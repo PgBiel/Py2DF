@@ -16,3 +16,5 @@ class BlockType(AutoLowerNameEnum):
     CALL_FUNCTION = auto()
     CONTROL = auto()
     # TODO: Finish this list
+
+
