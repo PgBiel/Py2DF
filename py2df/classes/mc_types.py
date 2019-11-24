@@ -16,7 +16,7 @@ class Item:
         pass  # TODO - returns dict
 
     def to_item(self) -> "Item":
-        return self
+        return self  #
 
 
 class DFText:
