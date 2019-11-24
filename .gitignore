@@ -31,6 +31,9 @@ MANIFEST
 *.manifest
 *.spec
 
+# IDE stuff
+.idea/
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

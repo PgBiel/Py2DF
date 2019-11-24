@@ -18,3 +18,13 @@ class BlockType(AutoLowerNameEnum):
     # TODO: Finish this list
 
 
+@unique
+class BracketType(AutoLowerNameEnum):
+    NORM = auto()
+    REPEAT = auto()
+
+
+@unique
+class BracketDirection(AutoLowerNameEnum):
+    OPEN = auto()
+    CLOSE = auto()
