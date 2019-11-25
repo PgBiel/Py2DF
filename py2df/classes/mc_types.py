@@ -188,7 +188,7 @@ class DFNumber:
         pass  # TODO: implement this as slimeball and stuff
 
 
-class DFLocation:
+class DFLocation:  # TODO: __getitem__ [0]=x [1]=y [2]=z and __iter__ goes through x,y,z
     """
     Represents a DiamondFire Location.
 
