@@ -5,6 +5,8 @@ import abc
 from enums import BlockType
 import typing
 
+from classes.mc_types import Item
+
 
 class Codeblock(metaclass=abc.ABCMeta):
     """
@@ -65,7 +67,7 @@ class Action(metaclass=abc.ABCMeta):
             except ValueError:  # not a valid block type
                 return NotImplemented  # not an Action
 
-        return NotImplemented
+        return NotImplemented  # #
 
 
 class Event(metaclass=abc.ABCMeta):
@@ -145,7 +147,11 @@ class JSONData(metaclass=abc.ABCMeta):
     __slots__ = ()
 
     @abc.abstractmethod
-    def as_json_data(self):
+    def as_json_data(self) -> typing.Union[str, int, float, dict, list, tuple]:
+        """
+        Exports this class as raw json data (not as string, but as a valid json data type).
+        :return: One of str, int, float, dict, list or tuple (which is converted to list).
+        """
         raise NotImplementedError
 
     @classmethod
@@ -162,6 +168,47 @@ class JSONData(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
+class BuildableJSONData(metaclass=abc.ABCMeta):
+    """
+    An ABC that describes a JSON Data class that can also build itself from pre-existing JSON data.
+    """
+    __slots__ = ()
+
+    @abc.abstractmethod
+    def as_json_data(self) -> typing.Union[str, int, float, dict, list, tuple]:
+        """
+        Exports this class as parsed json data (not as string, but as a valid json data type).
+        :return: One of str, int, float, dict, list or tuple (which is converted to list).
+        """
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def from_json_data(cls: type, data: typing.Union[str, int, float, dict, list, tuple]):
+        """
+        Builds a class instance using pre-existing PARSED JSON data. (Str, int, float, dict, list, tuple).
+        :param data: The parsed JSON data.
+        :return: The new class instance.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def __subclasshook__(cls, o_cls: type):
+        """
+        Checks if the given class is a subclass of BuildableJSONData (implements it.)
+        :param o_cls: Class to check.
+        :return: `True` if subclass; `NotImplemented` otherwise
+        """
+        if cls is BuildableJSONData:
+            if JSONData.__subclasshook__(o_cls) is NotImplemented:  # must be valid JSON data.
+                return NotImplemented
+
+            if any("from_json_data" in B.__dict__ for B in o_cls.__mro__):
+                return True  # has to have "as_json_data"
+
+        return NotImplemented
+
+
 class Itemable(metaclass=abc.ABCMeta):
     """
     An ABC that describes a class representing an item or DF type.
@@ -170,10 +217,18 @@ class Itemable(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def as_json_data(self):
+        """
+        Exports this class as parsed json data (not as string, but as a valid json data type).
+        :return: One of str, int, float, dict, list or tuple (which is converted to list).
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def to_item(self):
+    def to_item(self) -> Item:
+        """
+        Converts this class to an equivalent Item.
+        :return: Item instance.
+        """
         raise NotImplementedError
 
     @classmethod
