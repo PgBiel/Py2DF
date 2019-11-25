@@ -1,3 +1,6 @@
+"""
+Enum related utilities.
+"""
 from enum import Enum
 
 
