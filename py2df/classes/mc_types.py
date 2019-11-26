@@ -1,5 +1,6 @@
 import constants
 import typing
+import math
 import re
 import collections
 import numpy as np
@@ -28,18 +29,19 @@ class Item:
         return self  #
 
 
-class DFText:
+class DFText(collections.UserString):
     """
     Represents a DiamondFire Text variable. (note: this is not a dynamic variable.)
 
+    Subclasses `collections.UserString`; therefore, supports all str operations.
+
     `Attributes`:
-        value: The value of the text variable. String.
+        data: The value of the text variable. String.
 
         convert_color: Whether or not should convert "&" to "§" (section sign) to allow easier color code writing.
             Defaults to True.
     """
-    __slots__ = ("value", "convert_color")
-    value: str
+    __slots__ = ("convert_color",)
     convert_color: bool
 
     def __init__(self, text: str = "", *, convert_color: bool = True):
@@ -49,7 +51,8 @@ class DFText:
         :param text: Text, defaults to "" (empty str).
         :param convert_color: Boolean; whether or not should convert &x to color codes (§x). (Defaults to True)
         """
-        self.value = text
+        super().__init__(text)
+        self.data = text
         self.convert_color = bool(convert_color)
 
     def set(self, new_text: str):
@@ -58,7 +61,7 @@ class DFText:
 
         :param new_text: The new text.
         """
-        self.value = new_text
+        self.data = new_text
 
     def as_json_data(self) -> dict:
         """
@@ -67,8 +70,8 @@ class DFText:
         :return: Dict.
         """
         converted_str: str = re.sub(
-            constants.STR_COLOR_CODE_REGEX, constants.SECTION_SIGN + r"\1", self.value
-        ) if self.convert_color else self.value  # convert color
+            constants.STR_COLOR_CODE_REGEX, constants.SECTION_SIGN + r"\1", self.data
+        ) if self.convert_color else self.data  # convert color
 
         return dict(
             id=constants.ITEM_ID_TEXT_VAR,
@@ -102,6 +105,9 @@ class DFText:
     def to_item(self) -> Item:
         pass  # TODO: implement this as book and stuff
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__} data='{self.data}'>"
+
 
 AnyNumber = typing.Union[int, float]
 
@@ -109,6 +115,8 @@ AnyNumber = typing.Union[int, float]
 class DFNumber:
     """
     Represents a DiamondFire Number variable.
+
+    Supports practically all int/float-related operations and comparisons.
 
     `Attributes`:
         value: The value of the number variable. Float.
@@ -187,8 +195,81 @@ class DFNumber:
     def to_item(self) -> Item:
         pass  # TODO: implement this as slimeball and stuff
 
+    @staticmethod
+    def _extract_val(possible_num: typing.Union[int, float, "DFNumber"]):
+        if isinstance(possible_num, DFNumber):
+            return possible_num.value
 
-class DFLocation:  # TODO: __getitem__ [0]=x [1]=y [2]=z and __iter__ goes through x,y,z
+        return possible_num
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.value == other.value
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __gt__(self, other):
+        return self.value > DFNumber._extract_val(other)
+
+    def __ge__(self, other):
+        return self.value >= DFNumber._extract_val(other)
+
+    def __lt__(self, other):
+        return self.value < DFNumber._extract_val(other)
+
+    def __le__(self, other):
+        return self.value <= DFNumber._extract_val(other)
+
+    def __add__(self, other):
+        return DFNumber(self.value + DFNumber._extract_val(other))
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        return DFNumber(self.value - DFNumber._extract_val(other))
+
+    def __rsub__(self, other):
+        return DFNumber((+other) - self.value)
+
+    def __mul__(self, other):
+        return DFNumber(self.value * DFNumber._extract_val(other))
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __mod__(self, other):
+        return DFNumber(self.value % DFNumber._extract_val(other))
+
+    def __rmod__(self, other):
+        return other % self.value
+
+    def __truediv__(self, other):
+        return DFNumber(self.value / DFNumber._extract_val(other))
+
+    def __floordiv__(self, other):
+        return DFNumber(self.value // DFNumber._extract_val(other))
+
+    def __pow__(self, power):
+        return DFNumber(self.value ** DFNumber._extract_val(other))
+
+    def __neg__(self):
+        return DFNumber(-self.value)
+
+    def __pos__(self):
+        return self
+
+    def __abs__(self):
+        return DFNumber(abs(self.value))
+
+    def __ceil__(self):
+        return DFNumber(math.ceil(self.value))
+
+    def __floor__(self):
+        return DFNumber(math.floor(self.value))
+
+
+class DFLocation:
     """
     Represents a DiamondFire Location.
 
@@ -521,6 +602,30 @@ class DFLocation:  # TODO: __getitem__ [0]=x [1]=y [2]=z and __iter__ goes throu
 
     def __str__(self):
         return str((self.x, self.y, self.z, self.pitch, self.yaw))
+
+    def __getitem__(self, item: typing.Union[int, str, slice]):
+        if item in self.__class__.__slots__:  # ["x"]
+            return getattr(self, item)  # give them self.x
+
+        positional_attrs = (self.x, self.y, self.z)
+        return positional_attrs[item]  # [0] = x ; [1] = y ; [2] = z
+
+    def __setitem__(self, key: typing.Union[int, str, slice], value: typing.Union[int, float]):
+        fl_val = float(value)
+        if key in self.__class__.__slots__:
+            return setattr(self, key, fl_val)
+
+        pos_attrs = ("x", "y", "z")
+        attr_s_to_set = pos_attrs[key]
+        if type(attr_s_to_set) == str:
+            setattr(self, attr_s_to_set, fl_val)
+        else:
+            for attr_name in attr_s_to_set:
+                setattr(self, attr_name, fl_val)
+
+    def __iter__(self):
+        for coord in (self.x, self.y, self.z):
+            yield coord
 
     def __add__(
         self,
