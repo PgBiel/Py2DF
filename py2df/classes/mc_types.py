@@ -4,7 +4,9 @@ import math
 import re
 import collections
 import numpy as np
+import json
 from enums import Material
+from .subcollections import Lore
 
 DEFAULT_VAL = constants.DEFAULT_VAL
 
@@ -13,20 +15,128 @@ class Item:
     """
     Represents a Minecraft Item stack.
     """
-    __slots__ = ()
+    __slots__ = ("material", "_amount")
 
     # TODO - Material, quantity, multiplication override to set item stack amount, lore...
     def __init__(
             self, material: Material, amount: int = 1,
-            # *,
+            *, lore: typing.Union[Lore, collections.Iterable] # TODO: more arguments
     ):
         pass
 
+    @property
+    def amount(self):
+        return self._amount
+
+    @amount.setter
+    def amount(self, new_amt: int):
+        i_n_amt = int(new_amt)
+        if i_n_amt > constants.MAX_ITEM_STACK_SIZE:
+            raise ValueError(f"Maximum item stack size is {constants.MAX_ITEM_STACK_SIZE}!")
+
+        if i_n_amt < constants.MIN_ITEM_STACK_SIZE:
+            raise ValueError(f"Minimum item stack size is {constants.MIN_ITEM_STACK_SIZE}!")
+
+        self._amount = i_n_amt
+
     def as_json_data(self) -> dict:
-        pass  # TODO - returns dict
+        return dict(
+            id=constants.ITEM_ID_ITEM,
+            data=dict(
+                item=json.dumps(dict(
+                    id=self.material,  # TODO: DF_NBT = ???; Count = 1b -> is this the amount? Gotta test more
+                ))
+            )
+        )
+
+    def from_json_data(self) -> "Item":
+        pass  # TODO
 
     def to_item(self) -> "Item":
         return self  #
+
+    def copy(self) -> "Item":
+        return Item(self.material, self.amount)
+
+    def __eq__(self, other: "Item"):
+        attrs_to_compare = set(self.__class__.__slots__) - {"_amount", }  # compare all except amount
+
+        return type(self) == type(other) and all(
+            getattr(self, attr) == getattr(other, attr) for attr in attrs_to_compare
+        )
+
+    def __ne__(self, other: "Item"):
+        return not self.__eq__(other)
+
+    def __gt__(self, other: "Item"):
+        if self != other:
+            raise TypeError("Cannot compare different items (must be equal)")
+
+        return self.amount > other.amount
+
+    def __ge__(self, other: "Item"):
+        if self != other:
+            raise TypeError("Cannot compare different items (must be equal)")
+
+        return self.amount >= other.amount
+
+    def __lt__(self, other: "Item"):
+        if self != other:
+            raise TypeError("Cannot compare different items (must be equal)")
+
+        return self.amount < other.amount
+
+    def __le__(self, other: "Item"):
+        if self != other:
+            raise TypeError("Cannot compare different items (must be equal)")
+
+        return self.amount <= other.amount
+
+    def __mul__(self, other: typing.Union[int, "Item"]):  # can be an Item if it is == to current instance.
+        new = self.copy()
+        new.amount *= other.amount if self == other else int(other)
+        return new
+
+    def __rmul__(self, other: typing.Union[int, "Item"]):
+        return self.__mul__(other)
+
+    def __add__(self, other: typing.Union[int, "Item"]):
+        new = self.copy()
+        new.amount += other.amount if self == other else int(other)
+        return new
+
+    def __radd__(self, other: typing.Union[int, "Item"]):
+        return self.__add__(other)
+
+    def __pow__(self, power: typing.Union[int, "Item"]):
+        new = self.copy()
+        new.amount **= power.amount if self == power else int(power)
+        return new
+
+    def __truediv__(self, other: typing.Union[int, "Item"]):  # always rounded.
+        return self.__floordiv__(other)
+
+    def __floordiv__(self, other: typing.Union[int, "Item"]):
+        new = self.copy()
+        new.amount //= other.amount if self == other else int(other)
+        return new
+
+    def __sub__(self, other: typing.Union[int, "Item"]):
+        new = self.copy()
+        new.amount -= other.amount if self == other else int(other)
+        return new
+
+    def __ceil__(self):
+        return self
+
+    def __floor__(self):
+        return self
+
+    def __abs__(self):
+        return self
+
+    def __pos__(self):
+        return self
 
 
 class DFText(collections.UserString):

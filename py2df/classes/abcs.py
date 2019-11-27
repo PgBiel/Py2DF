@@ -5,7 +5,7 @@ import abc
 from enums import BlockType
 import typing
 
-from classes.mc_types import Item
+from .mc_types import Item
 
 
 class Codeblock(metaclass=abc.ABCMeta):
