@@ -202,6 +202,12 @@ class DFNumber:
 
         return possible_num
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__} value={self.value}>"
+
+    def __str__(self):
+        return str(self.value)
+
     def __eq__(self, other):
         return type(self) == type(other) and self.value == other.value
 
@@ -554,7 +560,7 @@ class DFLocation:
         return type(self) == type(other) and all(getattr(self, attr) == getattr(other, attr) for attr in attrs_to_check)
 
     def __ne__(self, other: "DFLocation"):
-        return not self == other
+        return not self.__eq__(other)
 
     def __gt__(self, other: "DFLocation") -> bool:
         """
@@ -783,6 +789,30 @@ class DFLocation:
         new_loc = self.copy()
         for attr in ("x", "y", "z", "pitch", "yaw"):
             setattr(new_loc, attr, abs(getattr(self, attr)))
+
+        return new_loc
+
+    def __ceil__(self):
+        """
+        Returns `math.ceil()` applied to every coordinate and pitch/yaw.
+
+        :return: New location.
+        """
+        new_loc = self.copy()
+        for attr in ("x", "y", "z", "pitch", "yaw"):
+            setattr(new_loc, attr, float(math.ceil(getattr(self, attr))))
+
+        return new_loc
+
+    def __floor__(self):
+        """
+        Returns `math.floor()` applied to every coordinate and pitch/yaw.
+
+        :return: New location.
+        """
+        new_loc = self.copy()
+        for attr in ("x", "y", "z", "pitch", "yaw"):
+            setattr(new_loc, attr, float(math.floor(getattr(self, attr))))
 
         return new_loc
 

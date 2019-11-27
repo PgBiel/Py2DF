@@ -1,7 +1,7 @@
 """
 Enum for all items.
 """
-from enums.enum_util import AutoLowerNameEnum
+from .enum_util import AutoLowerNameEnum
 from enum import auto, unique
 
 

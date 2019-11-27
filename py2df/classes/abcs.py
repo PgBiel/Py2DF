@@ -12,19 +12,20 @@ class Codeblock(metaclass=abc.ABCMeta):
     """
     An ABC that describes any codeblock - event, action etc.
 
-    `Attributes`:
-        block: Type of block - instance of enums.BlockType
+    `Attributes`
+    -------------
+        `block:` Type of block - instance of enums.BlockType
 
-        args: Arguments
+        `args`: Arguments
 
-        action: Specific action/description of it - e.g. event name
+        `action`: Enum CodeblockActionType - Specific action/description of it - e.g. event name
 
-        length: The space, in Minecraft blocks, that this codeblock occupies. (Most are 2, but some, like IFs, are 1)
+        `length`: The space, in Minecraft blocks, that this codeblock occupies. (Most are 2, but some, like IFs, are 1)
 
     """
     # block: BlockType
     # args: Arguments
-    # action: str
+    # action: CodeblockActionType
     # length: int
     __slots__ = ()
 
