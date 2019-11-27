@@ -25,16 +25,16 @@ class EventType(CodeblockActionType):
     pass
 
 
-class CallableBlockType(CodeblockActionType):
+class IfType(CodeblockActionType):
     """
-    An ABC for enums of callable types (Function and Process).
+    An ABC for enums of If types (If Player, If Variable, If Entity and If Game).
     """
     pass
 
 
-class IfType(CodeblockActionType):
+class UtilityBlockType(CodeblockActionType):
     """
-    An ABC for enums of If types (If Player, If Variable, If Entity and If Game).
+    An ABC for enums of utility types (Repeat, Set Var and Select Object).
     """
     pass
 
@@ -72,7 +72,7 @@ class AutoSnakeToPascalCaseNameEnum(Enum):
     """
 
     def _generate_next_value_(name, _start, _count, _last_values):
-        keep_upper = ("XP", "AI", "TNT", "PFX")  # strings to keep uppercase
+        keep_upper = ("XP", "AI", "TNT", "PFX", "HSL", "HSB", "RGB")  # strings to keep uppercase
         return "".join(map(
             lambda s: s.upper() if s in keep_upper else s.capitalize(),
             name.split("_")
