@@ -41,14 +41,14 @@ class IfVariableType(AutoSnakeToPascalCaseNameEnum, IfType):
     NOT_EQUALS = " != "
     EQUALS = " = "
     CONTAINS = auto()
-    GREATER_THAN = "Greater Than"
-    GREATER_THAN_OR_EQUAL_TO = "Greater Than Or Equal To"
+    GREATER_THAN = ">"
+    GREATER_THAN_OR_EQUAL_TO = ">="
     IN_RANGE = auto()
     IS_NEAR = auto()
     ITEM_EQUALS = auto()
     ITEM_HAS_TAG = auto()
-    LESS_THAN = "Less Than"
-    LESS_THAN_OR_EQUAL_TO = "Less Then or equal to"  # yes, it's written as "less thEn"...
+    LESS_THAN = "<"
+    LESS_THAN_OR_EQUAL_TO = "<="
     LIST_CONTAINS = auto()
     LIST_VALUE_EQ = auto()
     TEXT_MATCHES = auto()

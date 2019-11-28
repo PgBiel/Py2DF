@@ -7,22 +7,34 @@ import numpy as np
 import json
 from enums import Material
 from .subcollections import Lore
+from .dataclass import Enchantment
 
 DEFAULT_VAL = constants.DEFAULT_VAL
 
 
+# TODO: Sound and Particle in Enum and as type. Note that, in Enum, we must convert to display name.
 class Item:
     """
     Represents a Minecraft Item stack.
     """
-    __slots__ = ("material", "_amount")
+    __slots__ = ("material", "_amount", "lore", "enchantments")
 
     # TODO - Material, quantity, multiplication override to set item stack amount, lore...
     def __init__(
             self, material: Material, amount: int = 1,
-            *, lore: typing.Union[Lore, collections.Iterable] # TODO: more arguments
+            *, lore: typing.Union[Lore, collections.Iterable[typing.Optional[str]]] = Lore(),
+            enchantments: typing.Optional[typing.Iterable[Enchantment]] = None
+            # TODO: more arguments - Damage, Tags (include display name and crap)...
     ):
-        pass
+        self.material: Material = material
+        self._amount = 1
+        self.amount = amount
+        self.lore = Lore(lore)
+
+        if enchantments and any(type(i) != Enchantment for i in enchantments):
+            raise TypeError("Non-Enchantment instance found in given 'enchantments' arg.")
+
+        self.enchantments = list(enchantments) if enchantments else []
 
     @property
     def amount(self):
@@ -39,13 +51,17 @@ class Item:
 
         self._amount = i_n_amt
 
+    def as_nbt(self) -> str:
+        dict_with_data = dict(
+            id=f"minecraft:{self.material.value}",
+            Count=f"{min(max(self.amount, 1), 64)}b"  # TODO: Finish this NBT
+        )
+
     def as_json_data(self) -> dict:
         return dict(
             id=constants.ITEM_ID_ITEM,
             data=dict(
-                item=json.dumps(dict(
-                    id=self.material,  # TODO: DF_NBT = ???; Count = 1b -> is this the amount? Gotta test more
-                ))
+                item=self.as_nbt()  # it seems "DF_NBT = 1976" is just a means of representing version; can be ignored.
             )
         )
 
@@ -442,7 +458,7 @@ class DFLocation:
 
         `+a`: Returns a.
     """
-    __slots__ = ("x", "y", "z", "pitch", "yaw", "is_block", "world_least", "world_most")
+    __slots__ = ("x", "y", "z", "pitch", "yaw", "is_block")  # , "world_least", "world_most")
 
     x: float
     y: float
@@ -450,14 +466,15 @@ class DFLocation:
     pitch: float
     yaw: float
     is_block: bool
-    world_least: typing.Optional[int]
-    world_most: typing.Optional[int]
+    # world_least: typing.Optional[int]
+    # world_most: typing.Optional[int]
 
     def __init__(
         self, x: AnyNumber = 0.0, y: AnyNumber = 0.0, z: AnyNumber = 0.0, pitch: AnyNumber = 0.0,
         yaw: AnyNumber = 0.0,
-        *, is_block: bool = False, world_least: typing.Optional[int] = None, world_most: typing.Optional[int] = None
-    ):
+        *, is_block: bool = False,
+        # world_least: typing.Optional[int] = None, world_most: typing.Optional[int] = None  # locs are now relative
+    ):                                                                                       # to the plot
         """
         Init the location.
 
@@ -467,25 +484,25 @@ class DFLocation:
         :param pitch: The pitch value (float).
         :param yaw: The yaw value (float).
         :param is_block: Whether or not this location represents a solid (non-air) block. (bool) Defaults to False.
-        :param world_least: A constant int related to DF; this shouldn't need to be defined by the library user. None
-          to let the library handle it.
-        :param world_most: A constant int related to DF; this shouldn't need to be defined by the library user. None
-          to let the library handle it.
         """
+        # :param world_least: A constant int related to DF; this shouldn't need to be defined by the library user. None
+        #   to let the library handle it.
+        # :param world_most: A constant int related to DF; this shouldn't need to be defined by the library user. None
+        #   to let the library handle it.
         self.x = float(x)
         self.y = float(y)
         self.z = float(z)
         self.pitch = float(pitch)
         self.yaw = float(yaw)
         self.is_block = bool(is_block)
-        self.world_least = None if world_least is None else int(world_least)
-        self.world_most = None if world_most is None else int(world_most)
+        # self.world_least = None if world_least is None else int(world_least)
+        # self.world_most = None if world_most is None else int(world_most)
 
     def set(
         self, x: AnyNumber = DEFAULT_VAL, y: AnyNumber = DEFAULT_VAL, z: AnyNumber = DEFAULT_VAL,
         pitch: AnyNumber = DEFAULT_VAL, yaw: AnyNumber = DEFAULT_VAL,
         *, is_block: bool = DEFAULT_VAL,
-        world_least: typing.Optional[int] = DEFAULT_VAL, world_most: typing.Optional[int] = DEFAULT_VAL
+        # world_least: typing.Optional[int] = DEFAULT_VAL, world_most: typing.Optional[int] = DEFAULT_VAL
     ) -> "DFLocation":
         """
         Set the location.
@@ -508,12 +525,12 @@ class DFLocation:
         self.pitch = self.pitch if pitch == DEFAULT_VAL else float(pitch)
         self.yaw = self.yaw if yaw == DEFAULT_VAL else float(yaw)
         self.is_block = self.is_block if is_block == DEFAULT_VAL else bool(is_block)
-        self.world_least = self.world_least if world_least == DEFAULT_VAL else (
-            None if world_least is None else int(world_least)
-        )
-        self.world_least = self.world_most if world_most == DEFAULT_VAL else (
-            None if world_most is None else int(world_most)
-        )
+        # self.world_least = self.world_least if world_least == DEFAULT_VAL else (
+        #     None if world_least is None else int(world_least)
+        # )
+        # self.world_least = self.world_most if world_most == DEFAULT_VAL else (
+        #     None if world_most is None else int(world_most)
+        # )
 
         return self
 
@@ -526,7 +543,7 @@ class DFLocation:
         """
         return self.set(
             loc.x, loc.y, loc.z, loc.pitch, loc.yaw, is_block=loc.is_block,
-            world_least=loc.world_least, world_most=loc.world_most
+            # world_least=loc.world_least, world_most=loc.world_most
         )
 
     def as_json_data(self) -> dict:
@@ -544,8 +561,8 @@ class DFLocation:
                 z=self.z,
                 pitch=self.pitch,
                 yaw=self.yaw,
-                worldLeast=constants.LOC_DEFAULT_WORLD_LEAST if self.world_least is None else int(self.world_least),
-                worldMost=constants.LOC_DEFAULT_WORLD_MOST if self.world_most is None else int(self.world_most)
+                # worldLeast=constants.LOC_DEFAULT_WORLD_LEAST if self.world_least is None else int(self.world_least),
+                # worldMost=constants.LOC_DEFAULT_WORLD_MOST if self.world_most is None else int(self.world_most)
             )
         )
 
@@ -575,8 +592,8 @@ class DFLocation:
         return cls(
             d_dict.x, d_dict.y, d_dict.z, d_dict.pitch, d_dict.yaw,
             is_block=d_dict.isBlock,
-            world_least=None if int(d_dict.worldLeast) == constants.LOC_DEFAULT_WORLD_LEAST else d_dict.worldLeast,
-            world_most=None if int(d_dict.worldMost) == constants.LOC_DEFAULT_WORLD_MOST else d_dict.worldMost
+            # world_least=None if int(d_dict.worldLeast) == constants.LOC_DEFAULT_WORLD_LEAST else d_dict.worldLeast,
+            # world_most=None if int(d_dict.worldMost) == constants.LOC_DEFAULT_WORLD_MOST else d_dict.worldMost
         )
 
     def copy(self):
@@ -666,7 +683,7 @@ class DFLocation:
         :return: True if equal, False otherwise.
         """
 
-        attrs_to_check = set(self.__class__.__slots__) - {"world_least", "world_most"}
+        attrs_to_check = set(self.__class__.__slots__)  # - {"world_least", "world_most"}
         return type(self) == type(other) and all(getattr(self, attr) == getattr(other, attr) for attr in attrs_to_check)
 
     def __ne__(self, other: "DFLocation"):
