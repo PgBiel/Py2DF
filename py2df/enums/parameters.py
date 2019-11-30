@@ -7,7 +7,7 @@ from .enum_util import AutoLowerNameEnum
 
 @unique
 class BlockType(AutoLowerNameEnum):
-    EVENT = auto()
+    PLAYER_EVENT = "event"
     PLAYER_ACTION = auto()
     GAME_ACTION = auto()
     IF_PLAYER = auto()
@@ -15,8 +15,7 @@ class BlockType(AutoLowerNameEnum):
     START_PROCESS = auto()
     CALL_FUNCTION = auto()
     CONTROL = auto()
-    # TODO: Finish this list -- unsures below; sort after sure
-    IF_VARIABLE = auto()
+    IF_VAR = auto()
     IF_ENTITY = auto()
     IF_GAME = auto()
     SET_VARIABLE = auto()
@@ -25,7 +24,7 @@ class BlockType(AutoLowerNameEnum):
     PROCESS = auto()
     SELECT_OBJECT = auto()
     ENTITY_ACTION = auto()
-    ENTITY_EVENT = auto()  # ???? PLAYER_EVENT appears just as EVENT...
+    ENTITY_EVENT = auto()
 
 
 @unique

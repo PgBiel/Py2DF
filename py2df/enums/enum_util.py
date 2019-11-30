@@ -77,3 +77,16 @@ class AutoSnakeToPascalCaseNameEnum(Enum):
             lambda s: s.upper() if s in keep_upper else s.capitalize(),
             name.split("_")
         ))  # TEST_TEST_TEST => TestTestTest
+
+
+class AutoSnakeToCapitalizedWordsEnum(Enum):
+    """
+    An enum whose auto values are the respective *Capitalized Words* names of the constants (instead of SNAKE_CASE).
+    """
+
+    def _generate_next_value_(name, _start, _count, _last_values):
+        keep_upper = ("XP", "AI", "TNT", "PFX", "HSL", "HSB", "RGB")  # strings to keep uppercase
+        return "".join(map(
+            lambda s: s.upper() if s in keep_upper else s.capitalize() + " ",
+            name.split("_")
+        )).strip()  # TEST_TEST_TEST => Test Test Test

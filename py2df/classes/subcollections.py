@@ -17,7 +17,7 @@ class Lore(collections.UserList[typing.Optional[str]]):
         :param iter: List of lines as an Iterable. (Optional)
         """
         if type(iter) == Lore:
-            self.data = iter.data  # allow easy and efficient use of Lore(Lore(...))
+            self.data = iter.data[:]  # allow easy and efficient use of Lore(Lore(...))
             super().__init__()
         else:
             super().__init__(map(str, iter))
@@ -62,6 +62,14 @@ class Lore(collections.UserList[typing.Optional[str]]):
                 )
 
             self.data.append(item)
+
+    def as_json_data(self) -> list:
+        """
+        Returns this Lore item as valid json data (list).
+
+        :return: List of lines as strings (None becomes "")
+        """
+        return list(map(lambda t: str(t) if t else "", self.data))
 
     def __setitem__(self, key: typing.Union[int, slice], value: typing.Optional[str]):
         if type(key) == int:
