@@ -6,15 +6,13 @@ import collections
 import numpy as np
 import json
 from dataclasses import dataclass
-from enums import Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType
+from ..enums import Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect
 from .subcollections import Lore
 from .dataclass import Enchantment
-from ..utils import nbt_dict_to_str
+from ..utils import nbt_dict_to_str, NBTWrapper
+from constants import DEFAULT_VAL, DEFAULT_SOUND_PITCH, DEFAULT_SOUND_VOL
 
-DEFAULT_VAL = constants.DEFAULT_VAL
 
-
-# TODO: Sound and Particle in Enum and as type. Note that, in Enum, we must convert to display name.
 class Item:
     """
     Represents a Minecraft Item stack.
@@ -55,7 +53,6 @@ class Item:
         "leather_armor_color", "entity_tag", "extra_tags"
     )
 
-    # TODO - Material, quantity, multiplication override to set item stack amount, lore...
     def __init__(
             self, material: Material, amount: int = 1,
             *, name: typing.Optional[typing.Union[str, "DFText"]] = None,
@@ -65,7 +62,6 @@ class Item:
             leather_armor_color: typing.Optional[int] = None,
             entity_tag: typing.Optional[typing.Union[dict, str]] = None,
             extra_tags: typing.Optional[typing.Union[dict, str]] = None
-            # TODO: more arguments - Damage, Tags (include display name and crap)...
     ):
         """
         Initialize the item stack.
@@ -97,7 +93,7 @@ class Item:
 
         self.enchantments = list(enchantments) if enchantments else []
 
-        self.damage: int = damage
+        self.damage: int = int(damage)
 
         self.unbreakable: bool = bool(unbreakable)
 
@@ -106,7 +102,8 @@ class Item:
         if self.material in (
             Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS
         ):
-            self.leather_armor_color: typing.Optional[int] = leather_armor_color
+            self.leather_armor_color: typing.Optional[int] = int(leather_armor_color) \
+                if leather_armor_color is not None else None
         else:
             self.leather_armor_color: typing.Optional[int] = None
 
@@ -142,10 +139,10 @@ class Item:
         """
         tag_dict = dict(
             *(dict(Damage=int(self.damage)) if self.damage != 0 else dict()),
-            *(dict(Unbreakable="nbt:1b") if self.unbreakable else dict()),  # "nbt:" is used to ensure quotes aren't
-            *(dict(                                                         # used
+            *(dict(Unbreakable=NBTWrapper("1b")) if self.unbreakable else dict()),  # NBTWrapper is used to ensure
+            *(dict(                                                                 # quotes aren't used
                 EntityTag=(
-                    nbt_dict_to_str(self.entity_tag) if type(self.entity_tag) == dict else f"nbt:{self.entity_tag}"
+                    nbt_dict_to_str(self.entity_tag) if type(self.entity_tag) == dict else NBTWrapper(self.entity_tag)
                 ) if self.entity_tag else dict()
             )),
             *(dict(
@@ -158,13 +155,14 @@ class Item:
             *(dict(HideFlags=self.hide_flags.value) if self.hide_flags and self.hide_flags.value else dict())
         )
         if type(self.extra_tags) == str:
-            tag_dict["extra_tags"] = "nbt:" + self.extra_tags
+            tag_dict["extra_tags"] = NBTWrapper(self.extra_tags)
+
         elif type(self.extra_tags) == dict:
             tag_dict.update(self.extra_tags)
 
         dict_with_data = dict(
             id=f"minecraft:{self.material.value}",
-            Count=f"nbt:{min(max(self.amount, 1), 64)}b",  # TODO: Finish this NBT
+            Count=NBTWrapper(f"{min(max(self.amount, 1), 64)}b"),  # TODO: Finish this NBT
             tag=tag_dict
         )
 
@@ -209,7 +207,7 @@ class Item:
         )
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} - minecraft:{self.material.value} x {self.amount}>"
+        return f"<{self.__class__.__name__} minecraft:{self.material.value} x {self.amount}>"
 
     def __str__(self):
         return f"minecraft:{self.material.value}"
@@ -321,13 +319,17 @@ class DFText(collections.UserString):
         self.data = text
         self.convert_color = bool(convert_color)
 
-    def set(self, new_text: str):
+    def set(self, new_text: str) -> "DFText":
         """
         Set the value of this text variable.
 
         :param new_text: The new text.
+
+        :return: self to allow chaining
         """
         self.data = new_text
+
+        return self
 
     def as_json_data(self) -> dict:
         """
@@ -416,13 +418,15 @@ class DFNumber:
         """
         self._value = float(new_value)
 
-    def set(self, new_value: AnyNumber):
+    def set(self, new_value: AnyNumber) -> "DFNumber":
         """
         Set the value of this number variable.
 
         :param new_value: The new value.
         """
         self._value = float(new_value)
+
+        return self
 
     def as_json_data(self) -> dict:
         """
@@ -457,6 +461,9 @@ class DFNumber:
             )
 
         return cls(float(data["data"]["name"]))
+
+    def copy(self):
+        return DFNumber(self.value)
 
     def to_item(self) -> Item:
         pass  # TODO: implement this as slimeball and stuff
@@ -658,12 +665,13 @@ class DFLocation:
         :param pitch: The pitch value (float).
         :param yaw: The yaw value (float).
         :param is_block: Whether or not this location represents a solid (non-air) block. (bool) Defaults to False.
-        :param world_least: A constant int related to DF; this shouldn't need to be defined by the library user. None
-          to let the library handle it.
-        :param world_most: A constant int related to DF; this shouldn't need to be defined by the library user. None
-          to let the library handle it.
         :return: self to allow chaining
         """
+        # :param world_least: A constant int related to DF; this shouldn't need to be defined by the library user. None
+        #   to let the library handle it.
+        # :param world_most: A constant int related to DF; this shouldn't need to be defined by the library user. None
+        #   to let the library handle it
+
         self.x = self.x if x == DEFAULT_VAL else float(x)
         self.y = self.y if y == DEFAULT_VAL else float(y)
         self.z = self.z if z == DEFAULT_VAL else float(z)
@@ -841,6 +849,9 @@ class DFLocation:
         :param other: Other DFLocation to compare.
         :return: Bool.
         """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Incompatible comparison types {type(self)} and {type(other)}.")
+
         positional_attrs = ("x", "y", "z")
         return any(getattr(self, attr) > getattr(other, attr) for attr in positional_attrs)
 
@@ -852,6 +863,9 @@ class DFLocation:
         :param other: Other DFLocation to compare.
         :return: Bool.
         """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Incompatible comparison types {type(self)} and {type(other)}.")
+
         positional_attrs = ("x", "y", "z")
         return all(getattr(self, attr) >= getattr(other, attr) for attr in positional_attrs)
 
@@ -862,6 +876,9 @@ class DFLocation:
         :param other: Other DFLocation to compare.
         :return: Bool.
         """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Incompatible comparison types {type(self)} and {type(other)}.")
+
         positional_attrs = ("x", "y", "z")
         return any(getattr(self, attr) < getattr(other, attr) for attr in positional_attrs)
 
@@ -872,6 +889,9 @@ class DFLocation:
         :param other: Other DFLocation to compare.
         :return: Bool.
         """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Incompatible comparison types {type(self)} and {type(other)}.")
+
         positional_attrs = ("x", "y", "z")
         return all(getattr(self, attr) <= getattr(other, attr) for attr in positional_attrs)
 
@@ -1106,7 +1126,10 @@ class DFSound:
     pitch: float
     volume: int
 
-    def __init__(self, sound_type: SoundType, pitch: AnyNumber = 1.0, volume: int = 2):
+    def __init__(
+        self, sound_type: SoundType, *, volume: int = DEFAULT_SOUND_VOL,
+        pitch: AnyNumber = DEFAULT_SOUND_PITCH
+    ):
         if not isinstance(sound_type, SoundType):
             raise TypeError("Sound type must be an instance of SoundType enum.")
 
@@ -1150,9 +1173,38 @@ class DFSound:
             )
         )
 
-    @staticmethod
-    def from_json_data() -> "DFSound":
-        pass  # TODO: Sound from json data
+    @classmethod
+    def from_json_data(cls: typing.Type["DFSound"], data: dict) -> "DFSound":
+        """
+        Obtain DFSound from pre-existing parsed JSON data.
+
+        :param data: The parsed JSON dict.
+        :return: DFSound instance.
+        """
+        if (
+            not isinstance(data, dict)
+            # or "id" not in data  # not really required
+            or "data" not in data
+            or not isinstance(data["data"], dict)
+            or "sound" not in data["data"]
+            or not type("sound") == str
+        ):
+            raise TypeError(
+                "Malformed DFSound parsed JSON data! Must be a dict with, at least, a 'data' dict and a sound value."
+            )
+
+        given_pitch = data["data"].get("pitch")
+        pitch: float = float(given_pitch if given_pitch is not None else DEFAULT_SOUND_PITCH)
+
+        given_vol = data["data"].get("vol")
+        vol: int = int(given_vol if given_vol is not None else DEFAULT_SOUND_VOL)
+        return cls(SoundType(data["data"]["sound"]), pitch=pitch, volume=vol)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} sound_type={self.sound_type.value} pitch={self.pitch} volume={self.volume}>"
+
+    def __str__(self):
+        return self.sound_type.value
 
 
 @dataclass
@@ -1163,21 +1215,30 @@ class DFParticle:
     `Attributes`:
     -------------
         `particle_type`: The ParticleType enum instance that specifies which particle is this.
+
+    `Supported Comparisons`:
+    ------------------------
+        `a == b`: Checks if two particles have the same ParticleType enum value.
+
+        `a != b`: Same as `not a == b`.
     """
     __slots__ = ("particle_type",)
     particle_type: ParticleType
 
-    def set(self, particle_type: ParticleType) -> None:
+    def set(self, particle_type: ParticleType) -> "DFParticle":
         """
         Immediately set the type of this DFParticle. Note that this is not changed dynamically, in DiamondFire. For
         that, use a dynamic variable.
 
         :param particle_type: The new particle type.
+        :return: self to allow chaining
         """
         if not isinstance(particle_type, ParticleType):
             raise TypeError("Particle type must be an instance of ParticleType enum.")
 
         self.particle_type = particle_type
+
+        return self
 
     def __post_init__(self):
         if not isinstance(self.particle_type, ParticleType):
@@ -1199,9 +1260,39 @@ class DFParticle:
             )
         )
 
-    @staticmethod
-    def from_json_data(data: dict) -> "DFParticle":
-        pass  # TODO: Particle from json data
+    @classmethod
+    def from_json_data(cls: typing.Type["DFParticle"], data: dict) -> "DFParticle":
+        """
+        Obtain DFParticle from pre-existing parsed JSON data.
+
+        :param data: The parsed JSON dict.
+        :return: DFParticle instance.
+        """
+        if (
+            not isinstance(data, dict)
+            # or "id" not in data  # not really required
+            or "data" not in data
+            or not isinstance(data["data"], dict)
+            or "particle" not in data["data"]
+            or not type("particle") == str
+        ):
+            raise TypeError(
+                "Malformed DFSound parsed JSON data! Must be a dict with, at least, a 'data' dict and a particle value."
+            )
+
+        return cls(ParticleType(data["data"]["particle"]))
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} particle_type={self.particle_type.value}>"
+
+    def __str__(self) -> str:
+        return str(self.particle_type.value)
+
+    def __eq__(self, other: "DFParticle") -> bool:
+        return type(self) == type(other) and self.particle_type == other.particle_type
+
+    def __ne__(self, other: "DFParticle") -> bool:
+        return not self.__eq__(other)
 
 
 @dataclass
@@ -1212,21 +1303,31 @@ class DFCustomSpawnEgg:
     `Attributes`:
     -------------
         `egg_type`: The CustomSpawnEggType enum instance that specifies which spawn egg is this.
+
+
+    `Supported Comparisons`:
+    -----------------------
+        `a == b`: Checks if two `DFCustomSpawnEgg` instances have the same `egg_type` attribute.
+
+        `a != b`: Same as `not a == b`
     """
     __slots__ = ("egg_type",)
     egg_type: CustomSpawnEggType
 
-    def set(self, egg_type: CustomSpawnEggType) -> None:
+    def set(self, egg_type: CustomSpawnEggType) -> "DFCustomSpawnEgg":
         """
         Immediately set the type of this DFParticle. Note that this is not changed dynamically, in DiamondFire. For
         that, use a dynamic variable.
 
         :param egg_type: The new spawn egg type.
+        :return: self to allow chaining
         """
         if not isinstance(egg_type, CustomSpawnEggType):
             raise TypeError("Egg type must be an instance of CustomSpawnEggType enum.")
 
         self.egg_type = egg_type
+
+        return self
 
     def __post_init__(self):
         if not isinstance(self.egg_type, CustomSpawnEggType):
@@ -1235,10 +1336,261 @@ class DFCustomSpawnEgg:
     def to_item(self):
         pass  # TODO: egg lol
 
-    # TODO: Figure out json for Custom Spawn Egg.
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} egg_type={self.egg_type.value}>"
+
+    def __str__(self) -> str:
+        return str(self.egg_type.value)
+
+    def __eq__(self, other: "DFCustomSpawnEgg") -> bool:
+        return type(self) == type(other) and self.egg_type == other.egg_type
+
+    def __ne__(self, other: "DFCustomSpawnEgg") -> bool:
+        return not self.__eq__(other)
+
+    # TODO: Figure out json for Custom Spawn Egg;
 
 
-# TODO: GameValue; Potion
+class DFPotion:
+    """
+    Used for potion effects in potion-effect-related actions.
 
-DFType = typing.Union[Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg]  # TODO: GameValue etc
+    `Attributes`:
+    -------------
+        `effect`: The PotionEffect enum instance that specifies which potion effect this DFPotion represents.
 
+        `amplifier`: int representing the strength of the effect. This should vary between -255 and 255.
+
+        `duration`: int x int tuple (int, int). Represents the duration of the effect in the form (min, seconds).
+
+    `Supported Comparisons`:
+    ------------------------
+        `a == b`: Checks if two DFPotions have the same `effect`, `amplifier` and `duration` attributes.
+
+        `a != b`: Same as `not a == b`
+
+        `a > b`, `a >= b`, `a < b`, `a <= b`: Applies the respective comparisons on the amplifiers of the potions.
+
+    `Supported Operations`:
+    -----------------------
+        `a + b`, `a - b`, `a * b`, `a / b`, `a // b`, `a % b`, `a ** b`: Applies the respective operations between the
+        amplifiers of the potions, generating a new DFPotion (e.g. amplifier 5 pot - amplifier 2 pot = amplifier 3
+        pot). Worth noting that those operations also work between one DFPotion and one int/float, however the result is
+        always rounded down, since amplifiers can only be `int`s. (e.g. DFPotion(amp=5) + 6 => DFPotion(amp=11))
+
+        `a += b`, `a -= b`, ...: Applies each of the operations above, in a similar fashion.
+
+        `ceil(a)`, `floor(a)`, `abs(a)`, `+a`: Returns the class itself.
+
+        `bool(a)`: Returns whether or not the duration is bigger than 00:00 (tuple > (0,0) ).
+    """
+    __slots__ = ("effect", "amplifier", "duration")
+
+    effect: PotionEffect
+    amplifier: int
+    duration: typing.Tuple[int, int]
+
+    def __init__(self, effect: PotionEffect, *, amplifier: int = 1, duration: typing.Iterable[int, int] = (0, 5)):
+        """
+        Init this DFPotion.
+
+        :param effect: The effect that this DFPotion represents.
+        :param amplifier: An amplifier int.
+        :param duration: A duration in the form (int, int). Can be any Iterable with two ints.
+        """
+        self.effect = PotionEffect(effect)
+        self.amplifier = int(amplifier)
+        self.duration = typing.cast(typing.Tuple[int, int], tuple(map(int, duration))[:2])
+
+    def set(
+        self, effect: PotionEffect = DEFAULT_VAL,
+        *, amplifier: int = DEFAULT_VAL, duration: typing.Iterable[int, int] = DEFAULT_VAL
+    ) -> "DFPotion":
+        """
+        Set certain attributes of this DFPotion. Specify `constants.DEFAULT_VAL` to not change one.
+
+        :param effect: The new potion effect.
+        :param amplifier: The new amplifier.
+        :param duration: The new duration/
+        :return: self for chaining
+        """
+        if effect != DEFAULT_VAL:
+            self.effect = PotionEffect(effect)
+
+        if amplifier != DEFAULT_VAL:
+            self.amplifier = int(amplifier)
+
+        if duration != DEFAULT_VAL:
+            self.duration = typing.cast(typing.Tuple[int, int], tuple(map(int, duration))[:2])
+
+        return self
+
+    def as_json_data(self) -> dict:
+        """
+        Returns this DFPotion as a valid json serializable dict.
+
+        :return: Dict
+        """
+        return dict(
+            id=constants.ITEM_ID_POTION,
+            data=dict(
+                pot=self.effect.value,
+                dur=None,  # TODO: Figure out dur json; milliseconds?
+                amp=self.amplifier
+            )
+        )
+
+    def from_json_data(self) -> dict:
+        pass  # TODO: Figure out dur json then implement this
+
+    def copy(self) -> "DFPotion":
+        """
+        Creates an identical copy of this DFPotion.
+
+        :return: Copy DFPotion.
+        """
+        return DFPotion(self.effect, amplifier=self.amplifier, duration=self.duration)
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} effect={self.effect.value} amplifier={self.amplifier} \
+duration={self.duration[0]}:{self.duration[1]}>"
+
+    def __str__(self) -> str:
+        return self.effect.value
+
+    def __bool__(self) -> bool:
+        """
+        Returns whether or not this DFPotion's duration is higher than 00:00 (> (0,0)).
+        :return: bool
+        """
+        return self.duration > (0, 0)
+
+    def __eq__(self, other: "DFPotion") -> bool:
+        """
+        Checks if two DFPotions are strictly equal (have the same effect, amplifier and duration).
+
+        :param other: DFPotion to compare.
+        :return: Whether or not they are equal.
+        """
+        return type(self) == type(other) and self.effect == other.effect and self.amplifier == other.amplifier \
+            and self.duration == other.duration
+
+    def __ne__(self, other: "DFPotion") -> bool:
+        return not self.__eq__(other)
+
+    def __gt__(self, other: "DFPotion") -> bool:
+        if not type(self) == type(other) or not self.effect == other.effect:
+            raise TypeError(f"DFPotion must be compared with another DFPotion of same effect.")
+
+        return self.amplifier > other.amplifier
+
+    def __ge__(self, other: "DFPotion") -> bool:
+        if not type(self) == type(other) or not self.effect == other.effect:
+            raise TypeError(f"DFPotion must be compared with another DFPotion of same effect.")
+
+        return self.amplifier >= other.amplifier
+
+    def __lt__(self, other: "DFPotion") -> bool:
+        if not type(self) == type(other) or not self.effect == other.effect:
+            raise TypeError(f"DFPotion must be compared with another DFPotion of same effect.")
+
+        return self.amplifier < other.amplifier
+
+    def __le__(self, other: "DFPotion") -> bool:
+        if not type(self) == type(other) or not self.effect == other.effect:
+            raise TypeError(f"DFPotion must be compared with another DFPotion of same effect.")
+
+        return self.amplifier <= other.amplifier
+
+    def __add__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
+        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+            raise TypeError(f"DFPotion must be added with another DFPotion of same effect, or with an int/float.")
+
+        copy = self.copy()
+        copy.amplifier += other.amplifier if isinstance(other, type(self)) else other
+        copy.amplifier = int(copy.amplifier)
+        return copy
+
+    def __radd__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
+        return self.__add__(other)
+
+    def __mul__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
+        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+            raise TypeError(f"DFPotion must be multiplied with another DFPotion of same effect, or with an int/float.")
+
+        copy = self.copy()
+        copy.amplifier *= other.amplifier if isinstance(other, type(self)) else other
+        copy.amplifier = int(copy.amplifier)
+        return copy
+
+    def __rmul__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
+        return self.__mul__(other)
+
+    def __sub__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
+        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+            raise TypeError(f"DFPotion must be subtracted from another DFPotion of same effect, or from an int/float.")
+
+        copy = self.copy()
+        copy.amplifier -= other.amplifier if isinstance(other, type(self)) else other
+        copy.amplifier = int(copy.amplifier)
+        return copy
+
+    def __pow__(self, other: typing.Union["DFPotion", AnyNumber], modulo=None) -> "DFPotion":
+        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+            raise TypeError(
+                f"DFPotion must be taken to the power of another DFPotion of same effect, or of an int/float."
+            )
+
+        copy = self.copy()
+        copy.amplifier = int(pow(
+            copy.amplifier, other.amplifier if isinstance(other, type(self)) else other,
+            modulo
+        ))
+        return copy
+
+    def __truediv__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
+        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+            raise TypeError(f"DFPotion must be subtracted from another DFPotion of same effect, or from an int/float.")
+
+        copy = self.copy()
+        copy.amplifier /= other.amplifier if isinstance(other, type(self)) else other
+        copy.amplifier = int(copy.amplifier)
+        return copy
+
+    def __floordiv__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
+        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+            raise TypeError(f"DFPotion must be subtracted from another DFPotion of same effect, or from an int/float.")
+
+        copy = self.copy()
+        copy.amplifier //= other.amplifier if isinstance(other, type(self)) else other
+        copy.amplifier = int(copy.amplifier)
+        return copy
+
+    def __mod__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
+        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+            raise TypeError(f"DFPotion must be subtracted from another DFPotion of same effect, or from an int/float.")
+
+        copy = self.copy()
+        copy.amplifier %= other.amplifier if isinstance(other, type(self)) else other
+        copy.amplifier = int(copy.amplifier)
+        return copy
+
+    def __ceil__(self):
+        return self
+
+    def __floor__(self):
+        return self
+
+    def __pos__(self):
+        return self
+
+    def __abs__(self):
+        return self
+
+
+# TODO: GameValue
+
+
+DFType = typing.Union[
+    Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion
+]  # TODO: GameValue etc

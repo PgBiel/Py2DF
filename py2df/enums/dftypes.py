@@ -15,3 +15,8 @@ class ParticleType(AutoSnakeToCapitalizedWordsEnum):
 @unique
 class CustomSpawnEggType:  # <- still don't know which enum type to use! Snake->Words? Snake->Pascal?
     pass  # TODO: Use in Minecraft and find out its json; Ender Dragon, Giant, Iron/Snow Golem, etc
+
+
+@unique
+class PotionEffect:
+    pass  # TODO: Potion effect name (use display names; SNAKE_CASE <=> Capitalized Words)

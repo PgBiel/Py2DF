@@ -12,3 +12,6 @@ MAX_ENCHANTMENT_LEVEL = 2147483647
 # ^location system was changed to be based on the plot itself
 
 MAX_DEGREES = 360
+
+DEFAULT_SOUND_PITCH = 1.0
+DEFAULT_SOUND_VOL = 2

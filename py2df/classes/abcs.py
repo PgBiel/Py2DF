@@ -7,20 +7,23 @@ import typing
 
 from .mc_types import Item
 
+# region:Codeblock
+
 
 class Codeblock(metaclass=abc.ABCMeta):
     """
     An ABC that describes any codeblock - event, action etc.
 
-    `Attributes`
+    `Attributes`:
     -------------
-        `block:` Type of block - instance of enums.BlockType
+        `block:` Type of block - instance of enums.BlockType (Class var)
 
-        `args`: Arguments
+        `args`: Arguments instance (Instance var.)
 
-        `action`: Enum CodeblockActionType - Specific action/description of it - e.g. event name
+        `action`: Enum CodeblockActionType - Specific action/description of it - e.g. event name (Class var)
 
         `length`: The space, in Minecraft blocks, that this codeblock occupies. (Most are 2, but some, like IFs, are 1)
+        (Class var)
 
     """
     # block: BlockType
@@ -38,13 +41,13 @@ class Codeblock(metaclass=abc.ABCMeta):
         """
 
         if cls is Codeblock:
-            attribs = ["block", "args", "action", "length"]  # must have those attributes to be a codeblock.
+            attribs = ["block", "action", "length"]  # must have those attributes to be a codeblock.
             if all(any(attr in B.__dict__ for B in o_cls.__mro__) for attr in attribs):
                 return True
         return NotImplemented
 
 
-class Action(metaclass=abc.ABCMeta):
+class ActionBlock(metaclass=abc.ABCMeta):
     """
     An ABC that describes any action - Player Action, Game Action, Entity Action or Control. Must implement Codeblock.
     """
@@ -58,7 +61,7 @@ class Action(metaclass=abc.ABCMeta):
         :return: True if subclass; NotImplemented otherwise
         """
 
-        if cls is Action:
+        if cls is ActionBlock:
             if Codeblock.__subclasshook__(o_cls) is NotImplemented:  # must be a Codeblock
                 return NotImplemented
 
@@ -71,7 +74,7 @@ class Action(metaclass=abc.ABCMeta):
         return NotImplemented  # #
 
 
-class Event(metaclass=abc.ABCMeta):
+class EventBlock(metaclass=abc.ABCMeta):
     """
     An ABC that describes any event - Player Event or Entity Event. Must implement Codeblock.
     """
@@ -85,15 +88,15 @@ class Event(metaclass=abc.ABCMeta):
         :return: True if subclass; NotImplemented otherwise
         """
 
-        if cls is Event:
+        if cls is EventBlock:
             if Codeblock.__subclasshook__(o_cls) is NotImplemented:
                 return NotImplemented
 
-            try:  # TODO: Entity event?
-                if BlockType(getattr(o_cls, "block")) == BlockType.EVENT:  # must be event.
+            try:
+                if BlockType(getattr(o_cls, "block")) in (BlockType.PLAYER_EVENT, BlockType.ENTITY_EVENT):  # be event.
                     return True
             except ValueError:  # not a valid block type
-                return NotImplemented  # not an Action
+                return NotImplemented  # not an Event
 
         return NotImplemented
 
@@ -139,7 +142,36 @@ class BracketedBlock(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-# TODO: Customizable start block (Functions and processes)
+class CallableBlock(metaclass=abc.ABCMeta):
+    """
+    An ABC that describes any callable - Function or Process. Must implement Codeblock.
+    """
+    __slots__ = ()
+
+    @classmethod
+    def __subclasshook__(cls, o_cls: type):
+        """
+        Checks if the given class is a subclass of Event (implements it).
+        :param o_cls: Class to check.
+        :return: True if subclass; NotImplemented otherwise
+        """
+
+        if cls is CallableBlock:
+            if Codeblock.__subclasshook__(o_cls) is NotImplemented:
+                return NotImplemented
+
+            try:
+                if BlockType(getattr(o_cls, "block")) in (BlockType.FUNCTION, BlockType.PROCESS):
+                    return True
+            except ValueError:  # not a valid block type
+                return NotImplemented  # not a CallableBlock
+
+        return NotImplemented
+
+# endregion:Codeblock
+
+# region:JSONData
+
 
 class JSONData(metaclass=abc.ABCMeta):
     """
@@ -247,3 +279,27 @@ class Itemable(metaclass=abc.ABCMeta):
                 return True  # has to have "as_json_data"
 
         return NotImplemented
+
+# endregion:JSONData
+
+# region:Misc
+
+
+class Settable(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def set(self) -> None:
+        raise NotImplementedError
+
+    @classmethod
+    def __subclasshook__(cls, o_cls: type):
+        """
+        Checks if the given class is a subclass of Settable (implements it.)
+        :param o_cls: Class to check.
+        :return: True if subclass; NotImplemented otherwise
+        """
+        if cls is Settable and any("set" in B.__dict__ for B in o_cls.__mro__):
+            return True  # has to have "set" attr
+
+        return NotImplemented
+
+# endregion:Misc

@@ -18,11 +18,11 @@ class BlockType(AutoLowerNameEnum):
     IF_VAR = auto()
     IF_ENTITY = auto()
     IF_GAME = auto()
-    SET_VARIABLE = auto()
+    SET_VAR = auto()
     ELSE = auto()
-    FUNCTION = auto()
+    FUNCTION = auto()  # TODO: Verify Function, Process and Player Event json data
     PROCESS = auto()
-    SELECT_OBJECT = auto()
+    SELECT_OBJ = auto()
     ENTITY_ACTION = auto()
     ENTITY_EVENT = auto()
 
