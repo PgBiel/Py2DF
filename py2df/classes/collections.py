@@ -2,17 +2,21 @@
 General utility classes.
 """
 import typing
-import constants
 import collections
-import errors
+from .. import constants, errors
 from .mc_types import Item, DFType
 from .abcs import Itemable
+from ..utils import remove_u200b_from_doc
 
 
 class Arguments:
-    """
-    A container for arguments. In general, only holds the "items" attribute. This class is used in case any other
+    """A container for arguments. In general, only holds the "items" attribute. This class is used in case any other
     properties are added in the future.
+
+    Attributes
+    ----------\u200b
+        items : :class:`ItemCollection`
+            The ItemCollection held by this Arguments instance.
     """
     items: "ItemCollection"
 
@@ -27,23 +31,25 @@ class Arguments:
         return dict(items=self.items.as_json_data() if self.items else dict())
 
 
-class ItemCollection(collections.UserList[DFType]):
-    """
-    A container for items or other DF types (text variables, number variables...)
-
+class ItemCollection(collections.UserList):  # [DFType]
+    """A container for items or other DF types (text variables, number variables...)
+    
     Subclasses `collections.UserList`. Supports, as a consequence, most list operations. Do note that it does not allow
     changing the actual size of the list - it's always at the max length, with empty slots of items filled with `None`.
     However, `len()` returns the amount of FILLED slots (amount of items). Also, attempting to `del` or `remove()` will
     only turn the item into an empty slot (None).
-
+    
     Also, `append()` will add to the empty slot with lowest index, erroring if there are not any. `extend()` will
     execute in a similar condition to `append()` for every element in the iterable.
+    
+    Attributes
+    -------------\u200b
+        data : List[DFType]
+            The internal item list; this should not be modified by the user.
+        
+        max_len : :class:`int`
+            Maximum length of the item collection, defaults to 27 (small chest).
 
-    `Attributes`:
-    -------------
-        max_len: Maximum length of the item collection, defaults to 27 (small chest).
-
-        data: The internal item list; this should not be modified by the user.
     """
     __slots__ = ("max_len",)
 
@@ -57,7 +63,7 @@ class ItemCollection(collections.UserList[DFType]):
         """
         Initializes an item collection.
         
-        :param data: An iterable of items (list, ItemCollection, etc.) or a single Item/DFType to be
+        :param data: An iterable of items (list, ItemCollection, etc.) or a single :class:`Item`/DFType to be
             used with the `items` arg.
         :param items: Any other items to add. If `data` is an iterable, this is not considered.
         :param max_len: The maximum length of this collection, defaults to 27 items (small chest).
@@ -93,11 +99,7 @@ class ItemCollection(collections.UserList[DFType]):
             self.data: typing.List[typing.Optional[DFType]] = [None] * max_len
 
     def as_json_data(self) -> typing.List[dict]:
-        """
-        Convert this to a JSON-exportable list. (For internal use.)
-
-        :return: A list.
-        """
+        """Convert this to a JSON-exportable list of dicts. (For internal use.)"""
         gen_list: typing.List[dict] = [
             dict(
                 item=item.as_json_data(),
@@ -108,13 +110,25 @@ class ItemCollection(collections.UserList[DFType]):
         return gen_list
 
     def append(self, val: DFType) -> None:
-        """
-        Appends an Item/DFType to the first empty slot available (smallest None index).
+        """Appends an :class:`Item`/DFType to the first empty slot available (smallest None index).
 
-        :param val: The item/DFType to append.
-        :raises TypeError: If there was an attempt to add `None` or non-`Item`/`DFType`.
-        :raises LimitReachedError: If there is no empty slot where to append the Item/DFType to.
-        :return: None
+        Parameters
+        ----------
+        val : `DFType`
+            The item/DFType to append.
+
+        Returns
+        -------
+        None
+            None
+
+        Raises
+        ------
+        TypeError
+            If there was an attempt to add `None` or non-`:class:`Item``/`DFType`.
+        LimitReachedError
+            If there is no empty slot where to append the :class:`Item`/DFType to.
+
         """
         if not isinstance(val, Itemable):
             raise TypeError("Cannot append non-Item/DFType to ItemCollection.")
@@ -126,11 +140,18 @@ class ItemCollection(collections.UserList[DFType]):
         self[first_available_slot] = typing.cast(DFType, val)
 
     def remove(self, x: DFType) -> None:
-        """
-        Removes an Item/DFType, setting it to None.
+        """Removes an :class:`Item`/DFType, setting it to None.
 
-        :param x: Item/DFType to remove.
-        :return: `None`
+        Parameters
+        ----------
+        x : DFType
+            :class:`Item`/DFType to remove.
+
+        Returns
+        -------
+        None
+            None
+
         """
         if x is None:
             raise TypeError("Cannot remove None (empty slot) from ItemCollection.")
@@ -143,20 +164,23 @@ class ItemCollection(collections.UserList[DFType]):
         super().insert(index_at, None)
 
     def clear(self) -> None:
-        """
-        Replaces the entire item collection with empty slots.
-
-        :return: `None`
-        """
+        """Replaces the entire item collection with empty slots."""
         old_len = len(self.data)
         super().clear()  # clears data
         self.data = [None] * old_len  # sets it all to None
 
-    def extend(self, other: collections.Iterable) -> None:
-        """
-        Appends multiple items by replacing empty slots.
+    def extend(self, other: typing.Iterable[DFType]) -> None:
+        """Appends multiple items by replacing empty slots.
 
-        :param other: Iterable of Item/DFType.
+        Parameters
+        ----------
+        other : Iterable[DFType]
+            Iterable of :class:`Item`/DFType.
+
+        Returns
+        -------
+        None
+            None
         """
         empty_slots = list(map(lambda t: t[0], filter(lambda i, el: el is None, enumerate(self.data))))
         if len(empty_slots) < 1:
@@ -187,7 +211,7 @@ class ItemCollection(collections.UserList[DFType]):
         Get an item at an index. Returns None if there is no item.
 
         :param ii: Index.
-        :return: Item, if any, otherwise None.
+        :return: :class:`Item`, if any, otherwise None.
         """
         if (ii - 1) > self.max_len:
             raise IndexError(f"Item collection index out of range (max for this instance: {self.max_len - 1}).")
@@ -207,10 +231,10 @@ class ItemCollection(collections.UserList[DFType]):
 
     def __setitem__(self, ii: int, val: typing.Optional[DFType]) -> None:
         """
-        Set an item somewhere in the Item Collection/grid.
+        Set an item somewhere in the :class:`Item` Collection/grid.
 
         :param ii: Index to set.
-        :param val: Item/DF type to set.
+        :param val: :class:`Item`/DF type to set.
         """
         # optional: self._acl_check(val)
         if (ii - 1) > self.max_len:
@@ -226,3 +250,8 @@ class ItemCollection(collections.UserList[DFType]):
     def __delslice__(self, i, j) -> None:
         the_slice = self.data[i:j]
         self.data[i:j] = [None] * len(the_slice)  # replace with None
+
+
+_col_classes = (Arguments, ItemCollection)
+for cls in _col_classes:
+    remove_u200b_from_doc(cls)

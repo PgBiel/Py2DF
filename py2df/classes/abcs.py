@@ -2,7 +2,7 @@
 Generic base classes for the library.
 """
 import abc
-from enums import BlockType
+from ..enums import BlockType
 import typing
 
 from .mc_types import Item
@@ -11,20 +11,18 @@ from .mc_types import Item
 
 
 class Codeblock(metaclass=abc.ABCMeta):
-    """
-    An ABC that describes any codeblock - event, action etc.
-
+    """An ABC that describes any codeblock - event, action etc.
+    
     `Attributes`:
     -------------
         `block:` Type of block - instance of enums.BlockType (Class var)
-
+    
         `args`: Arguments instance (Instance var.)
-
+    
         `action`: Enum CodeblockActionType - Specific action/description of it - e.g. event name (Class var)
-
+    
         `length`: The space, in Minecraft blocks, that this codeblock occupies. (Most are 2, but some, like IFs, are 1)
         (Class var)
-
     """
     # block: BlockType
     # args: Arguments
@@ -48,9 +46,8 @@ class Codeblock(metaclass=abc.ABCMeta):
 
 
 class ActionBlock(metaclass=abc.ABCMeta):
-    """
-    An ABC that describes any action - Player Action, Game Action, Entity Action or Control. Must implement Codeblock.
-    """
+    """An ABC that describes any action - Player Action, Game Action, Entity Action or Control.
+    Must implement Codeblock."""
     __slots__ = ()
 
     @classmethod
@@ -75,9 +72,7 @@ class ActionBlock(metaclass=abc.ABCMeta):
 
 
 class EventBlock(metaclass=abc.ABCMeta):
-    """
-    An ABC that describes any event - Player Event or Entity Event. Must implement Codeblock.
-    """
+    """An ABC that describes any event - Player Event or Entity Event. Must implement Codeblock."""
     __slots__ = ()
 
     @classmethod
@@ -103,8 +98,7 @@ class EventBlock(metaclass=abc.ABCMeta):
 
 class BracketedBlock(metaclass=abc.ABCMeta):
     """
-    An ABC that describes any codeblock with brackets. Can be used on a `with` construct. Must implement CodeBlock.
-    """
+    An ABC that describes any codeblock with brackets. Can be used on a `with` construct. Must implement CodeBlock."""
     __slots__ = ()
 
     @classmethod
@@ -143,9 +137,7 @@ class BracketedBlock(metaclass=abc.ABCMeta):
 
 
 class CallableBlock(metaclass=abc.ABCMeta):
-    """
-    An ABC that describes any callable - Function or Process. Must implement Codeblock.
-    """
+    """An ABC that describes any callable - Function or Process. Must implement Codeblock."""
     __slots__ = ()
 
     @classmethod
@@ -174,16 +166,16 @@ class CallableBlock(metaclass=abc.ABCMeta):
 
 
 class JSONData(metaclass=abc.ABCMeta):
-    """
-    An ABC that describes a class implementing `.as_json_data()'.
-    """
+    """An ABC that describes a class implementing `.as_json_data()'."""
     __slots__ = ()
 
     @abc.abstractmethod
     def as_json_data(self) -> typing.Union[str, int, float, dict, list, tuple]:
-        """
-        Exports this class as raw json data (not as string, but as a valid json data type).
-        :return: One of str, int, float, dict, list or tuple (which is converted to list).
+        """Exports this class as parsed json data (not as string, but as a valid json data type).
+
+        Returns
+        -------
+        Union[str, int, float, dict, list, tuple]
         """
         raise NotImplementedError
 
@@ -202,26 +194,34 @@ class JSONData(metaclass=abc.ABCMeta):
 
 
 class BuildableJSONData(metaclass=abc.ABCMeta):
-    """
-    An ABC that describes a JSON Data class that can also build itself from pre-existing JSON data.
-    """
+    """An ABC that describes a JSON Data class that can also build itself from pre-existing JSON data."""
     __slots__ = ()
 
     @abc.abstractmethod
     def as_json_data(self) -> typing.Union[str, int, float, dict, list, tuple]:
-        """
-        Exports this class as parsed json data (not as string, but as a valid json data type).
-        :return: One of str, int, float, dict, list or tuple (which is converted to list).
+        """Exports this class as parsed json data (not as string, but as a valid json data type).
+
+        Returns
+        -------
+        Union[str, int, float, dict, list, tuple]
         """
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
     def from_json_data(cls: type, data: typing.Union[str, int, float, dict, list, tuple]):
-        """
-        Builds a class instance using pre-existing PARSED JSON data. (Str, int, float, dict, list, tuple).
-        :param data: The parsed JSON data.
-        :return: The new class instance.
+        """Builds a class instance using pre-existing PARSED JSON data. (Str, int, float, dict, list, tuple).
+
+        Parameters
+        ----------
+        data : typing.Union[str, int, float, dict, list, tuple]
+            The parsed JSON data.
+
+        Returns
+        -------
+        `Buildable`
+            The new class instance.
+
         """
         raise NotImplementedError
 
@@ -243,24 +243,26 @@ class BuildableJSONData(metaclass=abc.ABCMeta):
 
 
 class Itemable(metaclass=abc.ABCMeta):
-    """
-    An ABC that describes a class representing an item or DF type.
-    """
+    """An ABC that describes a class representing an item or DF type."""
     __slots__ = ()
 
     @abc.abstractmethod
     def as_json_data(self):
-        """
-        Exports this class as parsed json data (not as string, but as a valid json data type).
-        :return: One of str, int, float, dict, list or tuple (which is converted to list).
+        """Exports this class as parsed json data (not as string, but as a valid json data type).
+
+        Returns
+        -------
+        Union[str, int, float, dict, list, tuple]
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def to_item(self) -> Item:
-        """
-        Converts this class to an equivalent Item.
-        :return: Item instance.
+        """Converts this class to an equivalent Item.
+
+        Returns
+        -------
+        `Item`
         """
         raise NotImplementedError
 

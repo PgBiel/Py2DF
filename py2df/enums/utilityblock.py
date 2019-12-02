@@ -1,9 +1,9 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum, UtilityBlockType
+from .enum_util import AutoSnakeToPascalCaseNameEnum
 from enum import unique, auto
 
 
 @unique
-class RepeatType(AutoSnakeToPascalCaseNameEnum, UtilityBlockType):
+class RepeatType(AutoSnakeToPascalCaseNameEnum):
     ADJACENT = auto()
     FOR_EACH = auto()
     FOREVER = auto()
@@ -13,7 +13,7 @@ class RepeatType(AutoSnakeToPascalCaseNameEnum, UtilityBlockType):
 
 
 @unique
-class SetVarType(AutoSnakeToPascalCaseNameEnum, UtilityBlockType):
+class SetVarType(AutoSnakeToPascalCaseNameEnum):
     ABSOLUTE_VALUE = auto()
     ADD = "+="
     ADD_ITEM_ATTRIBUTE = auto()
@@ -150,7 +150,7 @@ class SetVarType(AutoSnakeToPascalCaseNameEnum, UtilityBlockType):
 
 
 @unique
-class SelectObjectType(UtilityBlockType):
+class SelectObjectType(AutoSnakeToPascalCaseNameEnum):
     ALL_ENTITIES = auto()
     ALL_MOBS = auto()
     ALL_PLAYERS = auto()

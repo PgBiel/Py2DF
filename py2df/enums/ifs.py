@@ -1,9 +1,9 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum, IfType
+from .enum_util import AutoSnakeToPascalCaseNameEnum
 from enum import auto, unique
 
 
 @unique
-class IfPlayerType(AutoSnakeToPascalCaseNameEnum, IfType):
+class IfPlayerType(AutoSnakeToPascalCaseNameEnum):
     BLOCK_EQUALS = auto()
     CMD_ARG_EQUALS = auto()
     CMD_EQUALS = auto()
@@ -37,7 +37,7 @@ class IfPlayerType(AutoSnakeToPascalCaseNameEnum, IfType):
 
 
 @unique
-class IfVariableType(AutoSnakeToPascalCaseNameEnum, IfType):
+class IfVariableType(AutoSnakeToPascalCaseNameEnum):
     NOT_EQUALS = " != "
     EQUALS = " = "
     CONTAINS = auto()
@@ -56,7 +56,7 @@ class IfVariableType(AutoSnakeToPascalCaseNameEnum, IfType):
 
 
 @unique
-class IfEntityType(AutoSnakeToPascalCaseNameEnum, IfType):
+class IfEntityType(AutoSnakeToPascalCaseNameEnum):
     EXISTS = auto()
     IS_ITEM = auto()
     IS_MOB = auto()
@@ -69,7 +69,7 @@ class IfEntityType(AutoSnakeToPascalCaseNameEnum, IfType):
 
 
 @unique
-class IfGameType(AutoSnakeToPascalCaseNameEnum, IfType):
+class IfGameType(AutoSnakeToPascalCaseNameEnum):
     BLOCK_EQUALS = auto()
     BLOCK_POWERED = auto()
     CMD_ARG_EQUALS = auto()

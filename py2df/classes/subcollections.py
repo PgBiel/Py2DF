@@ -1,26 +1,32 @@
 """
 Collections required by Minecraft Type classes. This is used to avoid cyclic imports.
 """
-import collections
-import errors
 import typing
-from constants import MAX_LORE_LINES  # 100
+import collections
+from .. import errors
+from ..constants import MAX_LORE_LINES  # 100
 
 
-class Lore(collections.UserList[typing.Optional[str]]):
+class Lore(collections.UserList):  # [typing.Optional[str]]
     __slots__ = ()
 
-    def __init__(self, iter: collections.Iterable[typing.Optional[str]] = None):
+    def __init__(self, iter: typing.Optional[typing.Iterable[str]] = None):
         """
         Init a Lore collection.
 
-        :param iter: List of lines as an Iterable. (Optional)
+        Parameters
+        ----------
+        iter : Optional[Iterable[:class:`str`]], optional
+            List of lines as an Iterable. (Optional)
         """
         if type(iter) == Lore:
             self.data = iter.data[:]  # allow easy and efficient use of Lore(Lore(...))
             super().__init__()
         else:
-            super().__init__(map(str, iter))
+            if iter:
+                super().__init__(map(str, iter))
+            else:
+                super().__init__()
 
         if self.data:
             curr_data_len = len(self.data)
@@ -31,12 +37,20 @@ class Lore(collections.UserList[typing.Optional[str]]):
                 )
 
     def append(self, text: str) -> None:
-        """
-        Append a line after the last written line.
+        """Append a line after the last written line.
 
-        :param text: Text to be written. Can not be None.
-        :raises LimitReachedError: If there was an attempt to surpass the limit of lore lines (100).
-        :raises TypeError: If None was given.
+        Parameters
+        ----------
+        text : str
+            Text to be written. Can not be None.
+
+        Raises
+        ------
+        LimitReachedError
+            If there was an attempt to surpass the limit of lore lines (100).
+        TypeError
+            If None was given.
+
         """
         if len(self.data) == MAX_LORE_LINES:
             raise errors.LimitReachedError(
@@ -48,12 +62,19 @@ class Lore(collections.UserList[typing.Optional[str]]):
 
         self.data.append(text)
 
-    def extend(self, other: collections.Iterable[typing.Optional[str]]) -> None:
-        """
-        Extends the lore line list.
+    def extend(self, other: typing.Optional[typing.Iterable[str]]) -> None:
+        """Extends the lore line list.
 
-        :param other: Iterable to be added into the line list.
-        :raises LimitReachedError: If there was an attempt to surpass the limit of lore lines (100).
+        Parameters
+        ----------
+        other : Optional[Iterable[str]
+            Iterable to be added into the line list.
+
+        Raises
+        ------
+        LimitReachedError
+            If there was an attempt to surpass the limit of lore lines (100).
+
         """
         for item in other:
             if len(self.data) == MAX_LORE_LINES:
@@ -64,10 +85,12 @@ class Lore(collections.UserList[typing.Optional[str]]):
             self.data.append(item)
 
     def as_json_data(self) -> list:
-        """
-        Returns this Lore item as valid json data (list).
+        """Returns this Lore item as valid json data (list).
 
-        :return: List of lines as strings (None becomes "")
+        Returns
+        -------
+        List[str]
+            List of lines as strings (any None become "")
         """
         return list(map(lambda t: str(t) if t else "", self.data))
 

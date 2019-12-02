@@ -1,10 +1,20 @@
 import typing
 from .enum_util import AutoLowerNameEnum
-from enum import auto, unique, Enum
+from enum import auto, unique, Enum, EnumMeta
+
+
+class StandaloneHideFlagMeta(type):
+    def __instancecheck__(cls, obj):
+        return type(obj) in (HideFlags, _HideFlagsSum)
+
+
+class HideFlagMeta(EnumMeta, StandaloneHideFlagMeta):
+    def __instancecheck__(cls, obj):
+        return StandaloneHideFlagMeta.__instancecheck__(cls, obj)
 
 
 @unique
-class HideFlags(Enum):
+class HideFlags(Enum, metaclass=HideFlagMeta):
     """
     List of flags to hide. Note that they can be summed to combine multiple flags. ALL has all flags combined.
 
@@ -16,6 +26,7 @@ class HideFlags(Enum):
 
     `a - b`: Removes a flag from a combination of flags. (E.g.: HideFlags.ALL - HideFlags.ENCHANTMENTS)
     """
+    __metaclass__ = HideFlagMeta
     ENCHANTMENTS = 1
     ATTRIBUTE_MODIFIERS = 2
     UNBREAKABLE = 4
@@ -40,11 +51,26 @@ class HideFlags(Enum):
         return _HideFlagsSum(abs(self.value - other.value))
 
 
-class _HideFlagsSum(HideFlags):  # subclass to allow `isinstance` checks
+class _HideFlagsSum(metaclass=StandaloneHideFlagMeta):  # subclass to allow `isinstance` checks
     __slots__ = ("value",)
 
     def __init__(self, value: int):
         self.value: int = value
+
+    def __add__(self, other: "HideFlags"):
+        if not isinstance(other, HideFlags):
+            raise TypeError(f"Incompatible operation types HideFlags and {type(other)}")
+
+        return _HideFlagsSum(self.value | other.value)
+
+    def __or__(self, other: "HideFlags"):
+        return self.__add__(other)
+
+    def __sub__(self, other: "HideFlags"):
+        if not isinstance(other, HideFlags):
+            raise TypeError(f"Incompatible operation types HideFlagsand {type(other)}")
+
+        return _HideFlagsSum(abs(self.value - other.value))
 
 
 @unique

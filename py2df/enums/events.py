@@ -1,9 +1,9 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum, EventType
+from .enum_util import AutoSnakeToPascalCaseNameEnum
 from enum import auto, unique
 
 
 @unique
-class PlayerEventType(AutoSnakeToPascalCaseNameEnum, EventType):
+class PlayerEventType(AutoSnakeToPascalCaseNameEnum):
     BREAK_BLOCK = auto()
     BREAK_ITEM = auto()
     CHANGE_SLOT = auto()
@@ -49,7 +49,7 @@ class PlayerEventType(AutoSnakeToPascalCaseNameEnum, EventType):
 
 
 @unique
-class EntityEventType(AutoSnakeToPascalCaseNameEnum, EventType):
+class EntityEventType(AutoSnakeToPascalCaseNameEnum):
     BLOCK_FALL = auto()
     ENTITY_DEATH = auto()
     ENTITY_DMG = auto()

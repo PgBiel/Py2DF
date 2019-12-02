@@ -1,9 +1,9 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum, ActionType
+from .enum_util import AutoSnakeToPascalCaseNameEnum  # TODO: Solve ActionType/etc. thing
 from enum import auto, unique
 
 
 @unique
-class PlayerActionType(AutoSnakeToPascalCaseNameEnum, ActionType):
+class PlayerActionType(AutoSnakeToPascalCaseNameEnum):
     ACTION_BAR = auto()
     ADD_INV_ROW = auto()
     ALLOW_DROPS = auto()
@@ -114,7 +114,7 @@ class PlayerActionType(AutoSnakeToPascalCaseNameEnum, ActionType):
 
 
 @unique
-class EntityActionType(AutoSnakeToPascalCaseNameEnum, ActionType):
+class EntityActionType(AutoSnakeToPascalCaseNameEnum):
     ARMOR_STAND_TAGS = auto()
     BLOCK_DISGUISE = auto()
     CREEPER_CHARGED = auto()
@@ -183,7 +183,7 @@ class EntityActionType(AutoSnakeToPascalCaseNameEnum, ActionType):
 
 
 @unique
-class ControlType(AutoSnakeToPascalCaseNameEnum, ActionType):
+class ControlType(AutoSnakeToPascalCaseNameEnum):
     END = auto()
     RETURN = auto()
     SKIP = auto()
@@ -192,7 +192,7 @@ class ControlType(AutoSnakeToPascalCaseNameEnum, ActionType):
 
 
 @unique
-class GameActionType(AutoSnakeToPascalCaseNameEnum, ActionType):
+class GameActionType(AutoSnakeToPascalCaseNameEnum):
     BLOCK_DROPS_OFF = auto()
     BLOCK_DROPS_ON = auto()
     BONE_MEAL = auto()

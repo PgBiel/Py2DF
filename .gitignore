@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Recursive link thing
+_origin_folder
+
 # Distribution / packaging
 .Python
 build/
@@ -102,6 +105,12 @@ venv.bak/
 
 # mkdocs documentation
 /site
+
+# sphinx
+Makefile
+make.bat
+conf.py
+
 
 # mypy
 .mypy_cache/

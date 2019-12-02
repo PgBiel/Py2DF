@@ -1,6 +1,6 @@
-import constants
+from .. import constants
 from dataclasses import dataclass, field
-from enums import Enchantments
+from ..enums import Enchantments
 
 
 @dataclass
