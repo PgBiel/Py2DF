@@ -455,7 +455,7 @@ class DFNumber:
     
     Supports practically all :class:`int`/:class:`float`-related operations and comparisons.
     
-    *Attributes*
+    Attributes\u200b
     ------------
         value : :class:`float`
             The value of the number variable.
@@ -647,7 +647,7 @@ class DFNumber:
 class DFLocation:
     """Represents a DiamondFire Location.
     
-    *Attributes*
+    Attributes\u200b
     -------------
     
         x : :class:`float`
@@ -668,8 +668,7 @@ class DFLocation:
         is_block : :class:`bool`
             Whether or not this location represents a solid (non-air) block. Defaults to False.
     
-    *Supported comparisons:*
-    '''''''''''''''''''''''''''
+    **Supported comparisons:**
     
         `a == b`: True if `a` and `b` have the same x,y,z,pitch,yaw, False if at least one is different.
     
@@ -686,8 +685,7 @@ class DFLocation:
         `a <= b`: Applies `<=` between each coordinate x,y,z of a and b.
     
     
-    *Supported operations:*
-    '''''''''''''''''''''''''''
+    **Supported operations:**
     
         (Note: They are all applied in-place with given values, not dynamically in DiamondFire!)
     
@@ -1168,7 +1166,7 @@ class DFLocation:
 class DFSound:
     """Used for DF Sounds (Blaze Death, XP Level up etc.)
     
-    *Attributes*
+    Attributes\u200b
     -------------
     
         sound_type : :class:`SoundType`
@@ -1293,17 +1291,16 @@ class DFSound:
 class DFParticle:
     """Used for DF Particles (Smoke, Large Smoke etc.)
     
-    *Attributes*
+    Attributes\u200b
     -------------
     
         particle_type : :class:`ParticleType`
             The enum instance that specifies which particle is this.
     
-    *Supported Comparisons*
-    '''''''''''''''''''''''''''
-    
+    **Supported Comparisons**
+
         `a == b`: Checks if two particles have the same :class:`ParticleType` enum value.
-    
+
         `a != b`: Same as `not a == b`.
 
     """
@@ -1318,7 +1315,7 @@ class DFParticle:
         ----------
         particle_type : :class:`ParticleType`
             The new particle type.
-            
+
 
         Returns
         -------
@@ -1399,19 +1396,18 @@ class DFParticle:
 
 class DFCustomSpawnEgg:
     """Used for the custom spawn egg types provided by DiamondFire (Giant, Iron Golem etc.)
-    
-    *Attributes*
+
+    Attributes\u200b
     ---------------
-    
+
         egg_type : :class:`CustomSpawnEggType`
             The enum instance that specifies which spawn egg is this.
-    
-    
-    *Supported Comparisons*
-    '''''''''''''''''''''''''''
-    
+
+
+    **Supported Comparisons**
+
         `a == b`: Checks if two :class:`DFCustomSpawnEgg` instances have the same `egg_type` attribute.
-    
+
         `a != b`: Same as `not a == b`
 
     """
@@ -1468,30 +1464,29 @@ class DFCustomSpawnEgg:
 class DFPotion:
     """
     Used for potion effects in potion-effect-related actions.
-    
-    *Attributes*
+
+    Attributes\u200b
     --------------
-    
+
         effect : :class:`PotionEffect`
             The PotionEffect enum instance that specifies which potion effect this :class:`DFPotion` represents.
-    
+
         amplifier : :class:`int`
             Represents the strength of the effect. This should vary between -255 and 255.
-    
-        `duration`: Tuple[:class:`int`, :class:`int`]
+
+        duration: Tuple[:class:`int`, :class:`int`]
             Tuple (:class:`int`, :class:`int`). Represents the duration of the effect in the form (min, seconds).
-    
-    Supported Comparisons
-    '''''''''''''''''''''
-    
-        `a == b`: Checks if two :class:`DFPotion`s have the same `effect`, `amplifier` and `duration` attributes.
-    
+
+    **Supported Comparisons**
+
+        `a == b`: Checks if two :class:`DFPotion` instances have the same `effect`, `amplifier` and `duration`
+        attributes.
+
         `a != b`: Same as `not a == b`
-    
+
         `a > b`, `a >= b`, `a < b`, `a <= b`: Applies the respective comparisons on the amplifiers of the potions.
-    
-    Supported Operations
-    ''''''''''''''''''''''
+
+    **Supported Operations**
     
         `a + b`, `a - b`, `a * b`, `a / b`, `a // b`, `a % b`, `a ** b`: Applies the respective operations between the
         amplifiers of the potions, generating a new :class:`DFPotion` (e.g. amplifier 5 pot - amplifier 2 pot =
