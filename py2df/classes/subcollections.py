@@ -5,9 +5,20 @@ import typing
 import collections
 from .. import errors
 from ..constants import MAX_LORE_LINES  # 100
+from ..utils import remove_u200b_from_doc
 
 
 class Lore(collections.UserList):  # [typing.Optional[str]]
+    """
+    Represents an :class:`~py2df.classes.mc_types.Item` 's lore.
+
+    Subclasses :class:`collections.UserList`, so supports all :class:`list` -related operations.
+
+    Attributes\u200b
+    -----------
+        data : List[:class:`str`]
+            Internal list containing lore lines.
+    """
     __slots__ = ()
 
     def __init__(self, iter: typing.Optional[typing.Iterable[str]] = None):
@@ -46,9 +57,9 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
 
         Raises
         ------
-        LimitReachedError
+        :exc:`LimitReachedError`
             If there was an attempt to surpass the limit of lore lines (100).
-        TypeError
+        :exc:`TypeError`
             If None was given.
 
         """
@@ -63,7 +74,7 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
         self.data.append(text)
 
     def extend(self, other: typing.Optional[typing.Iterable[str]]) -> None:
-        """Extends the lore line list.
+        f"""Extends the lore line list.
 
         Parameters
         ----------
@@ -72,8 +83,8 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
 
         Raises
         ------
-        LimitReachedError
-            If there was an attempt to surpass the limit of lore lines (100).
+        :exc:`LimitReachedError`
+            If there was an attempt to surpass the limit of lore lines ({MAX_LORE_LINES}).
 
         """
         for item in other:
@@ -115,4 +126,4 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
         super().__setitem__(key, value)
 
 
-
+remove_u200b_from_doc(Lore)

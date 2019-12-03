@@ -4,11 +4,11 @@ Custom errors used by py2df.
 Exception Tree:
 ---------------
 Exception
-  | Py2DfError
+| Py2DfError
 
-     | Py2DfCollectionError
+--| Py2DfCollectionError
 
-        | LimitReachedError
+----| LimitReachedError
 """
 
 

@@ -16,7 +16,7 @@ class Arguments:
     Attributes
     ----------\u200b
         items : :class:`ItemCollection`
-            The ItemCollection held by this Arguments instance.
+            The :class:`ItemCollection` instance held by this :class:`Arguments` instance.
     """
     items: "ItemCollection"
 
@@ -62,11 +62,18 @@ class ItemCollection(collections.UserList):  # [DFType]
     ):
         """
         Initializes an item collection.
-        
-        :param data: An iterable of items (list, ItemCollection, etc.) or a single :class:`Item`/DFType to be
+
+        Parameters
+        ----------
+        data : Optional[Union[Iterable[:class:`DFType`], :class:`DFType`]]
+            An iterable of items (:class:`list`, :class:`ItemCollection`, etc.) or a single :class:`Item`/DFType to be
             used with the `items` arg.
-        :param items: Any other items to add. If `data` is an iterable, this is not considered.
-        :param max_len: The maximum length of this collection, defaults to 27 items (small chest).
+
+        items : Optional[:class:`DFType`]
+            Any other items to add. If `data` is an iterable, this is not considered.
+
+        max_len : :class:`int`
+            The maximum length of this collection, defaults to 27 items (small chest).
         """
         super().__init__()
         self.max_len: int = max_len or constants.DEFAULT_ITEM_COLLECTION_MAX_LEN
@@ -124,9 +131,9 @@ class ItemCollection(collections.UserList):  # [DFType]
 
         Raises
         ------
-        TypeError
+        :exc:`TypeError`
             If there was an attempt to add `None` or non-`:class:`Item``/`DFType`.
-        LimitReachedError
+        :exc:`LimitReachedError`
             If there is no empty slot where to append the :class:`Item`/DFType to.
 
         """
@@ -253,5 +260,4 @@ class ItemCollection(collections.UserList):  # [DFType]
 
 
 _col_classes = (Arguments, ItemCollection)
-for cls in _col_classes:
-    remove_u200b_from_doc(cls)
+remove_u200b_from_doc(_col_classes)

@@ -3,6 +3,7 @@ Generic base classes for the library.
 """
 import abc
 from ..enums import BlockType
+from ..utils import remove_u200b_from_doc
 import typing
 
 from .mc_types import Item
@@ -13,16 +14,20 @@ from .mc_types import Item
 class Codeblock(metaclass=abc.ABCMeta):
     """An ABC that describes any codeblock - event, action etc.
     
-    `Attributes`:
+    Attributes\u200b
     -------------
-        `block:` Type of block - instance of enums.BlockType (Class var)
+        block : :class:`~py2df.enums.parameters.BlockType`
+            Type of block. (Class var)
     
-        `args`: Arguments instance (Instance var.)
+        args : :class:`~py2df.classes.collections.Arguments`
+            Arguments of this codeblock (Instance var)
     
-        `action`: Enum CodeblockActionType - Specific action/description of it - e.g. event name (Class var)
+        action : :class:`~py2df.enums.enum_util.CodeBlockActionType`
+            Specific action/description of it - e.g. event name (Class var)
     
-        `length`: The space, in Minecraft blocks, that this codeblock occupies. (Most are 2, but some, like IFs, are 1)
-        (Class var)
+        length : :class:`int`
+            The space, in Minecraft blocks, that this codeblock occupies. (Most are 2, but some, like IFs, are 1)
+            (Class var)
     """
     # block: BlockType
     # args: Arguments
@@ -47,7 +52,17 @@ class Codeblock(metaclass=abc.ABCMeta):
 
 class ActionBlock(metaclass=abc.ABCMeta):
     """An ABC that describes any action - Player Action, Game Action, Entity Action or Control.
-    Must implement Codeblock."""
+    Must implement :class:`Codeblock`.
+
+    Includes all of :class:`Codeblock` 's attributes, plus:
+
+    Attributes\u200b
+    -----------
+        block : Union[:attr:`~py2df.enums.parameters.BlockType.PLAYER_ACTION`, \
+:attr:`~py2df.enums.action.BlockType.ENTITY_ACTION`, :attr:`~py2df.enums.action.BlockType.GAME_ACTION`, \
+:attr:`~py2df.enums.action.CONTROL`]
+            The block type - either `Player Action`, `Entity Action`. `Game Action` or `Control`.
+    """
     __slots__ = ()
 
     @classmethod
@@ -63,7 +78,9 @@ class ActionBlock(metaclass=abc.ABCMeta):
                 return NotImplemented
 
             try:  # TODO: Entity action
-                if BlockType(getattr(o_cls, "block")) in (BlockType.PLAYER_ACTION, BlockType.GAME_ACTION):
+                if BlockType(getattr(o_cls, "block")) in (
+                        BlockType.PLAYER_ACTION, BlockType.GAME_ACTION, BlockType.CONTROL, BlockType.ENTITY_ACTION
+                ):
                     return True  # must be one of BlockType.PLAYER_ACTION or BlockType.GAME_ACTION
             except ValueError:  # not a valid block type
                 return NotImplemented  # not an Action
@@ -72,7 +89,17 @@ class ActionBlock(metaclass=abc.ABCMeta):
 
 
 class EventBlock(metaclass=abc.ABCMeta):
-    """An ABC that describes any event - Player Event or Entity Event. Must implement Codeblock."""
+    """
+    An ABC that describes any event - Player Event or Entity Event. Must implement :class:`Codeblock`.
+
+    Includes all of :class:`Codeblock` 's attributes, plus:
+
+    Attributes\u200b
+    -----------
+        block : Union[:attr:`~py2df.enums.parameters.BlockType.PLAYER_EVENT`, \
+:attr:`~py2df.enums.action.BlockType.ENTITY_EVENT`]
+            The block type - either `Player Event` or `Entity Event`.
+    """
     __slots__ = ()
 
     @classmethod
@@ -98,7 +125,8 @@ class EventBlock(metaclass=abc.ABCMeta):
 
 class BracketedBlock(metaclass=abc.ABCMeta):
     """
-    An ABC that describes any codeblock with brackets. Can be used on a `with` construct. Must implement CodeBlock."""
+    An ABC that describes any codeblock with brackets. Can be used on a `with` construct. Must implement
+    :class:`CodeBlock`."""
     __slots__ = ()
 
     @classmethod
@@ -121,23 +149,30 @@ class BracketedBlock(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def __enter__(self):
-        """
-        Places the OPEN bracket. Can have two types: NORM and REPEAT
-        :return:
+        """Places the OPEN bracket. Can have two types: :attr:`~py2df.enums.parameters.BracketType.NORM`
+        and :attr:`~py2df.enums.parameters.BracketType.REPEAT`
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def __exit__(self):
-        """
-        Places the CLOSE bracket. Can have two types: NORM and REPEAT
-        :return:
+        """Places the CLOSE bracket. Can have two types: :attr:`~py2df.enums.parameters.BracketType.NORM`
+        and :attr:`~py2df.enums.parameters.BracketType.REPEAT`
         """
         raise NotImplementedError
 
 
 class CallableBlock(metaclass=abc.ABCMeta):
-    """An ABC that describes any callable - Function or Process. Must implement Codeblock."""
+    """An ABC that describes any callable - Function or Process. Must implement :class:`Codeblock`.
+
+    Includes all of :class:`Codeblock` 's attributes, plus:
+
+    Attributes\u200b
+    ------------
+        block : Union[:attr:`~py2df.enums.parameters.BlockType.FUNCTION`, \
+:attr:`~py2df.enums.parameters.BlockType.PROCESS`]
+            The type of the callable block - `Function` or `Process`.
+    """
     __slots__ = ()
 
     @classmethod
@@ -166,16 +201,16 @@ class CallableBlock(metaclass=abc.ABCMeta):
 
 
 class JSONData(metaclass=abc.ABCMeta):
-    """An ABC that describes a class implementing `.as_json_data()'."""
+    """An ABC that describes a class implementing ``.as_json_data()``."""
     __slots__ = ()
 
     @abc.abstractmethod
-    def as_json_data(self) -> typing.Union[str, int, float, dict, list, tuple]:
+    def as_json_data(self) -> typing.Union[str, int, float, dict, list, tuple, bool]:
         """Exports this class as parsed json data (not as string, but as a valid json data type).
 
         Returns
         -------
-        Union[str, int, float, dict, list, tuple]
+        Union[:class:`str`, :class:`int`, :class:`float`, :class:`dict`, :class:`list`, :class:`tuple`, :class:`bool`]
         """
         raise NotImplementedError
 
@@ -203,23 +238,24 @@ class BuildableJSONData(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        Union[str, int, float, dict, list, tuple]
+        Union[:class:`str`, :class:`int`, :class:`float`, :class:`dict`, :class:`list`, :class:`tuple`, :class:`bool`]
         """
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def from_json_data(cls: type, data: typing.Union[str, int, float, dict, list, tuple]):
+    def from_json_data(cls: type, data: typing.Union[str, int, float, dict, list, tuple]) -> "BuildableJSONData":
         """Builds a class instance using pre-existing PARSED JSON data. (Str, int, float, dict, list, tuple).
 
         Parameters
         ----------
-        data : typing.Union[str, int, float, dict, list, tuple]
+        data : Union[:class:`str`, :class:`int`, :class:`float`, :class:`dict`, :class:`list`, :class:`tuple`, \
+:class:`bool`]
             The parsed JSON data.
 
         Returns
         -------
-        `Buildable`
+        :class:`BuildableJSONData`
             The new class instance.
 
         """
@@ -243,7 +279,8 @@ class BuildableJSONData(metaclass=abc.ABCMeta):
 
 
 class Itemable(metaclass=abc.ABCMeta):
-    """An ABC that describes a class representing an item or DF type."""
+    """An ABC that describes a class representing an item or DF type (i.e., can be converted to
+    :class:`~py2df.classes.mc_types.Item`)."""
     __slots__ = ()
 
     @abc.abstractmethod
@@ -252,7 +289,7 @@ class Itemable(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        Union[str, int, float, dict, list, tuple]
+        Union[:class:`str`, :class:`int`, :class:`float`, :class:`dict`, :class:`list`, :class:`tuple`, :class:`bool`]
         """
         raise NotImplementedError
 
@@ -262,7 +299,7 @@ class Itemable(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        `Item`
+        :class:`~py2df.classes.mc_types.Item`
         """
         raise NotImplementedError
 
@@ -288,8 +325,17 @@ class Itemable(metaclass=abc.ABCMeta):
 
 
 class Settable(metaclass=abc.ABCMeta):
+    """An ABC that describes a class that can be ``.set()`` ."""
     @abc.abstractmethod
-    def set(self) -> None:
+    def set(self) -> "Settable":
+        """
+        Set this class instance's attributes.
+
+        Returns
+        -------
+        :class:`Settable`
+            self to allow chaining.
+        """
         raise NotImplementedError
 
     @classmethod
@@ -303,5 +349,11 @@ class Settable(metaclass=abc.ABCMeta):
             return True  # has to have "set" attr
 
         return NotImplemented
+
+
+_abc_classes = (
+    Codeblock, EventBlock, BracketedBlock, CallableBlock, ActionBlock, JSONData, BuildableJSONData, Itemable, Settable
+)
+remove_u200b_from_doc(_abc_classes)
 
 # endregion:Misc

@@ -19,7 +19,7 @@ class Item:
     Attributes\u200b
     -------------
     
-        material : :class:`py2df.enums.Material`
+        material : :class:`~py2df.enums.materials.Material`
             Tells what kind of item this is.
     
         amount : :class:`int`
@@ -28,10 +28,10 @@ class Item:
         name : :class:`str`
             The item's name.
     
-        lore : :class:`Lore`
+        lore : :class:`~py2df.classes.subcollections.Lore`
             The item's lore, as an instance of Lore.
     
-        enchantments : List[:class:`Enchantment`]
+        enchantments : List[:class:`~py2df.classes.dataclass.Enchantment`]
             A list containing instances of Enchantment.
     
         damage : :class:`int`
@@ -41,7 +41,7 @@ class Item:
         unbreakable : :class:`bool`
             If True, this item cannot lose durability, and remains at damage = 0.
     
-        hide_flags : :class:`HideFlags`
+        hide_flags : :class:`~py2df.enums.misc_mc_enums.HideFlags`
             Flags to be hidden. Use the HideFlags enum for this. One flag is of the form HideFlag.FLAG_NAME,
             while, to use more than one, add them up (HideFlag.FLAG_NAME + HideFlag.OTHER_FLAG_NAME + ...). There is also
             HideFlag.ALL which has all flags added up already for you. So, you can select to hide "all but FLAG_NAME" by
@@ -74,36 +74,51 @@ class Item:
             entity_tag: typing.Optional[typing.Union[dict, str]] = None,
             extra_tags: typing.Optional[typing.Union[dict, str]] = None
     ):
-        """
-        Initialize the item stack.
+        """Initialize the item stack.
+
+        Parameters
+        ----------
 
         material : :class:`Material`
             Instance of the Materials enum; represents what this item actually is.
+
         amount : :class:`int`
             The amount of items in this item stack, between 1 and 64. By default, 1.
+
         name : Optional[Union[:class:`str`, :class:`DFText`]]
             An optional custom name to be given to this item, as a `:class:`str`` or :class:`DFText`. Default: None
+
         lore : Union[`Lore`, Optional[Iterable[:class:`str`]]]
             A Lore for this item (either Lore instance or list of `:class:`str``). Default: empty Lore instance.
-        enchantments : Optional[Iterable[`Enchantment`]]
-            A list of `Enchantment` instances.
+
+        enchantments : Optional[Iterable[:class:`~py2df.classes.dataclass.Enchantment`]]
+            A list of :class:`~py2df.classes.dataclass.Enchantment` instances.
+
         damage : :class:`int`
             The damage of this item (i.e., amount of uses so far). Defaults to 0 (not used).
+
         unbreakable : :class:`bool`
-            Bool, whether or not this item is unbreakable. Defaults to False.
-        hide_flags : Optional[HideFlags]
-            Flags to be hidden.
+            Whether or not this item is unbreakable. Defaults to False.
+
+        hide_flags : Optional[:class:`~py2df.enums.misc_mc_enums.HideFlags`]
+            Flags to be hidden, such as unbreakability. See the enum documentation for more info.
+
+        Other Parameters
+        ----------------
         leather_armor_color : Optional[:class:`int`]
             If this is a piece of leather armor, specify its color through an integer. Tip: Use
-            0x...... for hexadecimal colors.
+            ``0x......`` for hexadecimal colors.
+
         entity_tag : Optional[Union[:class:`dict`, :class:`str`]]
             An optional :class:`str` or :class:`dict` representing Entity NBT tags applied on entities that are spawned
             through this item. Applies to the materials: (X)_SPAWN_EGG; TROPICAL_FISH_BUCKET; ARMOR_STAND. Default:
             None
+
         extra_tags : Optional[Union[:class:`dict`, :class:`str`]]
             Any extra NBT tags you'd like to give your item, either as a :class:`dict` of NBT tags or a valid NBT
-            :class:`str`. Please ensure those tags do not conflict with the previous ones to avoid spooky errors in DiamondFire.
-            Default: None. (Please ensure this is a valid TAG_Compound in NBT, a.k.a. `:class:`dict`` in pythonic language.)
+            :class:`str`. Please ensure those tags do not conflict with the previous ones to avoid spooky errors in
+            DiamondFire. Default: ``None``.
+            (Please ensure this is a valid TAG_Compound in NBT, a.k.a. `:class:`dict` in pythonic language.)
         """
         self.material: Material = material
         self._amount: int = 1
@@ -198,7 +213,7 @@ class Item:
 
         Returns
         -------
-        dict
+        :class:`dict`
         """
         return dict(
             id=constants.ITEM_ID_ITEM,
@@ -218,8 +233,8 @@ class Item:
 
         Parameters
         ----------
-        material : :class:`py2df.enums.Material` :
-             This item's material...
+        material : :class:`~py2df.enums.Material`
+             This item's material.
         *args :
             
         **kwargs :
@@ -470,7 +485,7 @@ class DFNumber:
         Parameters
         ----------
             value : Union[:class:`int`, :class:`float`]
-                Integer or :class:`float`, defaults to 0
+                Value of this :class:`DFNumber`. Defaults to ``0.0``
         """
         self.value = value
 
@@ -506,7 +521,8 @@ class DFNumber:
 
         Returns
         -------
-
+        :class:`DFNumber`
+            self to allow chaining
         """
         self._value = float(new_value)
 
@@ -558,6 +574,7 @@ class DFNumber:
         Returns
         -------
         :class:`DFNumber`
+            Identical copy of this instance.
         """
         return DFNumber(self.value)
 
@@ -643,6 +660,15 @@ class DFNumber:
     def __floor__(self):
         return DFNumber(math.floor(self.value))
 
+    def __bool__(self):
+        return self.value != 0.0
+
+    def __int__(self):
+        return int(self.value)
+
+    def __float__(self):
+        return float(self.value)
+
 
 class DFLocation:
     """Represents a DiamondFire Location.
@@ -670,44 +696,44 @@ class DFLocation:
     
     **Supported comparisons:**
     
-        `a == b`: True if `a` and `b` have the same x,y,z,pitch,yaw, False if at least one is different.
+        ``a == b``: True if `a` and `b` have the same x,y,z,pitch,yaw, False if at least one is different.
     
-        `a != b`: Negation of `a == b`.
+        ``a != b``: Negation of ``a == b``.
     
-        `a > b`: True if at least one of the coordinates x,y,z of a is bigger than the respective coordinate in b;
+        ``a > b``: True if at least one of the coordinates x,y,z of a is bigger than the respective coordinate in b;
         False otherwise.
     
-        `a < b`: True if at least one of the coordinates x,y,z of a is smaller than the respective coordinate in b;
+        ``a < b``: True if at least one of the coordinates x,y,z of a is smaller than the respective coordinate in b;
         False otherwise.
     
-        `a >= b`: Applies `>=` between each coordinate x,y,z of a and b.
+        ``a >= b``: Applies ``>=`` between each coordinate x,y,z of `a` and `b`.
     
-        `a <= b`: Applies `<=` between each coordinate x,y,z of a and b.
+        ``a <= b``: Applies ``<=`` between each coordinate x,y,z of `a` and `b`.
     
     
     **Supported operations:**
     
         (Note: They are all applied in-place with given values, not dynamically in DiamondFire!)
     
-        `a + b`: Adds two locations' x, y, z; pitch, yaw (mod 360 degrees). If `b` is an iterable (tuple, list etc.),
+        ``a + b``: Adds two locations' x, y, z; pitch, yaw (mod 360 degrees). If `b` is an iterable (tuple, list etc.),
         then the respective items 0-4 are added as x,y,z;pitch,yaw.
         If `b` is an :class:`int`/:class:`float`, it is added to x,y,z.
     
-        `a - b`: Follows same rules as addition, except that it is a subtraction.
+        ``a - b``: Follows same rules as addition, except that it is a subtraction.
     
-        `a * b`: Again, same rules as addition, but multiplication.
+        ``a * b``: Again, same rules as addition, but multiplication.
     
-        `a / b`: Same rules as addition, but division.
+        ``a / b``: Same rules as addition, but division.
     
-        `a // b`: Same rules as division, but floors.
+        ``a // b``: Same rules as division, but floors.
     
-        `a ** b`: Same rules as addition, but as exponentiation.
+        ``a ** b``: Same rules as addition, but as exponentiation.
     
-        `-a`: Applies -1 times x,y,z; pitch, yaw of a.
+        ``-a``: Applies -1 times x,y,z; pitch, yaw of `a`.
     
-        `abs(a)`: Applies abs() to x,y,z,pitch,yaw of a.
+        ``:func:`abs`(a)``: Applies abs() to x,y,z,pitch,yaw of `a`.
     
-        `+a`: Returns a.
+        ``+a``: Returns a.
     """
     __slots__ = ("x", "y", "z", "pitch", "yaw", "is_block")  # , "world_least", "world_most")
 
@@ -734,14 +760,20 @@ class DFLocation:
         ----------
         x : Union[:class:`int`, :class:`float`]
             The value of the x position (:class:`float`).
+
+
         y : Union[:class:`int`, :class:`float`]
             The value of the y position (:class:`float`).
+
         z : Union[:class:`int`, :class:`float`]
             The value of the z position (:class:`float`).
+
         pitch : Union[:class:`int`, :class:`float`]
             The pitch value (:class:`float`).
+
         yaw : Union[:class:`int`, :class:`float`]
             The yaw value (:class:`float`).
+
         is_block : :class:`bool`
             Whether or not this location represents a solid (non-air) block. (:class:`bool`) Defaults to False.
         """
@@ -771,14 +803,19 @@ class DFLocation:
         ----------
         x : Union[:class:`int`, :class:`float`], optional
             The value of the x position (:class:`float`).
+
         y : Union[:class:`int`, :class:`float`], optional
             The value of the y position (:class:`float`).
+
         z : Union[:class:`int`, :class:`float`], optional
             The value of the z position (:class:`float`).
+
         pitch : Union[:class:`int`, :class:`float`], optional
             The pitch value (:class:`float`).
+
         yaw : Union[:class:`int`, :class:`float`], optional
             The yaw value (:class:`float`).
+
         is_block : :class:`bool`, optional
             Whether or not this location represents a solid (non-air) block. (:class:`bool`) Defaults to False.
 
@@ -787,6 +824,15 @@ class DFLocation:
         :class:`DFLocation`
             self to allow chaining
 
+        Notes
+        -----
+        All parameters are optional here, meaning that one can pass :const:`~py2df.constants.utility_consts.DEFAULT_VAL`
+        to omit a parameter - or, more simply, only use kwargs to choose which values to set.
+
+        Warnings
+        --------
+        Passing ``None`` will set the value to that! If your intention is to omit a parameter, use
+        :const:`~py2df.constants.utility_consts.DEFAULT_VAL` or simply use kwargs to choose which values to set.
         """
         # :param world_least: A constant :class:`int` related to DF; this shouldn't need to be defined by
         # the library user. None to let the library handle it.
@@ -819,7 +865,7 @@ class DFLocation:
         Returns
         -------
         :class:`DFLocation`
-            self
+            `self` to allow chaining
 
         """
         return self.set(
@@ -1215,7 +1261,7 @@ class DFSound:
 
         Returns
         -------
-        DFSound
+        :class:`DFSound`
             self to allow chaining
         """
         if not isinstance(sound_type, SoundType) and sound_type != DEFAULT_VAL:
@@ -1226,8 +1272,36 @@ class DFSound:
         self.volume = int(self.volume if volume == DEFAULT_VAL else volume)
         return self
 
+    def set_to_other(self, other: "DFSound") -> "DFSound":
+        """
+        Set this instance to become identical to another :class:`DFSound` instance.
+        
+        Parameters
+        ----------
+        other : :class:`DFSound`
+            Other sound to set this instance to.
+
+        Returns
+        -------
+        :class:`DFSound`
+            self to allow chaining
+        """
+        self.set(sound_type=other.sound_type, pitch=other.pitch, volume=other.volume)
+        return self
+
     def to_item(self) -> "Item":
         pass  # TODO: Sea shell and crap
+
+    def copy(self) -> "DFSound":
+        """
+        Creates an identical copy of this :class:`DFSound` instance.
+
+        Returns
+        -------
+        :class:`DFSound`
+            Copy of this sound.
+        """
+        return DFSound(sound_type=self.sound_type, pitch=self.pitch, volume=self.volume)
 
     def as_json_data(self) -> dict:
         """Representation of this :class:`DFSound` as a valid json-serializable :class:`dict`.
@@ -1299,9 +1373,9 @@ class DFParticle:
     
     **Supported Comparisons**
 
-        `a == b`: Checks if two particles have the same :class:`ParticleType` enum value.
+        ``a == b``: Checks if two particles have the same :class:`ParticleType` enum value.
 
-        `a != b`: Same as `not a == b`.
+        ``a != b``: Same as ``not a == b``.
 
     """
     __slots__ = ("particle_type",)
@@ -1329,10 +1403,6 @@ class DFParticle:
         self.particle_type = particle_type
 
         return self
-
-    def __post_init__(self):
-        if not isinstance(self.particle_type, ParticleType):
-            raise TypeError("Particle type must be an instance of ParticleType enum.")
 
     def to_item(self):
         pass  # TODO: Sparkly thing and stuff
@@ -1400,15 +1470,15 @@ class DFCustomSpawnEgg:
     Attributes\u200b
     ---------------
 
-        egg_type : :class:`CustomSpawnEggType`
+        egg_type : :class:`py2df.enums.dftypes.CustomSpawnEggType`
             The enum instance that specifies which spawn egg is this.
 
 
     **Supported Comparisons**
 
-        `a == b`: Checks if two :class:`DFCustomSpawnEgg` instances have the same `egg_type` attribute.
+        ``a == b``: Checks if two :class:`DFCustomSpawnEgg` instances have the same `egg_type` attribute.
 
-        `a != b`: Same as `not a == b`
+        ``a != b``: Same as ``not a == b``
 
     """
     __slots__ = ("egg_type",)
@@ -1479,26 +1549,27 @@ class DFPotion:
 
     **Supported Comparisons**
 
-        `a == b`: Checks if two :class:`DFPotion` instances have the same `effect`, `amplifier` and `duration`
+        ``a == b``: Checks if two :class:`DFPotion` instances have the same `effect`, `amplifier` and `duration`
         attributes.
 
-        `a != b`: Same as `not a == b`
+        ``a != b``: Same as `not a == b`
 
-        `a > b`, `a >= b`, `a < b`, `a <= b`: Applies the respective comparisons on the amplifiers of the potions.
+        ``a > b``, ``a >= b``, ``a < b``, ``a <= b``: Applies the respective comparisons on the amplifiers of the
+        potions.
 
     **Supported Operations**
     
-        `a + b`, `a - b`, `a * b`, `a / b`, `a // b`, `a % b`, `a ** b`: Applies the respective operations between the
-        amplifiers of the potions, generating a new :class:`DFPotion` (e.g. amplifier 5 pot - amplifier 2 pot =
-        amplifier 3 pot). Worth noting that those operations also work between one :class:`DFPotion` and one
+        ``a + b``, ``a - b``, ``a * b``, ``a / b``, ``a // b``, ``a % b``, ``a ** b``: Applies the respective operations
+        between the amplifiers of the potions, generating a new :class:`DFPotion` (e.g. amplifier 5 pot - amplifier 2
+        pot = amplifier 3 pot). Worth noting that those operations also work between one :class:`DFPotion` and one
         :class:`int`/:class:`float`, however the result is always rounded down, since amplifiers can only
         be `:class:`int``s. (e.g. :class:`DFPotion`(amp=5) + 6 => :class:`DFPotion`(amp=11))
     
-        `a += b`, `a -= b`, ...: Applies each of the operations above, in a similar fashion.
+        ``a += b``, ``a -= b``, ...: Applies each of the operations above, in a similar fashion.
     
-        `ceil(a)`, `floor(a)`, `abs(a)`, `+a`: Returns the class itself.
+        ``:func:`ceil`(a)``, ``:func:`floor`(a)``, ``:func:`abs`(a)``, ``+a``: Returns the class itself.
     
-        `bool`(a)`: Returns whether or not the duration is bigger than 00:00 (tuple > (0,0) ).
+        ``:class:`bool`(a)``: Returns whether or not the duration is bigger than 00:00 (tuple > (0,0) ).
     """
     __slots__ = ("effect", "amplifier", "duration")
 
@@ -1715,5 +1786,4 @@ DFType = typing.Union[
     Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion
 ]  # TODO: GameValue etc
 
-for cls in _classes:
-    remove_u200b_from_doc(cls)
+remove_u200b_from_doc(_classes)
