@@ -7,3 +7,4 @@ from .ifs import *
 from .utilityblock import *
 from .misc_mc_enums import *
 from .dftypes import *
+from .sounds import *

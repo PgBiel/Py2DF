@@ -7,6 +7,9 @@ from enum import auto, unique
 
 @unique
 class Material(AutoLowerNameEnum):
+    """
+    Contains all of Minecraft's item types (version 1.14.4).
+    """
     ACACIA_BOAT = auto()
     ACACIA_BUTTON = auto()
     ACACIA_DOOR = auto()
