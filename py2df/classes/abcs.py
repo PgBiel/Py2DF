@@ -351,8 +351,34 @@ class Settable(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
+class FunctionHolder(metaclass=abc.ABCMeta):
+    """
+    An ABC that describes a class holding a function.
+
+    Attributes
+    ----------\u200b
+        function : Callable
+            The function that an instance holds.
+    """
+    __slots__ = ()
+    function: typing.Callable
+
+    @classmethod
+    def __subclasshook__(cls, o_cls: type):
+        """
+        Checks if the given class is a subclass of Settable (implements it.)
+        :param o_cls: Class to check.
+        :return: True if subclass; NotImplemented otherwise
+        """
+        if cls is FunctionHolder and any("function" in B.__dict__ for B in o_cls.__mro__):
+            return True  # has to have "function" attr
+
+        return NotImplemented
+
+
 _abc_classes = (
-    Codeblock, EventBlock, BracketedBlock, CallableBlock, ActionBlock, JSONData, BuildableJSONData, Itemable, Settable
+    Codeblock, EventBlock, BracketedBlock, CallableBlock, ActionBlock, JSONData, BuildableJSONData, Itemable, Settable,
+    FunctionHolder
 )
 remove_u200b_from_doc(_abc_classes)
 

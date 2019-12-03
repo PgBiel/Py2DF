@@ -1,7 +1,7 @@
 """
 Enums for parameters and attributes in classes.
 """
-from enum import auto, unique
+from enum import auto, unique, Enum
 from .enum_util import AutoLowerNameEnum
 
 
@@ -32,10 +32,11 @@ class BlockType(AutoLowerNameEnum):  # TODO: Verify Function, Process and Player
     START_PROCESS = auto(
     )  #: Starts processes made by a Process block. The Process is asynchronous; code will continue past this block.
 
+
 @unique
 class BracketType(AutoLowerNameEnum):
     """Contains all types of brackets (:attr:`REPEAT` is for Repeat blocks; :attr:`NORM` for all If's and Else)."""
-    NORM = auto()  #: Normal bracket; occurs on If-related blocks.
+    NORM = auto()  #: Normal bracket; occurs on If-related and Else blocks.
     REPEAT = auto()  #: Repeat bracket; occurs on Repeat blocks.
 
 
@@ -44,3 +45,11 @@ class BracketDirection(AutoLowerNameEnum):
     """Contains the directions of brackets (:attr:`OPEN` opens the block inserting space and :attr:`CLOSE` closes)."""
     OPEN = auto()  #: Opening bracket.
     CLOSE = auto()  #: Closing bracket.
+
+
+@unique
+class PlotSizes(Enum):
+    """An :class:`Enum` that relates each plot size to its respective width, in blocks. E.g.: Basic Plot is 50x50."""
+    BASIC_PLOT = 50
+    LARGE_PLOT = 100
+    MASSIVE_PLOT = 300
