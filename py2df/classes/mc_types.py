@@ -13,7 +13,7 @@ from ..utils import nbt_dict_to_str, NBTWrapper, remove_u200b_from_doc
 from ..constants import DEFAULT_VAL, DEFAULT_SOUND_PITCH, DEFAULT_SOUND_VOL
 
 
-class Item:
+class Item:  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
     """Represents a Minecraft Item stack.
     
     Attributes\u200b
@@ -42,10 +42,12 @@ class Item:
             If True, this item cannot lose durability, and remains at damage = 0.
     
         hide_flags : :class:`~py2df.enums.misc_mc_enums.HideFlags`
-            Flags to be hidden. Use the HideFlags enum for this. One flag is of the form HideFlag.FLAG_NAME,
-            while, to use more than one, add them up (HideFlag.FLAG_NAME + HideFlag.OTHER_FLAG_NAME + ...). There is also
-            HideFlag.ALL which has all flags added up already for you. So, you can select to hide "all but FLAG_NAME" by
-            using subtraction: HideFlag.ALL - HideFlag.FLAG_NAME (generically speaking).
+            Flags to be hidden. Use the :class:`~py2df.enums.misc_mc_enums.HideFlags` enum for this.
+            One flag is of the form ``HideFlags.FLAG_NAME``, while, to use more than one, add them up
+            (``HideFlags.FLAG_NAME + HideFlags.OTHER_FLAG_NAME + ...``). There is also
+            HideFlags.:attr:`~py2df.enums.misc_mc_enums.HideFlags.ALL` which has all flags added up already for you.
+            So, you can select to hide "all but FLAG_NAME" by using subtraction:
+            ``HideFlags.ALL - HideFlags.FLAG_NAME`` (generically speaking).
     
         leather_armor_color : :class:`int`
             An integer that represents the color of a leather armor. Tip: write `0x......` for a
@@ -429,6 +431,12 @@ class DFText(collections.UserString):
     def from_json_data(cls, data: dict):
         """Obtain variable from pre-existing parsed JSON data.
 
+        Must be of the form (have at least those parameters)::
+
+            { "data": { "name": str } }
+
+        Where ``str`` would be the type of the property.
+
         Parameters
         ----------
         data : :class:`dict`
@@ -440,6 +448,10 @@ class DFText(collections.UserString):
         :class:`DFText`
             :class:`DFText` instance.
 
+        Raises
+        ------
+        :exc:`TypeError`
+            If the data
         """
         if (
             not isinstance(data, dict)
@@ -447,7 +459,7 @@ class DFText(collections.UserString):
             or "data" not in data
             or not isinstance(data["data"], dict)
             or "name" not in data["data"]
-            or not type("name") == str
+            or not type(data["data"]["name"]) == str
         ):
             raise TypeError(
                 "Malformed DFText parsed JSON data! Must be a dict with, at least, a 'data' dict and a name str value."
@@ -559,7 +571,7 @@ class DFNumber:
             or "data" not in data
             or not isinstance(data["data"], dict)
             or "name" not in data["data"]
-            or not type("name") in (int, float, str)
+            or not type(data["data"]["name"]) in (int, float, str)
         ):
             raise TypeError(
                 "Malformed DFNumber parsed JSON data! Must be a dict with, at least, a 'data' dict and a name value."
@@ -760,7 +772,6 @@ class DFLocation:
         ----------
         x : Union[:class:`int`, :class:`float`]
             The value of the x position (:class:`float`).
-
 
         y : Union[:class:`int`, :class:`float`]
             The value of the y position (:class:`float`).
@@ -966,7 +977,7 @@ class DFLocation:
 
         Raises
         ------
-        TypeError
+        :exc:`TypeError`
             Invalid type provided for arithmetic.
 
         """
@@ -1333,7 +1344,6 @@ class DFSound:
         -------
         :class:`DFSound`
             New :class:`DFSound` instance.
-
         """
         if (
             not isinstance(data, dict)
@@ -1341,7 +1351,7 @@ class DFSound:
             or "data" not in data
             or not isinstance(data["data"], dict)
             or "sound" not in data["data"]
-            or not type("sound") == str
+            or not type(data["data"]["sound"]) == str
         ):
             raise TypeError(
                 "Malformed DFSound parsed JSON data! Must be a dict with, at least, a 'data' dict and a sound value."
@@ -1443,7 +1453,7 @@ class DFParticle:
             or "data" not in data
             or not isinstance(data["data"], dict)
             or "particle" not in data["data"]
-            or not type("particle") == str
+            or not type(data["data"]["particle"]) == str
         ):
             raise TypeError(
                 "Malformed DFSound parsed JSON data! Must be a dict with, at least, a 'data' dict and a particle value."
@@ -1528,7 +1538,7 @@ class DFCustomSpawnEgg:
     def __ne__(self, other: "DFCustomSpawnEgg") -> bool:
         return not self.__eq__(other)
 
-    # TODO: Figure out json for Custom Spawn Egg;
+    # TODO: Figure out json for Custom Spawn Egg.
 
 
 class DFPotion:
@@ -1777,8 +1787,7 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return self
 
 
-# TODO: GameValue
-
+# TODO: GameValue; DFVariable/DynamicVar
 
 _classes = (Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion)
 

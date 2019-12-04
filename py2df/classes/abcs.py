@@ -19,11 +19,12 @@ class Codeblock(metaclass=abc.ABCMeta):
         block : :class:`~py2df.enums.parameters.BlockType`
             Type of block. (Class var)
     
-        args : :class:`~py2df.classes.collections.Arguments`
-            Arguments of this codeblock (Instance var)
+        args : Optional[:class:`~py2df.classes.collections.Arguments`]
+            Arguments of this codeblock (Instance var). Some codeblocks (such as events) do not have arguments; for
+            them, this attribute is ``None``.
     
         action : :class:`~py2df.enums.enum_util.CodeBlockActionType`
-            Specific action/description of it - e.g. event name (Class var)
+            Specific action/description of it - e.g. event name (Class/instance var)
     
         length : :class:`int`
             The space, in Minecraft blocks, that this codeblock occupies. (Most are 2, but some, like IFs, are 1)
@@ -44,7 +45,7 @@ class Codeblock(metaclass=abc.ABCMeta):
         """
 
         if cls is Codeblock:
-            attribs = ["block", "action", "length"]  # must have those attributes to be a codeblock.
+            attribs = ["block", "length"]  # must have those attributes to be a codeblock.
             if all(any(attr in B.__dict__ for B in o_cls.__mro__) for attr in attribs):
                 return True
         return NotImplemented

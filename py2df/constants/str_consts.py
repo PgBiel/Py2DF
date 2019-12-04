@@ -6,4 +6,6 @@ ITEM_ID_SOUND = "snd"
 ITEM_ID_PARTICLE = "part"
 ITEM_ID_POTION = "pot"
 
+BLOCK_ID = "block"
+
 SECTION_SIGN = "\N{SECTION SIGN}"
