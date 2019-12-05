@@ -35,7 +35,7 @@ class DFReader:
             continue code, **if possible** (will error if that is impossible, i.e., it is not possible to shorten the
             code length). If False, will error at any trespassing of plot limit. Default: ``False``.
 
-        author : :class:`str`, optional
+        author : :class:`str`
             The author of this code, to be inserted in the NBT returned by :meth:`DFReader.output_snbt`. Default:
              ``"Unknown"``.
 

@@ -8,4 +8,6 @@ ITEM_ID_POTION = "pot"
 
 BLOCK_ID = "block"
 
+DEFAULT_AUTHOR = "Unknown"
+
 SECTION_SIGN = "\N{SECTION SIGN}"
