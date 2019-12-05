@@ -1,3 +1,6 @@
+"""
+Dataclasses.
+"""
 from .. import constants
 from dataclasses import dataclass, field
 from ..enums import Enchantments

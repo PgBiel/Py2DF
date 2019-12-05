@@ -1,11 +1,11 @@
 """
-General utility classes.
+Classes forming major DF-related collections.
 """
 import typing
 import collections
 from .. import constants, errors
 from .mc_types import Item, DFType
-from .abcs import Itemable
+from .abc import Itemable
 from ..utils import remove_u200b_from_doc
 
 

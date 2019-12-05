@@ -1,8 +1,17 @@
+"""
+The reader class, and related classes.
+"""
 import typing
-from ..utils import remove_u200b_from_doc
-from ..enums import PlotSizes
-from ..constants import DEFAULT_VAL
-from ..classes import Codeblock, FunctionHolder
+import json
+import base64
+import gzip
+import functools
+from collections import deque
+from .. import constants
+from ..utils import remove_u200b_from_doc, flatten
+from ..enums import PlotSizes, IfEntityType
+from ..constants import DEFAULT_VAL, DEFAULT_AUTHOR, SNBT_EXPORT_VERSION
+from ..classes import Codeblock, FunctionHolder, JSONData, Arguments, Material, BracketedBlock
 
 
 class DFReader:
@@ -24,31 +33,43 @@ class DFReader:
         auto_split : :class:`bool`
             If True, upon reaching the plot's length limit, the reader will automatically create a Function where to
             continue code, **if possible** (will error if that is impossible, i.e., it is not possible to shorten the
-            code length). If False, will error at any trespassing of plot limit. Default: False.
+            code length). If False, will error at any trespassing of plot limit. Default: ``False``.
 
-        lines : List[List[:class:`~py2df.classes.abcs.Codeblock`]]
-            List of all lines of codeblocks.
+        author : :class:`str`, optional
+            The author of this code, to be inserted in the NBT returned by :meth:`DFReader.output_snbt`. Default:
+             ``"Unknown"``.
 
-        functions : :class:`tuple`
+        lines : List[Deque[:class:`~py2df.classes.abc.Codeblock`]]
+            List of all lines of codeblocks. (Each line is a :class:`deque` , for performance reasons.)
+
+        functions : Tuple[FunctionHolder]
             A read-only copy of the internal function holder :class:`list` .
     """
-    __slots__ = ("lines", "plot_size", "auto_split", "_functions", "_curr_line")
-    lines: typing.List[typing.List[Codeblock]]
+    __slots__ = (
+        "lines", "plot_size", "auto_split", "author", "_functions", "_curr_line", "_curr_loc", "_prev_curr_locs"
+    )
+    lines: typing.List[typing.Deque[Codeblock]]
 
     plot_size: PlotSizes
 
     auto_split: bool
 
+    author: str
+
     _functions: typing.List[FunctionHolder]  #: List of FunctionHolder instances that hold the code lines.
 
     _curr_line: int  #: Current line being read (index in the :attr:`lines` list).
+
+    _curr_loc: typing.Optional[BracketedBlock]  #: The current bracket level, or None to send codeblocks to main line.
+
+    _prev_curr_locs: typing.List[typing.Optional[BracketedBlock]]  #: The previous bracket levels, for bracket closes.
 
     _singleton: "DFReader" = None  #: The singleton instance of :class:`DFReader`.
 
     def __new__(cls, *args, **kwargs):
         if cls._singleton:
-            if args:  # there was an update in settings!
-                cls._singleton.set(*args)
+            if args or kwargs:  # there was an update in settings!
+                cls._singleton.set(*args, **kwargs)
 
             return cls._singleton
 
@@ -57,36 +78,53 @@ class DFReader:
 
         return new_obj
 
-    def __init__(self, plot_size: PlotSizes = PlotSizes.BASIC_PLOT, auto_split: bool = False):
+    def __init__(
+        self, plot_size: PlotSizes = PlotSizes.BASIC_PLOT, auto_split: bool = False,
+        author: str = DEFAULT_AUTHOR
+    ):
         """
         Inits this :class:`Reader`.
 
         Parameters
         ----------
-        plot_size : :class:`~py2df.enums.parameters.PlotSizes`
+        plot_size : :class:`~py2df.enums.parameters.PlotSizes`, optional
             Size of the plot this code is being developed for. Default is
             :attr:`~py2df.enums.parameters.PlotSizes.BASIC_PLOT` .
 
-        auto_split : :class:`bool`
+        auto_split : :class:`bool`, optional
             Whether or not to automatically split long code lines into multiple Functions. Defaults to ``False`` .
+
+        author : :class:`str`, optional
+            The author of this code, to be inserted in the NBT returned by :meth:`DFReader.output_snbt`. Defaults
+            to ``"Unknown"``.
         """
         self.plot_size: PlotSizes = PlotSizes(plot_size)
         self.auto_split: bool = bool(auto_split)
-        self.lines: typing.List[typing.List[Codeblock]] = []
+        self.lines: typing.List[typing.Deque[Codeblock]] = []
+        self.author = str(author)
         self._functions: typing.List[FunctionHolder] = []
         self._curr_line = 0
+        self._curr_loc = None
+        self._prev_curr_locs = []
 
-    def set(self, plot_size: PlotSizes = DEFAULT_VAL, auto_split: bool = DEFAULT_VAL) -> "DFReader":
+    def set(
+        self, plot_size: PlotSizes = DEFAULT_VAL, auto_split: bool = DEFAULT_VAL,
+        author: str = DEFAULT_VAL
+    ) -> "DFReader":
         """
         Configures this Reader.
 
         Parameters
         ----------
-        plot_size : :class:`~py2df.enums.parameters.PlotSizes`
+        plot_size : :class:`~py2df.enums.parameters.PlotSizes`, optional
             Size of the plot this code is being developed for.
 
-        auto_split : :class:`bool`
+        auto_split : :class:`bool`, optional
             Whether or not to automatically split long code lines into multiple Functions. Default is ``False`` .
+
+        author : :class:`str`, optional
+            The author of this code, to be inserted in the NBT returned by :meth:`DFReader.output_snbt`. Defaults
+            to ``"Unknown"``.
 
         Returns
         -------
@@ -107,7 +145,7 @@ class DFReader:
 
         Parameters
         ----------
-        fn_holder : :class:`~py2df.classes.abcs.FunctionHolder`
+        fn_holder : :class:`~py2df.classes.abc.FunctionHolder`
             The function holder that has the function to be used.
 
         Returns
@@ -120,13 +158,38 @@ class DFReader:
 
         self._functions.append(fn_holder)
 
+    def append_codeblock(self, codeblock: Codeblock) -> None:
+        """
+        Appends a codeblock to the current location (If block, line etc.) being read.
+
+        Parameters
+        ----------
+        codeblock : :class:`~py2df.classes.abc.Codeblock`
+            The codeblock to be added (must be an instance of a class implementing the
+            :class:`~py2df.classes.abc.Codeblock` ABC).
+
+        Returns
+        -------
+        ``None``
+            ``None``
+        """
+        if not isinstance(codeblock, Codeblock):
+            raise TypeError("Codeblock has to be an instance of the Codeblock ABC.")
+
+        loc = self.curr_code_loc
+        if loc:
+            if isinstance(loc, BracketedBlock):
+                loc.codeblocks.append(codeblock)
+            else:
+                loc.append(codeblock)
+
     def remove_function(self, fn_holder: FunctionHolder) -> None:
         """
         Removes a specific function holder to be read from this reader.
 
         Parameters
         ----------
-        fn_holder : :class:`~py2df.classes.abcs.FunctionHolder`
+        fn_holder : :class:`~py2df.classes.abc.FunctionHolder`
             The function holder to be removed.
 
         Returns
@@ -135,6 +198,98 @@ class DFReader:
             ``None``
         """
         self._functions.remove(fn_holder)
+
+    def remove_codeblock(self, codeblock: Codeblock) -> None:
+        """
+        Removes a codeblock from the location (If block, line etc.) being currently read.
+
+        Parameters
+        ----------
+        codeblock : Codeblock
+            The codeblock to remove from the current line.
+
+        Returns
+        -------
+        ``None``
+            ``None``
+        """
+        loc = self.curr_code_loc
+
+        if loc:
+            if isinstance(loc, BracketedBlock):
+                loc.codeblocks.remove(codeblock)
+            else:
+                loc.remove(codeblock)
+
+    @property
+    def curr_line(self) -> typing.Optional[typing.Deque[Codeblock]]:
+        """
+        The line being currently read, or ``None`` if none is.
+
+        Returns
+        -------
+        Optional[Deque[:class:`~py2df.classes.abc.Codeblock`]]
+        """
+        lines = self.lines
+        curr_ind = self._curr_line
+        if len(lines) > curr_ind:
+            return lines[curr_ind]
+        else:
+            return None
+
+    @property
+    def curr_code_loc(self) -> typing.Union[BracketedBlock, typing.Deque[Codeblock]]:
+        """
+        The bracket level the code is in, currently (and where codeblocks are sent to), or a
+        :class:`~collections.deque` for main code line.
+
+        Returns
+        -------
+        Union[:class:`~py2df.classes.abc.BracketedBlock`, Deque[:class:`~py2df.classes.abc.Codeblock`]]
+            The :class:`~py2df.classes.abc.BracketedBlock` representing the current bracket level of the code, or
+            a deque being the main line.
+        """
+        curr = self._curr_loc
+        if curr:
+            return curr
+        else:
+            return self.curr_line
+
+    @curr_code_loc.setter
+    def curr_code_loc(self, new_loc: BracketedBlock) -> None:
+        """
+        Set the current location to a Bracketed Block.
+
+        Parameters
+        ----------
+        new_loc : :class:`~py2df.classes.abc.BracketedBlock`
+            The new bracket level this code is in.
+
+        Returns
+        -------
+        ``None``
+            ``None``
+
+        Raises
+        ------
+            :exc:`TypeError`: If the given location is not an instance of :class:`~py2df.classes.abc.BracketedBlock`.
+        """
+        if not isinstance(new_loc, BracketedBlock):
+            raise TypeError("The new code bracket level must be an instance of (implement) BracketedBlock.")
+
+        self._prev_curr_locs.append(self._curr_loc)
+        self._curr_loc = new_loc
+
+    def close_code_loc(self) -> None:
+        """
+        Sets the current location to the previous one (i.e., closes the bracket).
+
+        Returns
+        -------
+        ``None``
+            ``None``
+        """
+        self._curr_loc = self._prev_curr_locs.pop()
 
     @property
     def functions(self) -> typing.Tuple[FunctionHolder]:
@@ -146,7 +301,233 @@ class DFReader:
         if any(not isinstance(o, FunctionHolder) for o in new_list):
             raise TypeError("All function holders must be an instance of FunctionHolder ABC.")
 
-        self._functions = new_list
+        self._functions = new_list  # TODO: Add listening api - listen to add_codeblock etc.
+
+    def read(self):
+        """
+        Reads the code of every given function, and stores it. Note that running this will **erase any previously
+        generated data**.
+
+        Returns
+        -------
+        ``None``
+            ``None``
+
+        Warnings
+        --------
+        Every function given will be run, meaning that any function with "side effects" (i.e., changes something on the
+        system and whatnot) may be dangerous if running :meth:`~DFReader.read` more than once, so it is recommended to
+        **only run this method once.**
+        """
+        self._curr_line = -1  # first index will, then, be 0
+        for fn_holder in self._functions:
+            self._curr_line += 1
+            if len(self.lines) <= self._curr_line:  # if there is no corresponding deque
+                self.lines.append(deque())
+            else:
+                self.lines[self._curr_line] = deque()  # clear
+
+            fn_holder.function()
+            if isinstance(fn_holder, Codeblock):  # event/function/process
+                self.lines[self._curr_line].appendleft(fn_holder)
+
+    def output_json_data(self, read: bool = True) -> typing.List[dict]:
+        """
+        Outputs a JSON serializable :class:`dict` representing each code line.
+
+        Parameters
+        ----------
+        read : :class:`bool`, optional
+            Whether or not :meth:`~DFReader.read` should be called when running this function. Defaults to ``True`` .
+
+        Returns
+        -------
+        List[:class:`dict`]
+            List of dicts (one for every code line given).
+
+        Warnings
+        --------
+        If ``read`` is ``True``, this method runs :meth:`~DFReader.read`, so make sure to take a look at its
+        documentation and warnings.
+
+        See Also
+        --------
+        :meth:`DFReader.read`
+        """
+        if read:
+            self.read()  # obtain data
+
+        lines = self.lines
+
+        if not lines or not any(lines):
+            raise ValueError("No code lines were generated, so JSON data cannot be exported.")
+
+        return [
+            dict(blocks=[
+                block.as_json_data() if isinstance(block, JSONData) else dict(
+                    id=constants.BLOCK_ID,
+                    block=block.block.value,
+                    **(
+                        dict(
+                            args=block.args.as_json_data()
+                        ) if block.args and isinstance(block.args, Arguments) else dict()
+                    ),
+                    **(
+                        dict(
+                            action=str(block.action.value)
+                        ) if block.action and hasattr(block.action, "value") else dict()
+                    ),
+                    **(
+                        dict(
+                            sub_action=("E" if isinstance(block.action, IfEntityType) else "") + str(block.action.value)
+                        ) if block.sub_action and hasattr(block.sub_action, "value") else dict()
+                    ),
+                    **(
+                        dict(
+                            data=str(block.data)
+                        ) if block.data else dict()
+                    ),
+                    **(
+                        dict(
+                            target=str(block.target.value)
+                        ) if block.target and hasattr(block.target, "value") else dict()
+                    )
+                ) for block in flatten(line, allow_iterables=True)  # flatten in order to include If code
+            ]) for line in lines
+        ]
+
+    def output_json(self, read: bool = True) -> typing.List[str]:
+        """
+        Outputs the JSON string representing each code line.
+
+        Parameters
+        ----------
+        read : :class:`bool`, optional
+            Whether or not :meth:`~DFReader.read` should be called when running this function. Defaults to ``True`` .
+
+        Returns
+        -------
+        List[:class:`str`]
+            List of strings (one for every code line given).
+
+        Warnings
+        --------
+        If ``read`` is ``True``, this method runs :meth:`~DFReader.read`, so make sure to take a look at its
+        documentation and warnings.
+
+        See Also
+        --------
+        :meth:`DFReader.output_json_data`
+        """
+        return [json.dumps(obj, ensure_ascii=False) for obj in self.output_json_data(read)]
+
+    def output_encoded(self, read: bool = True) -> typing.List[bytes]:
+        """
+        Outputs the base64-formatted encoded bytes representing each code line's JSON format.
+
+        Parameters
+        ----------
+        read : :class:`bool`, optional
+            Whether or not :meth:`~DFReader.read` should be called when running this function. Defaults to ``True`` .
+
+        Returns
+        -------
+        List[:class:`bytes`]
+            List of :class:`bytes` instances (one for every code line given); they're all formatted in base 64
+            (encoded in UTF-8).
+
+        Warnings
+        --------
+        If ``read`` is ``True``, this method runs :meth:`~DFReader.read`, so make sure to take a look at its
+        documentation and warnings.
+
+        See Also
+        --------
+        :meth:`DFReader.output_json`
+        """
+        return [base64.b64encode(gzip.compress(json_str)) for json_str in self.output_json(read)]
+
+    def output_encoded_str(self, read: bool = True) -> typing.List[str]:
+        """
+        Outputs the **stringified** base64-formatted encoded bytes representing each code line's JSON format.
+
+        Parameters
+        ----------
+        read : :class:`bool`, optional
+            Whether or not :meth:`~DFReader.read` should be called when running this function. Defaults to ``True`` .
+
+        Returns
+        -------
+        List[:class:`str`]
+            List of strings (one for every code line given); they're all formatted in base 64
+            (encoded in UTF-8).
+
+        Warnings
+        --------
+        If ``read`` is ``True``, this method runs :meth:`~DFReader.read`, so make sure to take a look at its
+        documentation and warnings.
+
+        See Also
+        --------
+        :meth:`DFReader.output_encoded`
+        """
+        return [btes.decode("utf-8") for btes in self.output_encoded(read)]
+
+    def output_snbt(self, read: bool = True) -> typing.List[str]:
+        """
+        Outputs the SBNT format of the Paste item of each read line. It consists of the SNBT of an Ender Chest
+        appropriately named as the first block in the code line.
+
+        Parameters
+        ----------
+        read : :class:`bool`, optional
+            Whether or not :meth:`~DFReader.read` should be called when running this function. Defaults to ``True`` .
+
+        Returns
+        -------
+        List[:class:`str`]
+            List of SBNT strings (one for every code line given); they're all formatted in base 64
+            (encoded in UTF-8).
+
+        Warnings
+        --------
+        If ``read`` is ``True``, this method runs :meth:`~DFReader.read`, so make sure to take a look at its
+        documentation and warnings.
+
+        See Also
+        --------
+        :meth:`DFReader.output_encoded_str`
+        """
+        lines = self.lines
+
+        @functools.lru_cache(maxsize=128)
+        def get_line_name(i: int) -> str:
+            first_codeblock = lines[i][0]
+            if isinstance(first_codeblock, Codeblock):
+                return  # TODO: Name
+            else:
+                return "§6§lCode line"  # TODO: Colors enum
+
+        return [
+            json.dumps(
+                dict(
+                    id=Material.ENDER_CHEST.value,
+                    Count="1b",
+                    tag=dict(PublicBukkitValues={
+                        "hypercube:codetemplatedata": dict(
+                            author=str(self.author or DEFAULT_AUTHOR),
+                            name=get_line_name(i),
+                            version=SNBT_EXPORT_VERSION,
+                            code=encoded
+                        )
+                    }),
+
+                    display=dict(
+                        Name=json.dumps(get_line_name(i))
+                    )
+                )
+            ) for i, encoded in enumerate(self.output_encoded_str(read))
+        ]
 
 
 remove_u200b_from_doc(DFReader)

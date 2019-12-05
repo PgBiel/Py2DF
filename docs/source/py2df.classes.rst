@@ -4,10 +4,10 @@ py2df.classes package
 Submodules
 ----------
 
-py2df.classes.abcs module
+py2df.classes.abc module
 -------------------------
 
-.. automodule:: py2df.classes.abcs
+.. automodule:: py2df.classes.abc
    :members:
    :undoc-members:
    :show-inheritance:

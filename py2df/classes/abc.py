@@ -2,11 +2,14 @@
 Generic base classes for the library.
 """
 import abc
-from ..enums import BlockType
+from ..enums import BlockType, CodeblockActionType, ActionType, EventType, IfType, RepeatType, Target
 from ..utils import remove_u200b_from_doc
 import typing
 
 from .mc_types import Item
+
+if typing.TYPE_CHECKING:
+    from .collections import Arguments
 
 # region:Codeblock
 
@@ -23,17 +26,30 @@ class Codeblock(metaclass=abc.ABCMeta):
             Arguments of this codeblock (Instance var). Some codeblocks (such as events) do not have arguments; for
             them, this attribute is ``None``.
     
-        action : :class:`~py2df.enums.enum_util.CodeBlockActionType`
-            Specific action/description of it - e.g. event name (Class/instance var)
+        action : Optional[:class:`~py2df.enums.enum_util.CodeBlockActionType`]
+            Specific action/description of it - e.g. event name (Class/instance var). Some do not have this.
+
+        sub_action : Optional[:class:`~py2df.enums.enum_util.CodeBlockActionType`]
+            Describes, in an even more specific way, the aforementioned action. Generally used in Repeat and
+            SelectObj objects.
     
         length : :class:`int`
             The space, in Minecraft blocks, that this codeblock occupies. (Most are 2, but some, like IFs, are 1)
             (Class var)
+
+        data : Optional[:class:`str`]
+            An optional customized data field. Used for Function and Process names.
+
+        target : Optional[:class:`~py2df.enums.targets.Target`]
+            The target of this codeblock, if any.
     """
-    # block: BlockType
-    # args: Arguments
-    # action: CodeblockActionType
-    # length: int
+    block: BlockType
+    args: typing.Optional["Arguments"]
+    action: typing.Optional[CodeblockActionType]
+    sub_action: typing.Optional[CodeblockActionType]
+    length: int
+    data: typing.Optional[str]
+    target: typing.Optional[Target]
     __slots__ = ()
 
     @classmethod
@@ -64,6 +80,13 @@ class ActionBlock(metaclass=abc.ABCMeta):
 :attr:`~py2df.enums.action.CONTROL`]
             The block type - either `Player Action`, `Entity Action`. `Game Action` or `Control`.
     """
+    block: BlockType
+    args: "Arguments"
+    action: ActionType
+    sub_action: None
+    length: int
+    data: None
+    target: typing.Optional[Target]
     __slots__ = ()
 
     @classmethod
@@ -101,6 +124,13 @@ class EventBlock(metaclass=abc.ABCMeta):
 :attr:`~py2df.enums.action.BlockType.ENTITY_EVENT`]
             The block type - either `Player Event` or `Entity Event`.
     """
+    block: BlockType
+    args: None
+    action: EventType
+    sub_action: None
+    length: int
+    data: None
+    target: None
     __slots__ = ()
 
     @classmethod
@@ -128,6 +158,14 @@ class BracketedBlock(metaclass=abc.ABCMeta):
     """
     An ABC that describes any codeblock with brackets. Can be used on a `with` construct. Must implement
     :class:`CodeBlock`."""
+    block: BlockType
+    args: "Arguments"
+    action: typing.Union[IfType, RepeatType]
+    sub_action: typing.Optional[CodeblockActionType]
+    length: int
+    data: None
+    codeblocks: typing.Deque[Codeblock]  # TODO: Document all of this
+    target: typing.Optional[Target]
     __slots__ = ()
 
     @classmethod
@@ -174,12 +212,19 @@ class CallableBlock(metaclass=abc.ABCMeta):
 :attr:`~py2df.enums.parameters.BlockType.PROCESS`]
             The type of the callable block - `Function` or `Process`.
     """
+    block: BlockType
+    args: None
+    action: None
+    sub_action: None
+    length: int
+    data: str  # Name
+    target: None
     __slots__ = ()
 
     @classmethod
     def __subclasshook__(cls, o_cls: type):
         """
-        Checks if the given class is a subclass of Event (implements it).
+        Checks if the given class is a subclass of CallableBlock (implements it).
         :param o_cls: Class to check.
         :return: True if subclass; NotImplemented otherwise
         """
@@ -193,6 +238,88 @@ class CallableBlock(metaclass=abc.ABCMeta):
                     return True
             except ValueError:  # not a valid block type
                 return NotImplemented  # not a CallableBlock
+
+        return NotImplemented
+
+
+class CallerBlock(metaclass=abc.ABCMeta):
+    """An ABC that describes any caller - Call Function or Start Process. Must implement :class:`Codeblock`.
+
+    Includes all of :class:`Codeblock` 's attributes, plus:
+
+    Attributes\u200b
+    ------------
+        block : Union[:attr:`~py2df.enums.parameters.BlockType.CALL_FUNCTION`, \
+:attr:`~py2df.enums.parameters.BlockType.START_PROCESS`]
+            The type of the callable block - `Call Function` or `Start Process`.
+    """
+    block: BlockType
+    args: None
+    action: None
+    sub_action: None
+    length: int
+    data: str  # Name
+    target: None
+    __slots__ = ()
+
+    @classmethod
+    def __subclasshook__(cls, o_cls: type):
+        """
+        Checks if the given class is a subclass of CallerBlock (implements it).
+        :param o_cls: Class to check.
+        :return: True if subclass; NotImplemented otherwise
+        """
+
+        if cls is CallableBlock:
+            if Codeblock.__subclasshook__(o_cls) is NotImplemented:
+                return NotImplemented
+
+            try:
+                if BlockType(getattr(o_cls, "block")) in (BlockType.CALL_FUNCTION, BlockType.START_PROCESS):
+                    return True
+            except ValueError:  # not a valid block type
+                return NotImplemented  # not a CallerBlock
+
+        return NotImplemented
+
+
+class UtilityBlock(metaclass=abc.ABCMeta):
+    """An ABC that describes any utility block - Set Var, Select Object or Repeat. Must implement :class:`Codeblock`.
+
+    Includes all of :class:`Codeblock` 's attributes, plus:
+
+    Attributes\u200b
+    ------------
+        block : Union[:attr:`~py2df.enums.parameters.BlockType.REPEAT`, \
+:attr:`~py2df.enums.parameters.BlockType.SELECT_OBJ`, :attr:`~py2df.enums.parameters.BlockType.SET_VAR`]
+            The type of the utility block - `Set Var`, `Select Object` or `Repeat`.
+    """
+    block: BlockType
+    args: None
+    action: None
+    sub_action: typing.Optional[CodeblockActionType]
+    length: int
+    data: str  # Name
+    target: None
+    __slots__ = ()
+
+    @classmethod
+    def __subclasshook__(cls, o_cls: type):
+        """
+        Checks if the given class is a subclass of UtilityBlock (implements it).
+        :param o_cls: Class to check.
+        :return: True if subclass; NotImplemented otherwise
+        """
+
+        if cls is CallableBlock:
+            if Codeblock.__subclasshook__(o_cls) is NotImplemented:
+                return NotImplemented
+
+            try:
+                if BlockType(getattr(o_cls, "block")) in (BlockType.SET_VAR, BlockType.REPEAT, BlockType.SELECT_OBJ):
+                    return True
+            except ValueError:  # not a valid block type
+                return NotImplemented  # not an UtilityBlock
 
         return NotImplemented
 

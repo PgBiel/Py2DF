@@ -1,3 +1,6 @@
+"""
+Events and their decorators.
+"""
 import typing
 from .reader import DFReader
 from ..classes import FunctionHolder
@@ -8,8 +11,8 @@ from ..constants import BLOCK_ID, EMPTY_ARGS
 
 class PlayerEvent:
     """
-    Describes a Player Event on DiamondFire. Implements :class:`~py2df.classes.abcs.Codeblock` and
-    :class:`~py2df.classes.abcs.FunctionHolder`.
+    Describes a Player Event on DiamondFire. Implements :class:`~py2df.classes.abc.Codeblock` and
+    :class:`~py2df.classes.abc.FunctionHolder`.
 
     Check out this class's classmethods for the decorators.
 
@@ -838,8 +841,8 @@ class PlayerEvent:
 
 class EntityEvent:
     """
-    Describes an Entity Event on DiamondFire. Implements :class:`~py2df.classes.abcs.Codeblock` and
-    :class:`~py2df.classes.abcs.FunctionHolder`.
+    Describes an Entity Event on DiamondFire. Implements :class:`~py2df.classes.abc.Codeblock` and
+    :class:`~py2df.classes.abc.FunctionHolder`.
 
     Check out this class's classmethods for the decorators.
 

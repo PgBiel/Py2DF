@@ -1,3 +1,6 @@
+"""
+Classes related to DiamondFire (DF) variable types.
+"""
 import typing
 import math
 import re
@@ -743,7 +746,7 @@ class DFLocation:
     
         ``-a``: Applies -1 times x,y,z; pitch, yaw of `a`.
     
-        ``:func:`abs`(a)``: Applies abs() to x,y,z,pitch,yaw of `a`.
+        ``abs(a)``: Applies :func:`abs` to x,y,z,pitch,yaw of `a`.
     
         ``+a``: Returns a.
     """
