@@ -12,11 +12,12 @@ from dataclasses import dataclass
 from ..enums import Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect
 from .subcollections import Lore
 from .dataclass import Enchantment
+from .abc import DFType
 from ..utils import nbt_dict_to_str, NBTWrapper, remove_u200b_from_doc
 from ..constants import DEFAULT_VAL, DEFAULT_SOUND_PITCH, DEFAULT_SOUND_VOL
 
 
-class Item:  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
+class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
     """Represents a Minecraft Item stack.
     
     Attributes\u200b
@@ -167,10 +168,10 @@ class Item:  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/End
     def amount(self, new_amt: int) -> None:
         i_n_amt = int(new_amt)
         if i_n_amt > constants.MAX_ITEM_STACK_SIZE:
-            raise ValueError(f"Maximum item stack size is {constants.MAX_ITEM_STACK_SIZE}!")
+            raise ValueError(f"Maximum item stack size is {constants.MAX_ITEM_STACK_SIZE}.")
 
         if i_n_amt < constants.MIN_ITEM_STACK_SIZE:
-            raise ValueError(f"Minimum item stack size is {constants.MIN_ITEM_STACK_SIZE}!")
+            raise ValueError(f"Minimum item stack size is {constants.MIN_ITEM_STACK_SIZE}.")
 
         self._amount = i_n_amt
 
@@ -183,21 +184,21 @@ class Item:  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/End
             SBNT string.
         """
         tag_dict = dict(
-            *(dict(Damage=int(self.damage)) if self.damage != 0 else dict()),
-            *(dict(Unbreakable=NBTWrapper("1b")) if self.unbreakable else dict()),  # NBTWrapper is used to ensure
-            *(dict(                                                                 # quotes aren't used
+            **(dict(Damage=int(self.damage)) if self.damage != 0 else dict()),
+            **(dict(Unbreakable=NBTWrapper("1b")) if self.unbreakable else dict()),  # NBTWrapper is used to ensure
+            **(dict(                                                                 # quotes aren't used
                 EntityTag=(
                     nbt_dict_to_str(self.entity_tag) if type(self.entity_tag) == dict else NBTWrapper(self.entity_tag)
                 ) if self.entity_tag else dict()
             )),
-            *(dict(
+            **(dict(
                 display=dict(
-                    *(dict(color=self.leather_armor_color) if self.leather_armor_color is not None else dict()),
-                    *(dict(Name=json.dumps(str(self.name))) if self.name else dict()),
-                    *(dict(Lore=self.lore.as_json_data() if self.lore else dict()))
+                    **(dict(color=self.leather_armor_color) if self.leather_armor_color is not None else dict()),
+                    **(dict(Name=json.dumps(str(self.name))) if self.name else dict()),
+                    **(dict(Lore=self.lore.as_json_data() if self.lore else dict()))
                 ) if any([self.leather_armor_color is not None, self.name, self.lore]) else dict()
             )),
-            *(dict(HideFlags=self.hide_flags.value) if self.hide_flags and self.hide_flags.value else dict())
+            **(dict(HideFlags=self.hide_flags.value) if self.hide_flags and self.hide_flags.value else dict())
         )
         if type(self.extra_tags) == str:
             tag_dict["extra_tags"] = NBTWrapper(self.extra_tags)
@@ -227,8 +228,8 @@ class Item:  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/End
             )
         )
 
-    # def from_json_data(self) -> "Item":
-    #     pass  # TODO - ok now, this will be hard... gotta interpret NBT
+    def from_json_data(self) -> "Item":
+        pass  # TODO - ok now, this will be hard... gotta interpret NBT
 
     def to_item(self) -> "Item":
         return self  # well... yeah
@@ -272,7 +273,7 @@ class Item:  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/End
         )
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} minecraft:{self.material.value} x {self.amount}>"
+        return f"<{self.__class__.__name__} minecraft:{self.material.value} x {self.amount} | name={self.name}>"
 
     def __str__(self):
         return f"minecraft:{self.material.value}"
@@ -358,14 +359,14 @@ class Item:  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/End
         return self
 
 
-class DFText(collections.UserString):
+class DFText(collections.UserString, DFType):
     """Represents a DiamondFire Text variable. (note: this is not a dynamic variable.)
     
     Subclasses `collections.UserString`; therefore, supports all :class:`str` operations.
     
     Attributes
     ----------\u200b
-        data : :class:`str`
+        data : Union[:class:`str`, :class:`DFText`]
             The value of the text variable.
     
         convert_color : :class:`bool`
@@ -376,7 +377,7 @@ class DFText(collections.UserString):
     __slots__ = ("convert_color",)
     convert_color: bool
 
-    def __init__(self, text: str = "", *, convert_color: bool = True):
+    def __init__(self, text: typing.Union[str, "DFText"] = "", *, convert_color: bool = True):
         """
         Init text variable.
 
@@ -387,11 +388,11 @@ class DFText(collections.UserString):
         convert_color : :class:`bool`
             Boolean; whether or not should convert &x to color codes (§x). (Defaults to True)
         """
-        super().__init__(text)
-        self.data = text
+        super().__init__(str(text))
+        self.data = str(text)
         self.convert_color = bool(convert_color)
 
-    def set(self, new_text: str) -> "DFText":
+    def set(self, new_text: typing.Union[str, "DFText"]) -> "DFText":
         """Set the value of this text variable.
 
         Parameters
@@ -405,7 +406,7 @@ class DFText(collections.UserString):
             self to allow chaining
 
         """
-        self.data = new_text
+        self.data = str(new_text)
 
         return self
 
@@ -480,7 +481,7 @@ class DFText(collections.UserString):
 AnyNumber = typing.Union[int, float]
 
 
-class DFNumber:
+class DFNumber(DFType):
     """Represents a DiamondFire Number variable.
     
     Supports practically all :class:`int`/:class:`float`-related operations and comparisons.
@@ -493,7 +494,7 @@ class DFNumber:
     __slots__ = ("_value",)
     _value: float
 
-    def __init__(self, value: AnyNumber = 0.0):
+    def __init__(self, value: typing.Union["DFNumber", AnyNumber] = 0.0):
         """
         Init number variable.
 
@@ -526,7 +527,7 @@ class DFNumber:
         """
         self._value = float(new_value)
 
-    def set(self, new_value: AnyNumber) -> "DFNumber":
+    def set(self, new_value: typing.Union["DFNumber", AnyNumber]) -> "DFNumber":
         """Set the value of this number variable.
 
         Parameters
@@ -685,7 +686,7 @@ class DFNumber:
         return float(self.value)
 
 
-class DFLocation:
+class DFLocation(DFType):
     """Represents a DiamondFire Location.
     
     Attributes\u200b
@@ -1036,6 +1037,9 @@ class DFLocation:
 
         return new_loc
 
+    def to_item(self) -> "Item":
+        pass  # TODO: paper thing
+
     def __eq__(self, other: "DFLocation") -> bool:
         attrs_to_check = set(self.__class__.__slots__)  # - {"world_least", "world_most"}
         return type(self) == type(other) and all(getattr(self, attr) == getattr(other, attr) for attr in attrs_to_check)
@@ -1222,8 +1226,11 @@ class DFLocation:
 
         return new_loc
 
+    def __hash__(self):
+        return hash(tuple(getattr(self, attr) for attr in ("x", "y", "z", "pitch", "yaw")))
 
-class DFSound:
+
+class DFSound(DFType):
     """Used for DF Sounds (Blaze Death, XP Level up etc.)
     
     Attributes\u200b
@@ -1373,15 +1380,22 @@ class DFSound:
     def __str__(self):
         return self.sound_type.value
 
+    def __hash__(self):
+        return hash((self.sound_type.value, self.pitch, self.volume))
 
-@dataclass
-class DFParticle:
+    def __eq__(self, other: "DFSound") -> bool:
+        return type(self) == type(other) and all(
+            getattr(self, attr) == getattr(other, attr) for attr in DFSound.__slots__
+        )
+
+
+class DFParticle(DFType):
     """Used for DF Particles (Smoke, Large Smoke etc.)
     
     Attributes\u200b
     -------------
     
-        particle_type : :class:`ParticleType`
+        particle_type : :class:`~py2df.enums.dftypes.ParticleType`
             The enum instance that specifies which particle is this.
     
     **Supported Comparisons**
@@ -1393,6 +1407,17 @@ class DFParticle:
     """
     __slots__ = ("particle_type",)
     particle_type: ParticleType
+
+    def __init__(self, particle_type: ParticleType):
+        """
+        Initialize this DFParticle.
+
+        Parameters
+        ----------
+        particle_type : :class:`~py2df.enums.dftypes.ParticleType`
+            The enum instance that specifies which particle is this.
+        """
+        self.particle_type = ParticleType(particle_type)
 
     def set(self, particle_type: ParticleType) -> "DFParticle":
         """Immediately set the type of this :class:`DFParticle`. Note that this is not changed dynamically,
@@ -1477,7 +1502,7 @@ class DFParticle:
         return not self.__eq__(other)
 
 
-class DFCustomSpawnEgg:
+class DFCustomSpawnEgg(DFType):
     """Used for the custom spawn egg types provided by DiamondFire (Giant, Iron Golem etc.)
 
     Attributes\u200b
@@ -1541,10 +1566,13 @@ class DFCustomSpawnEgg:
     def __ne__(self, other: "DFCustomSpawnEgg") -> bool:
         return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(("DFCustomSpawnEgg", self.egg_type.value))
+
     # TODO: Figure out json for Custom Spawn Egg.
 
 
-class DFPotion:
+class DFPotion(DFType):
     """
     Used for potion effects in potion-effect-related actions.
 
@@ -1580,9 +1608,11 @@ class DFPotion:
     
         ``a += b``, ``a -= b``, ...: Applies each of the operations above, in a similar fashion.
     
-        ``:func:`ceil`(a)``, ``:func:`floor`(a)``, ``:func:`abs`(a)``, ``+a``: Returns the class itself.
+        ``ceil(a)``, ``floor(a)``, ``abs(a)``, ``+a``: Returns the class itself.
     
-        ``:class:`bool`(a)``: Returns whether or not the duration is bigger than 00:00 (tuple > (0,0) ).
+        ``bool(a)``: Returns whether or not the duration is bigger than 00:00 (tuple > (0,0) ).
+
+        ``hash(a)``: Returns an unique hash for this DFPotion instance.
     """
     __slots__ = ("effect", "amplifier", "duration")
 
@@ -1653,6 +1683,9 @@ class DFPotion:
     def from_json_data(self) -> dict:
         pass  # TODO: Figure out dur json then implement this
 
+    def to_item(self) -> Item:
+        pass  # TODO
+
     def copy(self) -> "DFPotion":
         """Creates an identical copy of this :class:`DFPotion`.
 
@@ -1669,6 +1702,9 @@ duration={self.duration[0]}:{self.duration[1]}>"
 
     def __str__(self) -> str:
         return str(self.effect.value)
+
+    def __hash__(self):
+        return hash((self.effect.value, self.amplifier, self.duration))
 
     def __bool__(self) -> bool:
         return self.duration > (0, 0)
@@ -1794,7 +1830,7 @@ duration={self.duration[0]}:{self.duration[1]}>"
 
 _classes = (Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion)
 
-DFType = typing.Union[
+DFTyping = typing.Union[
     Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion
 ]  # TODO: GameValue etc
 

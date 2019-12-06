@@ -1,9 +1,9 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum
+from .enum_util import AutoSnakeToPascalCaseNameEnum, EventType
 from enum import auto, unique
 
 
 @unique
-class PlayerEventType(AutoSnakeToPascalCaseNameEnum):
+class PlayerEventType(EventType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Player Event blocks."""
     BREAK_BLOCK = auto()  #: Executes code when a player breaks a block.
     BREAK_ITEM = auto()  #: Executes code when a player breaks an item.
@@ -50,7 +50,7 @@ class PlayerEventType(AutoSnakeToPascalCaseNameEnum):
 
 
 @unique
-class EntityEventType(AutoSnakeToPascalCaseNameEnum):
+class EntityEventType(EventType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Entity Event blocks."""
     BLOCK_FALL = auto()  #: Executes code when a block affected by gravity turns into a falling block.
     ENTITY_DEATH = auto()  #: Executes code when an entity dies by natural causes.

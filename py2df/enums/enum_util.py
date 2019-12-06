@@ -38,7 +38,6 @@ class UtilityBlockType(CodeblockActionType):
     """
     pass
 
-
 class AutoNameEnum(Enum):
     """
     An enum whose auto values are the respective names of the constants.
@@ -90,3 +89,10 @@ class AutoSnakeToCapitalizedWordsEnum(Enum):
             lambda s: s.upper() if s in keep_upper else s.capitalize() + " ",
             name.split("_")
         )).strip()  # TEST_TEST_TEST => Test Test Test
+
+
+class TagType(AutoSnakeToCapitalizedWordsEnum):
+    """
+    An ABC for Tag-related enums.
+    """
+    pass

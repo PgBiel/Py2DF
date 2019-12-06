@@ -1,9 +1,14 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum  # TODO: Solve ActionType/etc. thing
+"""
+All types of actions and their individual tags.
+"""
+from .enum_util import AutoSnakeToPascalCaseNameEnum, ActionType, TagType
 from enum import auto, unique
+
+# region:types
 
 
 @unique
-class PlayerActionType(AutoSnakeToPascalCaseNameEnum):
+class PlayerActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Player Action blocks."""
     ACTION_BAR = auto()  #: Sends a message on the action bar for the selected player.
     ADD_INV_ROW = auto()  #: Adds a row to the bottom of the currently open inventory.
@@ -120,7 +125,7 @@ class PlayerActionType(AutoSnakeToPascalCaseNameEnum):
 
 
 @unique
-class EntityActionType(AutoSnakeToPascalCaseNameEnum):
+class EntityActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Entity Action blocks."""
     ARMOR_STAND_TAGS = auto()  #: Changes the settings of an armor stand, such as visibility.
     BLOCK_DISGUISE = auto()  #: Disguises the entity as a block.
@@ -192,7 +197,7 @@ class EntityActionType(AutoSnakeToPascalCaseNameEnum):
 
 
 @unique
-class ControlType(AutoSnakeToPascalCaseNameEnum):
+class ControlType(ActionType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Control blocks."""
     END = auto()  #: Stops reading all code after the control block.
     RETURN = auto(
@@ -203,7 +208,7 @@ class ControlType(AutoSnakeToPascalCaseNameEnum):
 
 
 @unique
-class GameActionType(AutoSnakeToPascalCaseNameEnum):
+class GameActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Game Action blocks."""
     BLOCK_DROPS_OFF = auto()  #: Disables blocks dropping as items when broken.
     BLOCK_DROPS_ON = auto()  #: Enables blocks dropping as items when broken.
@@ -256,3 +261,30 @@ class GameActionType(AutoSnakeToPascalCaseNameEnum):
     SUMMON_LIGHTNING = auto()  #: Strikes lightning at a certain location, damaging players in a radius.
     TICK_BLOCK = auto()  #: Causes a block to get random ticked.
     UNCANCEL_EVENT = auto()  #: Uncancels the initial event that triggered this line of code.
+
+# endregion:types
+
+
+# region:tags
+
+    # region:player_action_tags
+    # endregion:player_action_tags
+
+    # region:entity_action_tags
+    # endregion:entity_action_tags
+
+    # region:control_tags
+
+@unique
+class CWaitTag(TagType):
+    """For :func:`~py2df.codeblocks.actions.Control.wait`; the time unit to use when specifying the wait duration."""
+    TICKS = auto()
+    SECONDS = auto()
+    MINUTES = auto()
+
+
+TimeUnit = CWaitTag  # alias
+
+    # endregion:control_tags
+
+# endregion:tags

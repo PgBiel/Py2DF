@@ -1,9 +1,9 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum
+from .enum_util import AutoSnakeToPascalCaseNameEnum, UtilityBlockType
 from enum import unique, auto
 
 
 @unique
-class RepeatType(AutoSnakeToPascalCaseNameEnum):
+class RepeatType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Repeat blocks."""
     ADJACENT = auto(
     )  #: Repeats code once for each block adjacent to a location. Each iteration, the var is set to the current block.
@@ -17,7 +17,7 @@ class RepeatType(AutoSnakeToPascalCaseNameEnum):
     WHILE_COND = auto()  #: Repeats code while a certain condition is true.
 
 @unique
-class SetVarType(AutoSnakeToPascalCaseNameEnum):
+class SetVarType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Set Variable blocks."""
     ABSOLUTE_VALUE = auto()  #: Makes negative numbers positive.
     ADD = "+="  #: Increments a number variable by 1 or more other numbers.
@@ -161,7 +161,7 @@ class SetVarType(AutoSnakeToPascalCaseNameEnum):
     WRAP_NUMBER = auto()  #: Checks if a number is between two bounds and if not, wraps it around the farthest bound.
 
 @unique
-class SelectObjectType(AutoSnakeToPascalCaseNameEnum):
+class SelectObjectType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Select Object blocks."""
     ALL_ENTITIES = auto()  #: Selects all entities on the plot.
     ALL_MOBS = auto()  #: Selects all mobs on the plot.

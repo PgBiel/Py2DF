@@ -9,7 +9,7 @@ import functools
 from collections import deque
 from .. import constants
 from ..utils import remove_u200b_from_doc, flatten
-from ..enums import PlotSizes, IfEntityType
+from ..enums import PlotSizes, IfEntityType, Color
 from ..constants import DEFAULT_VAL, DEFAULT_AUTHOR, SNBT_EXPORT_VERSION
 from ..classes import Codeblock, FunctionHolder, JSONData, Arguments, Material, BracketedBlock
 
@@ -23,6 +23,8 @@ class DFReader:
         if __name__ == '__main__':
             DFReader(PlotSizes.LARGE_PLOT, auto_split=True)  # changes config
             ...
+
+    To output the Paste item NBT, use :meth:`DFReader.output_sbnt` .
 
     Attributes
     ----------\u200b
@@ -76,6 +78,8 @@ class DFReader:
         new_obj = object.__new__(cls)
         new_obj.__init__(*args, **kwargs)
 
+        cls._singleton = new_obj
+
         return new_obj
 
     def __init__(
@@ -98,6 +102,9 @@ class DFReader:
             The author of this code, to be inserted in the NBT returned by :meth:`DFReader.output_snbt`. Defaults
             to ``"Unknown"``.
         """
+        if self.__class__._singleton:
+            return
+
         self.plot_size: PlotSizes = PlotSizes(plot_size)
         self.auto_split: bool = bool(auto_split)
         self.lines: typing.List[typing.Deque[Codeblock]] = []
@@ -177,7 +184,7 @@ class DFReader:
             raise TypeError("Codeblock has to be an instance of the Codeblock ABC.")
 
         loc = self.curr_code_loc
-        if loc:
+        if loc is not None:
             if isinstance(loc, BracketedBlock):
                 loc.codeblocks.append(codeblock)
             else:
@@ -379,7 +386,11 @@ class DFReader:
                     ),
                     **(
                         dict(
-                            sub_action=("E" if isinstance(block.action, IfEntityType) else "") + str(block.action.value)
+                            sub_action=(
+                                "E" if block.action in (
+                                    IfEntityType.NAME_EQUALS, IfEntityType.IS_NEAR, IfEntityType.STANDING_ON
+                                ) else ""  # ENameEquals; EIsNear; EStandingOn => separate from IfPlayer's.
+                            ) + str(block.action.value)
                         ) if block.sub_action and hasattr(block.sub_action, "value") else dict()
                     ),
                     **(
@@ -445,7 +456,9 @@ class DFReader:
         --------
         :meth:`DFReader.output_json`
         """
-        return [base64.b64encode(gzip.compress(json_str)) for json_str in self.output_json(read)]
+        return [
+            base64.b64encode(gzip.compress((json_str + "\n").encode("utf-8"))) for json_str in self.output_json(read)
+        ]
 
     def output_encoded_str(self, read: bool = True) -> typing.List[str]:
         """
@@ -504,9 +517,9 @@ class DFReader:
         def get_line_name(i: int) -> str:
             first_codeblock = lines[i][0]
             if isinstance(first_codeblock, Codeblock):
-                return  # TODO: Name
+                return "No name"  # TODO: Name
             else:
-                return "§6§lCode line"  # TODO: Colors enum
+                return Color.GOLD + Color.BOLD + "Code line"
 
         return [
             json.dumps(

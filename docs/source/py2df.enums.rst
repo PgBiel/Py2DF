@@ -68,6 +68,22 @@ py2df.enums.parameters module
    :undoc-members:
    :show-inheritance:
 
+py2df.enums.sounds module
+-------------------------
+
+.. automodule:: py2df.enums.sounds
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+py2df.enums.targets module
+--------------------------
+
+.. automodule:: py2df.enums.targets
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 py2df.enums.utilityblock module
 -------------------------------
 

@@ -3,13 +3,13 @@ Events and their decorators.
 """
 import typing
 from .reader import DFReader
-from ..classes import FunctionHolder
+from ..classes import FunctionHolder, Codeblock, JSONData
 from ..enums import PlayerEventType, EntityEventType, BlockType
 from ..utils import remove_u200b_from_doc
 from ..constants import BLOCK_ID, EMPTY_ARGS
 
 
-class PlayerEvent:
+class PlayerEvent(FunctionHolder, Codeblock, JSONData):
     """
     Describes a Player Event on DiamondFire. Implements :class:`~py2df.classes.abc.Codeblock` and
     :class:`~py2df.classes.abc.FunctionHolder`.
@@ -51,7 +51,12 @@ class PlayerEvent:
 
     action: PlayerEventType
 
+    data: None = None
+
     function: typing.Optional[typing.Callable]
+
+    sub_action: None = None
+    target: None = None
 
     def __init__(
         self, action: PlayerEventType, func: typing.Optional[typing.Callable] = None,
@@ -839,7 +844,7 @@ class PlayerEvent:
     # endregion:PlayerEvent_methods
 
 
-class EntityEvent:
+class EntityEvent(FunctionHolder):
     """
     Describes an Entity Event on DiamondFire. Implements :class:`~py2df.classes.abc.Codeblock` and
     :class:`~py2df.classes.abc.FunctionHolder`.
@@ -882,7 +887,12 @@ class EntityEvent:
 
     action: EntityEventType
 
+    data: None = None
+
     function: typing.Optional[typing.Callable]
+
+    sub_action: None = None
+    target: None = None
 
     def __init__(
         self, action: EntityEventType, func: typing.Optional[typing.Callable] = None,

@@ -5,6 +5,7 @@ ITEM_ID_ITEM = "item"
 ITEM_ID_SOUND = "snd"
 ITEM_ID_PARTICLE = "part"
 ITEM_ID_POTION = "pot"
+ITEM_ID_TAG = "bl_tag"
 
 BLOCK_ID = "block"
 

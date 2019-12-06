@@ -1,9 +1,9 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum
+from .enum_util import AutoSnakeToPascalCaseNameEnum, IfType
 from enum import auto, unique
 
 
 @unique
-class IfPlayerType(AutoSnakeToPascalCaseNameEnum):
+class IfPlayerType(IfType, AutoSnakeToPascalCaseNameEnum):
     """
     Contains all types of If Player blocks.
     """
@@ -45,7 +45,7 @@ class IfPlayerType(AutoSnakeToPascalCaseNameEnum):
 
 
 @unique
-class IfVariableType(AutoSnakeToPascalCaseNameEnum):
+class IfVariableType(IfType, AutoSnakeToPascalCaseNameEnum):
     """
     Contains all types of If Variable blocks.
     """
@@ -68,9 +68,8 @@ class IfVariableType(AutoSnakeToPascalCaseNameEnum):
     VAR_IS_TYPE = auto()  #: Checks if a variable is a certain type of variable.
 
 
-
 @unique
-class IfEntityType(AutoSnakeToPascalCaseNameEnum):
+class IfEntityType(IfType, AutoSnakeToPascalCaseNameEnum):
     """
     Contains all types of If Entity blocks.
     """
@@ -86,7 +85,7 @@ class IfEntityType(AutoSnakeToPascalCaseNameEnum):
 
 
 @unique
-class IfGameType(AutoSnakeToPascalCaseNameEnum):
+class IfGameType(IfType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of If Game blocks."""
     BLOCK_EQUALS = auto()  #: Checks if a block at a certain location is a certain block.
     BLOCK_POWERED = auto()  #: Checks if a block at a certain location is powered by redstone.

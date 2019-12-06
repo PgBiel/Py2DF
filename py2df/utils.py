@@ -101,4 +101,31 @@ def flatten(*args: typing.Any, allow_iterables: bool = True) -> list:
     return x
 
 
+T = typing.TypeVar("T")
+
+
+def all_attr_eq(a: T, b: T) -> bool:
+    """
+    Checks if two objects are equal by comparing their types and each of their attributes.
+
+    Parameters
+    ----------
+    a : Any
+        An object to compare.
+
+    b : Any
+        Another object to compare equality.
+
+    Returns
+    -------
+    :class:`bool`
+        Whether or not the objects are equal (if their types and attributes are all equal).
+    """
+    return type(a) == type(b) and all(
+        getattr(a, attr) == getattr(b, attr) for attr in getattr(
+            a.__class__, "__slots__", a.__dict__
+        ) or a.__class__.__dict__
+    )
+
+
 remove_u200b_from_doc(NBTWrapper)

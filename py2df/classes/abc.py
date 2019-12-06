@@ -6,15 +6,19 @@ from ..enums import BlockType, CodeblockActionType, ActionType, EventType, IfTyp
 from ..utils import remove_u200b_from_doc
 import typing
 
-from .mc_types import Item
-
 if typing.TYPE_CHECKING:
     from .collections import Arguments
+    from .mc_types import Item
 
 # region:Codeblock
 
 
-class Codeblock(metaclass=abc.ABCMeta):
+class Block(metaclass=abc.ABCMeta):
+    """An ABC that describes any block in code -- either Codeblock or Bracket."""
+    pass
+
+
+class Codeblock(Block, metaclass=abc.ABCMeta):
     """An ABC that describes any codeblock - event, action etc.
     
     Attributes\u200b
@@ -66,8 +70,19 @@ class Codeblock(metaclass=abc.ABCMeta):
                 return True
         return NotImplemented
 
+    def __repr__(self):
+        attrs = " ".join(
+            f"{attr}={getattr(self, attr)}" for attr in filter(lambda t: not str(t).startswith("_"), getattr(
+                self.__class__, "__slots__", self.__class__.__dict__
+            ))
+        )
+        if attrs:
+            attrs = " " + attrs
 
-class ActionBlock(metaclass=abc.ABCMeta):
+        return f"<{self.__class__.__name__}" + attrs + ">"
+
+
+class ActionBlock(Codeblock, metaclass=abc.ABCMeta):
     """An ABC that describes any action - Player Action, Game Action, Entity Action or Control.
     Must implement :class:`Codeblock`.
 
@@ -101,7 +116,7 @@ class ActionBlock(metaclass=abc.ABCMeta):
             if Codeblock.__subclasshook__(o_cls) is NotImplemented:  # must be a Codeblock
                 return NotImplemented
 
-            try:  # TODO: Entity action
+            try:
                 if BlockType(getattr(o_cls, "block")) in (
                         BlockType.PLAYER_ACTION, BlockType.GAME_ACTION, BlockType.CONTROL, BlockType.ENTITY_ACTION
                 ):
@@ -112,7 +127,7 @@ class ActionBlock(metaclass=abc.ABCMeta):
         return NotImplemented  # #
 
 
-class EventBlock(metaclass=abc.ABCMeta):
+class EventBlock(Codeblock, metaclass=abc.ABCMeta):
     """
     An ABC that describes any event - Player Event or Entity Event. Must implement :class:`Codeblock`.
 
@@ -154,7 +169,7 @@ class EventBlock(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
-class BracketedBlock(metaclass=abc.ABCMeta):
+class BracketedBlock(Codeblock, metaclass=abc.ABCMeta):
     """
     An ABC that describes any codeblock with brackets. Can be used on a `with` construct. Must implement
     :class:`CodeBlock`."""
@@ -201,7 +216,7 @@ class BracketedBlock(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class CallableBlock(metaclass=abc.ABCMeta):
+class CallableBlock(Codeblock, metaclass=abc.ABCMeta):
     """An ABC that describes any callable - Function or Process. Must implement :class:`Codeblock`.
 
     Includes all of :class:`Codeblock` 's attributes, plus:
@@ -242,7 +257,7 @@ class CallableBlock(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
-class CallerBlock(metaclass=abc.ABCMeta):
+class CallerBlock(Codeblock, metaclass=abc.ABCMeta):
     """An ABC that describes any caller - Call Function or Start Process. Must implement :class:`Codeblock`.
 
     Includes all of :class:`Codeblock` 's attributes, plus:
@@ -283,7 +298,7 @@ class CallerBlock(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
-class UtilityBlock(metaclass=abc.ABCMeta):
+class UtilityBlock(Codeblock, metaclass=abc.ABCMeta):
     """An ABC that describes any utility block - Set Var, Select Object or Repeat. Must implement :class:`Codeblock`.
 
     Includes all of :class:`Codeblock` 's attributes, plus:
@@ -356,7 +371,7 @@ class JSONData(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
-class BuildableJSONData(metaclass=abc.ABCMeta):
+class BuildableJSONData(JSONData, metaclass=abc.ABCMeta):
     """An ABC that describes a JSON Data class that can also build itself from pre-existing JSON data."""
     __slots__ = ()
 
@@ -406,7 +421,7 @@ class BuildableJSONData(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
-class Itemable(metaclass=abc.ABCMeta):
+class Itemable(JSONData, metaclass=abc.ABCMeta):
     """An ABC that describes a class representing an item or DF type (i.e., can be converted to
     :class:`~py2df.classes.mc_types.Item`)."""
     __slots__ = ()
@@ -422,7 +437,7 @@ class Itemable(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def to_item(self) -> Item:
+    def to_item(self) -> "Item":
         """Converts this class to an equivalent Item.
 
         Returns
@@ -455,9 +470,17 @@ class Itemable(metaclass=abc.ABCMeta):
 class Settable(metaclass=abc.ABCMeta):
     """An ABC that describes a class that can be ``.set()`` ."""
     @abc.abstractmethod
-    def set(self) -> "Settable":
+    def set(self, *args, **kwargs) -> "Settable":
         """
         Set this class instance's attributes.
+
+        Parameters
+        ----------
+        args : Any
+            Attributes to set.
+
+        kwargs : Any
+            Attributes to set.
 
         Returns
         -------
@@ -504,9 +527,14 @@ class FunctionHolder(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
+class DFType(Itemable, BuildableJSONData, Settable, metaclass=abc.ABCMeta):
+    """Represents a DiamondFire variable type."""
+    pass
+
+
 _abc_classes = (
-    Codeblock, EventBlock, BracketedBlock, CallableBlock, ActionBlock, JSONData, BuildableJSONData, Itemable, Settable,
-    FunctionHolder
+    Block, Codeblock, EventBlock, BracketedBlock, CallableBlock, ActionBlock, CallerBlock, UtilityBlock,
+    JSONData, BuildableJSONData, Itemable, Settable, FunctionHolder, DFType
 )
 remove_u200b_from_doc(_abc_classes)
 

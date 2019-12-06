@@ -1,6 +1,7 @@
 import typing
 from .enum_util import AutoLowerNameEnum
 from enum import auto, unique, Enum, EnumMeta
+from ..constants import SECTION_SIGN
 
 
 class _StandaloneHideFlagMeta(type):
@@ -73,7 +74,7 @@ class _HideFlagsSum(metaclass=_StandaloneHideFlagMeta):  # subclass to allow `is
         self.value: int = value
 
     def __repr__(self) -> str:
-        if self.value & HideFlags.ALL.value:
+        if self.value == HideFlags.ALL.value:
             return f"<HideFlags.ALL: {self.value}>"
 
         str_generated = "<"
@@ -144,3 +145,33 @@ class Enchantments(AutoLowerNameEnum):
     THORNS = auto()
     UNBREAKING = auto()
     VANISHING_CURSE = auto()
+
+
+class Color:
+    """
+    Represents all possible colors and formats of Minecraft. Accessing any attribute returns a string.
+    """
+    BLACK           = SECTION_SIGN + "0"
+    DARK_BLUE       = SECTION_SIGN + "1"
+    DARK_GREEN      = SECTION_SIGN + "2"
+    DARK_AQUA       = SECTION_SIGN + "3"
+    DARK_RED        = SECTION_SIGN + "4"
+    DARK_PURPLE     = SECTION_SIGN + "5"
+    GOLD            = SECTION_SIGN + "6"
+    GRAY            = SECTION_SIGN + "7"
+    DARK_GRAY       = SECTION_SIGN + "8"
+    BLUE            = SECTION_SIGN + "9"
+    GREEN           = SECTION_SIGN + "a"
+    AQUA            = SECTION_SIGN + "b"
+    RED             = SECTION_SIGN + "c"
+    LIGHT_PURPLE    = SECTION_SIGN + "d"
+    YELLOW          = SECTION_SIGN + "e"
+    WHITE           = SECTION_SIGN + "f"
+    OBFUSCATED      = SECTION_SIGN + "k"
+    BOLD            = SECTION_SIGN + "l"
+    STRIKETHROUGH   = SECTION_SIGN + "m"
+    UNDERLINE       = SECTION_SIGN + "n"
+    ITALIC          = SECTION_SIGN + "o"
+    RESET           = SECTION_SIGN + "r"
+
+Colour = Color  # alias

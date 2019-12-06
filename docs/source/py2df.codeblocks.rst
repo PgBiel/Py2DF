@@ -1,0 +1,22 @@
+py2df.codeblocks package
+========================
+
+Submodules
+----------
+
+py2df.codeblocks.actions module
+-------------------------------
+
+.. automodule:: py2df.codeblocks.actions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: py2df.codeblocks
+   :members:
+   :undoc-members:
+   :show-inheritance:

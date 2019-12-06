@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
    py2df.classes
+   py2df.codeblocks
    py2df.constants
    py2df.enums
    py2df.reading

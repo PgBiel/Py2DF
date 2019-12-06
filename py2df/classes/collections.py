@@ -4,8 +4,9 @@ Classes forming major DF-related collections.
 import typing
 import collections
 from .. import constants, errors
-from .mc_types import Item, DFType
-from .abc import Itemable
+from .dataclass import Tag
+from .abc import DFType, JSONData
+from .mc_types import DFTyping
 from ..utils import remove_u200b_from_doc
 
 
@@ -20,15 +21,50 @@ class Arguments:
     """
     items: "ItemCollection"
 
-    def __init__(self, items: "ItemCollection"):
+    def __init__(
+        self, items: typing.Optional[typing.Union["ItemCollection", typing.Iterable["OAcceptableItem"]]] = None,
+        *, tags: typing.Optional[typing.List[Tag]] = None
+    ):
         """
-        Init arguments.
-        :param items: Items to set.
+        Initialize :class:`Arguments` .
+        
+        Parameters
+        ----------
+        items : Optional[Union[:class:`ItemCollection`, Iterable[:class:`DFType`]]], optional
+            The items held by this :class:`Arguments` instance.
+            
+        tags : Optional[List[:class:`~py2df.classes.dataclass.Tag`]], optional
+            Optionally, tags to be added at the very end of items. **Be aware that this will override the last `n` items
+            of the item collection** (where `n` is the length of the list given for the ``tags`` parameter).
         """
-        self.items = items
+        self.items = ItemCollection(items) if items else ItemCollection()
+
+        if tags:  # let's add them to the end of the item collection.
+            n_tags = len(tags)
+            max_len = self.items.max_len
+            if n_tags > max_len:
+                raise errors.LimitReachedError(f"Can not assign {n_tags} tags to {max_len} items.")
+            
+            start_pos = max_len - n_tags
+            self.items.data[start_pos:] = tags
 
     def as_json_data(self) -> dict:
         return dict(items=self.items.as_json_data() if self.items else dict())
+
+    def __repr__(self) -> str:
+        start_str = "<Arguments"
+        if self.items:
+            start_str += " items=" + repr(self.items)
+
+        start_str += ">"
+        return start_str
+
+    def __str__(self) -> str:
+        return "<Arguments>"
+
+
+AcceptableItem = typing.Union[DFTyping, DFType, JSONData]  # for better code linting
+OAcceptableItem = typing.Optional[AcceptableItem]
 
 
 class ItemCollection(collections.UserList):  # [DFType]
@@ -44,7 +80,7 @@ class ItemCollection(collections.UserList):  # [DFType]
     
     Attributes
     -------------\u200b
-        data : List[DFType]
+        data : List[:class:`~py2df.classes.abc.DFType`]
             The internal item list; this should not be modified by the user.
         
         max_len : :class:`int`
@@ -56,8 +92,10 @@ class ItemCollection(collections.UserList):  # [DFType]
     max_len: int
 
     def __init__(
-        self, data: typing.Optional[typing.Union[typing.Iterable[DFType], DFType]] = constants.DEFAULT_VAL,
-        *items: typing.Optional[DFType],  # any other items/empty slots
+        self, data: typing.Optional[
+            typing.Union[typing.Iterable[AcceptableItem], AcceptableItem]
+        ] = constants.DEFAULT_VAL,
+        *items: OAcceptableItem,  # any other items/empty slots
         max_len: typing.Optional[int] = constants.DEFAULT_ITEM_COLLECTION_MAX_LEN
     ):
         """
@@ -65,11 +103,12 @@ class ItemCollection(collections.UserList):  # [DFType]
 
         Parameters
         ----------
-        data : Optional[Union[Iterable[:class:`DFType`], :class:`DFType`]]
-            An iterable of items (:class:`list`, :class:`ItemCollection`, etc.) or a single :class:`Item`/DFType to be
-            used with the `items` arg.
+        data : Optional[Union[Iterable[Union[:class:`~py2df.classes.abc.DFType`, :class:`~py2df.classes.abc.JSONData`]]\
+, Union[:class:`~py2df.classes.abc.DFType`, :class:`~py2df.classes.abc.JSONData`]]]
+            An iterable of items (:class:`list`, :class:`ItemCollection`, etc.) or a single
+            :class:`~py2df.classes.mc_types.Item`/DFType to be used with the `items` arg.
 
-        items : Optional[:class:`DFType`]
+        items : Optional[Union[:class:`~py2df.classes.abc.DFType`, :class:`~py2df.classes.abc.JSONData`]]
             Any other items to add. If `data` is an iterable, this is not considered.
 
         max_len : :class:`int`
@@ -80,15 +119,15 @@ class ItemCollection(collections.UserList):  # [DFType]
 
         if data is not constants.DEFAULT_VAL:  # if something was given...
             if isinstance(data, collections.abc.Iterable):
-                if any(not isinstance(it, Itemable) and it is not None for it in data):
+                if any(not isinstance(it, JSONData) and it is not None for it in data):
                     raise TypeError("There is a non-Item/DFType/None object within the given `data` arg.")
                 
                 self.data = list(data)
             else:
-                if not isinstance(data, Itemable):
+                if not isinstance(data, JSONData):
                     raise TypeError("`data` arg passed is not an Iterable nor an Item/DFType.")
                 
-                if any(not isinstance(it, Itemable) and it is not None for it in items):
+                if any(not isinstance(it, JSONData) and it is not None for it in items):
                     raise TypeError("There is a non-Item/DFType/None object within the given `items` arg.")
                 
                 self.data = [data, *items]
@@ -103,7 +142,7 @@ class ItemCollection(collections.UserList):  # [DFType]
             if length_given < max_len:
                 self.data.extend([None] * (max_len - length_given))  # fill out the missing empty slots.
         else:
-            self.data: typing.List[typing.Optional[DFType]] = [None] * max_len
+            self.data: typing.List[typing.Optional[JSONData]] = [None] * max_len
 
     def as_json_data(self) -> typing.List[dict]:
         """Convert this to a JSON-exportable list of dicts. (For internal use.)"""
@@ -111,17 +150,18 @@ class ItemCollection(collections.UserList):  # [DFType]
             dict(
                 item=item.as_json_data(),
                 slot=slot                 # We have to filter the enumeration in order to keep the slot indexes.
-            ) for slot, item in filter(lambda i, el: el is not None, enumerate(self.data))
+            ) for slot, item in filter(lambda tup: tup[1] is not None, enumerate(self.data))
         ]
 
         return gen_list
 
-    def append(self, val: DFType) -> None:
-        """Appends an :class:`Item`/DFType to the first empty slot available (smallest None index).
+    def append(self, val: AcceptableItem) -> None:
+        """Appends an :class:`~py2df.classes.mc_types.Item`/DFType to the first empty slot available
+        (smallest None index).
 
         Parameters
         ----------
-        val : `DFType`
+        val : Union[:class:`~py2df.classes.abc.DFType`, :class:`~py2df.classes.abc.JSONData`]
             The item/DFType to append.
 
         Returns
@@ -132,12 +172,13 @@ class ItemCollection(collections.UserList):  # [DFType]
         Raises
         ------
         :exc:`TypeError`
-            If there was an attempt to add `None` or non-`:class:`Item``/`DFType`.
+            If there was an attempt to add `None` or non-`:class:`~py2df.classes.mc_types.Item`` /
+            :class:`~py2df.classes.abc.DFType` .
         :exc:`LimitReachedError`
-            If there is no empty slot where to append the :class:`Item`/DFType to.
+            If there is no empty slot where to append the :class:`~py2df.classes.mc_types.Item`/DFType to.
 
         """
-        if not isinstance(val, Itemable):
+        if not isinstance(val, DFType):
             raise TypeError("Cannot append non-Item/DFType to ItemCollection.")
 
         first_available_slot = self.data.index(None)
@@ -146,13 +187,13 @@ class ItemCollection(collections.UserList):  # [DFType]
 
         self[first_available_slot] = typing.cast(DFType, val)
 
-    def remove(self, x: DFType) -> None:
-        """Removes an :class:`Item`/DFType, setting it to None.
+    def remove(self, x: AcceptableItem) -> None:
+        """Removes an :class:`~py2df.classes.mc_types.Item`/DFType, setting it to None.
 
         Parameters
         ----------
         x : DFType
-            :class:`Item`/DFType to remove.
+            :class:`~py2df.classes.mc_types.Item`/DFType to remove.
 
         Returns
         -------
@@ -176,27 +217,27 @@ class ItemCollection(collections.UserList):  # [DFType]
         super().clear()  # clears data
         self.data = [None] * old_len  # sets it all to None
 
-    def extend(self, other: typing.Iterable[DFType]) -> None:
+    def extend(self, other: typing.Iterable[AcceptableItem]) -> None:
         """Appends multiple items by replacing empty slots.
 
         Parameters
         ----------
-        other : Iterable[DFType]
-            Iterable of :class:`Item`/DFType.
+        other : Iterable[:class:`~py2df.classes.abc.DFType`]
+            Iterable of :class:`~py2df.classes.mc_types.Item`/:class:`~py2df.classes.abc.DFType`.
 
         Returns
         -------
         None
             None
         """
-        empty_slots = list(map(lambda t: t[0], filter(lambda i, el: el is None, enumerate(self.data))))
+        empty_slots = list(map(lambda t: t[0], filter(lambda tup: tup[1] is None, enumerate(self.data))))
         if len(empty_slots) < 1:
             raise errors.LimitReachedError("Cannot extend this item collection: there are no empty slots left.")
 
         empty_slots.append(None)  # so we can detect if the max length has been surpassed, otherwise zip just stops.
 
         for item, slot in zip(other, empty_slots):
-            if not isinstance(item, Itemable):
+            if not isinstance(item, JSONData):
                 raise TypeError("Iterable to extend with contains non-Item/DFType.")
 
             if slot is None:
@@ -213,12 +254,12 @@ class ItemCollection(collections.UserList):  # [DFType]
         """Amount of non-None items in the collection."""
         return len(list(filter(None, self.data)))
 
-    def __getitem__(self, ii: int) -> typing.Optional[DFType]:
+    def __getitem__(self, ii: int) -> OAcceptableItem:
         """
         Get an item at an index. Returns None if there is no item.
 
         :param ii: Index.
-        :return: :class:`Item`, if any, otherwise None.
+        :return: :class:`~py2df.classes.mc_types.Item`, if any, otherwise None.
         """
         if (ii - 1) > self.max_len:
             raise IndexError(f"Item collection index out of range (max for this instance: {self.max_len - 1}).")
@@ -235,24 +276,35 @@ class ItemCollection(collections.UserList):  # [DFType]
 
         super().__delitem__(ii)
         self.data.insert(ii, None)
-
-    def __setitem__(self, ii: int, val: typing.Optional[DFType]) -> None:
+    
+    @typing.overload
+    def __setitem__(self, item: int, val: OAcceptableItem) -> None: ...
+    
+    @typing.overload
+    def __setitem__(self, item: slice, val: typing.Iterable[OAcceptableItem]) -> None: ...
+    
+    def __setitem__(
+        self, item: typing.Union[int, slice], val: typing.Union[
+            OAcceptableItem,
+            typing.Iterable[OAcceptableItem]
+        ]
+    ) -> None:
         """
-        Set an item somewhere in the :class:`Item` Collection/grid.
+        Set an item somewhere in the :class:`~py2df.classes.mc_types.Item` Collection/grid.
 
-        :param ii: Index to set.
-        :param val: :class:`Item`/DF type to set.
+        :param item: Index to set, or :class:`slice`
+        :param val: :class:`~py2df.classes.mc_types.Item`/DF type to set, or an Iterable thereof (if ``item`` is slice)
         """
-        # optional: self._acl_check(val)
+        ii = item.stop if type(item) == slice else item
         if (ii - 1) > self.max_len:
             raise IndexError(
                 f"Item collection assignment index out of range (max for this instance: {self.max_len - 1})."
             )
 
-        if val is not None and not isinstance(val, Itemable):
+        if val is not None and not isinstance(val, collections.Iterable) and not isinstance(val, JSONData):
             raise TypeError("Attempt to set non-Item/DF type and non-None value to an ItemCollection instance.")
 
-        super().__setitem__(ii, typing.cast(DFType, val))
+        super().__setitem__(item, val)
 
     def __delslice__(self, i, j) -> None:
         the_slice = self.data[i:j]
