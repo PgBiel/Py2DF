@@ -7,14 +7,24 @@ import re
 import collections
 import operator
 import json
+import nbtlib as nbt
+from nbtlib.tag import Base
 from .. import constants
 from dataclasses import dataclass
-from ..enums import Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect
+from ..enums.misc_mc_enums import _HideFlagsSum
+from ..enums import (
+    Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect, Color, Enchantments,
+    GameValueType, Target, PlayerTarget, EntityTarget
+)
 from .subcollections import Lore
 from .dataclass import Enchantment
 from .abc import DFType
-from ..utils import nbt_dict_to_str, NBTWrapper, remove_u200b_from_doc
-from ..constants import DEFAULT_VAL, DEFAULT_SOUND_PITCH, DEFAULT_SOUND_VOL
+from ..utils import remove_u200b_from_doc, clamp, select_dict, nbt_to_python, all_attr_eq
+from ..schemas import ItemSchema, ItemTagSchema, ItemDisplaySchema, ItemEnchantmentSchema
+from ..constants import (
+    DEFAULT_VAL, DEFAULT_SOUND_PITCH, DEFAULT_SOUND_VOL, MAX_PITCH_DEGREES, MAX_YAW_DEGREES,
+    MAX_ITEM_STACK_SIZE, MIN_ITEM_STACK_SIZE
+)
 
 
 class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
@@ -71,14 +81,14 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
     )
 
     def __init__(
-            self, material: Material, amount: int = 1,
-            *, name: typing.Optional[typing.Union[str, "DFText"]] = None,
-            lore: typing.Union[Lore, typing.Optional[typing.Iterable[str]]] = Lore(),
-            enchantments: typing.Optional[typing.Iterable[Enchantment]] = None,
-            damage: int = 0, unbreakable: bool = False, hide_flags: typing.Optional[HideFlags] = None,
-            leather_armor_color: typing.Optional[int] = None,
-            entity_tag: typing.Optional[typing.Union[dict, str]] = None,
-            extra_tags: typing.Optional[typing.Union[dict, str]] = None
+        self, material: Material, amount: int = 1,
+        *, name: typing.Optional[typing.Union[str, "DFText"]] = None,
+        lore: typing.Union[Lore, typing.Optional[typing.Iterable[str]]] = Lore(),
+        enchantments: typing.Optional[typing.Iterable[Enchantment]] = None,
+        damage: int = 0, unbreakable: bool = False, hide_flags: typing.Optional[HideFlags] = None,
+        leather_armor_color: typing.Optional[int] = None,
+        entity_tag: typing.Optional[typing.Union[dict, str]] = None,
+        extra_tags: typing.Optional[typing.Union[dict, str]] = None
     ):
         """Initialize the item stack.
 
@@ -115,10 +125,10 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
             If this is a piece of leather armor, specify its color through an integer. Tip: Use
             ``0x......`` for hexadecimal colors.
 
-        entity_tag : Optional[Union[:class:`dict`, :class:`str`]]
-            An optional :class:`str` or :class:`dict` representing Entity NBT tags applied on entities that are spawned
+        entity_tag : Optional[Union[:class:`dict`, :class:`str`, :class:`nbtlib.Compound`]]
+            An optional TAG_Compound (NBT) representing Entity NBT tags applied on entities that are spawned
             through this item. Applies to the materials: (X)_SPAWN_EGG; TROPICAL_FISH_BUCKET; ARMOR_STAND. Default:
-            None
+            None (Note: If this is given a string, it must be a valid SNBT string)
 
         extra_tags : Optional[Union[:class:`dict`, :class:`str`]]
             Any extra NBT tags you'd like to give your item, either as a :class:`dict` of NBT tags or a valid NBT
@@ -167,15 +177,68 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
     @amount.setter
     def amount(self, new_amt: int) -> None:
         i_n_amt = int(new_amt)
-        if i_n_amt > constants.MAX_ITEM_STACK_SIZE:
-            raise ValueError(f"Maximum item stack size is {constants.MAX_ITEM_STACK_SIZE}.")
+        if i_n_amt > MAX_ITEM_STACK_SIZE:
+            raise ValueError(f"Maximum item stack size is {MAX_ITEM_STACK_SIZE}.")
 
-        if i_n_amt < constants.MIN_ITEM_STACK_SIZE:
-            raise ValueError(f"Minimum item stack size is {constants.MIN_ITEM_STACK_SIZE}.")
+        if i_n_amt < MIN_ITEM_STACK_SIZE:
+            raise ValueError(f"Minimum item stack size is {MIN_ITEM_STACK_SIZE}.")
 
         self._amount = i_n_amt
 
-    def as_nbt(self) -> str:
+    def as_nbt(self) -> nbt.Compound:
+        """Produces a NBT representation of this Item.
+
+        Returns
+        -------
+        :class`nbtlib.Compound`
+            A NBT Tag_Compound (dictionary-like structure) representing this item.
+        """
+        tag = ItemTagSchema()
+        if self.damage > 0:
+            tag["Damage"] = int(self.damage)
+
+        if self.unbreakable:
+            tag["Unbreakable"] = 1
+
+        if self.entity_tag:  # custom entity-related nbt
+            ent_t = self.entity_tag
+            if isinstance(ent_t, str) or isinstance(ent_t, collections.UserString):
+                tag["EntityTag"] = nbt.parse_nbt(ent_t)
+            else:  # must be a nbtlib.Compound or dict already
+                tag["EntityTag"] = ent_t
+
+        if any([self.leather_armor_color is not None, self.name, self.lore]):
+            display = ItemDisplaySchema()
+            if self.name:
+                display["Name"] = json.dumps(dict(text=self.name))
+
+            if self.lore:
+                display["Lore"] = self.lore.as_json_data()
+
+            if self.leather_armor_color is not None:
+                display["color"] = self.leather_armor_color
+
+            tag["display"] = display
+
+        if self.hide_flags and self.hide_flags.value:
+            tag["HideFlags"] = self.hide_flags.value
+
+        if self.extra_tags:
+            ext_t = self.extra_tags
+            tag.update(
+                nbt.serialize_tag(
+                    ext_t
+                ) if isinstance(ext_t, (str, collections.UserString)) else ext_t
+            )
+
+        main_nbt = ItemSchema(
+            id=f"minecraft:{self.material.value}",
+            Count=clamp(int(self.amount), 1, 64),
+            tag=tag
+        )
+        return main_nbt
+
+    def as_snbt(self) -> str:
         """Returns this item as a NBT string.
 
         Returns
@@ -183,58 +246,172 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
         :class:`str`
             SBNT string.
         """
-        tag_dict = dict(
-            **(dict(Damage=int(self.damage)) if self.damage != 0 else dict()),
-            **(dict(Unbreakable=NBTWrapper("1b")) if self.unbreakable else dict()),  # NBTWrapper is used to ensure
-            **(dict(                                                                 # quotes aren't used
-                EntityTag=(
-                    nbt_dict_to_str(self.entity_tag) if type(self.entity_tag) == dict else NBTWrapper(self.entity_tag)
-                ) if self.entity_tag else dict()
-            )),
-            **(dict(
-                display=dict(
-                    **(dict(color=self.leather_armor_color) if self.leather_armor_color is not None else dict()),
-                    **(dict(Name=json.dumps(str(self.name))) if self.name else dict()),
-                    **(dict(Lore=self.lore.as_json_data() if self.lore else dict()))
-                ) if any([self.leather_armor_color is not None, self.name, self.lore]) else dict()
-            )),
-            **(dict(HideFlags=self.hide_flags.value) if self.hide_flags and self.hide_flags.value else dict())
-        )
-        if type(self.extra_tags) == str:
-            tag_dict["extra_tags"] = NBTWrapper(self.extra_tags)
+        return nbt.serialize_tag(self.as_nbt())
 
-        elif type(self.extra_tags) == dict:
-            tag_dict.update(self.extra_tags)
+    @classmethod
+    def from_nbt(cls, data: typing.Union[typing.Dict[str, Base], nbt.Compound]) -> "Item":
+        """Produces an Item instance from a TAG_Compound (the Item's NBT).
 
-        dict_with_data = dict(
-            id=f"minecraft:{self.material.value}",
-            Count=NBTWrapper(f"{min(max(self.amount, 1), 64)}b"),  # TODO: Finish this NBT
-            tag=tag_dict
-        )
+        Parameters
+        ----------
+        data : Union[Dict[:class:`str`, :class:`nbtlib.Base`], :class:`nbtlib.Compound`]
+            The item's NBT data (either a dict or a Compound class from nbtlib).
 
-        return nbt_dict_to_str(dict_with_data)
+        Returns
+        -------
+        :class:`Item`
+            The Item instance representing this NBT data.
+
+        See Also
+        --------
+        :meth:`Item.from_snbt`
+        """
+        data = ItemSchema(data)
+
+        new = cls(Material.STONE)
+
+        id_: nbt.String = data.get("id")
+        count: nbt.Byte = data.get("Count")
+
+        if id_:
+            new.material = Material(nbt_to_python(id_).replace("minecraft:", ""))  # remove surrounding quotes; etc
+
+        if count:
+            new.amount = nbt_to_python(count)
+
+        tag: ItemTagSchema = data.get("tag")
+
+        if tag:
+            for tag_a, item_a in (
+                ("Damage", "damage"), ("Unbreakable", "unbreakable")
+            ):
+                if tag_a in tag:
+                    setattr(new, item_a, nbt_to_python(tag[tag_a]))
+
+            hide_flags: nbt.Int = tag.get("HideFlags")
+            enchants: nbt.List[ItemEnchantmentSchema] = tag.get("Enchantments")
+            display: ItemDisplaySchema = tag.get("display")
+            entity_tag: nbt.Compound = tag.get("EntityTag")
+            extra_tags: set = set(tag.keys()) - {
+                "Damage", "Unbreakable", "HideFlags", "Enchantments", "display", "EntityTag"
+            }
+
+            if hide_flags:
+                i_hide_flags = int(nbt_to_python(hide_flags))
+                try:
+                    new.hide_flags = HideFlags(i_hide_flags)
+                except ValueError:
+                    new.hide_flags = _HideFlagsSum(i_hide_flags)
+
+            if enchants:  # convert the Enchantment schemas
+                new.enchantments = [Enchantment(Enchantments(obj["id"]), obj["lvl"]) for obj in nbt_to_python(enchants)]
+
+            if display:
+                disp_dict = nbt_to_python(display)
+                for disp_a, item_a in (
+                    ("Name", "name"), ("color", "leather_armor_color")
+                ):
+                    if disp_a in tag:
+                        setattr(new, item_a, disp_dict[disp_a])
+
+                if "Lore" in disp_dict:
+                    def parse_line(line: str):
+                        try:
+                            parsed = json.loads(line)
+                            if type(parsed) == str:
+                                return parsed or None
+                            elif type(parsed) == dict:
+                                return parsed.get("text") or None
+                            else:
+                                return None
+                        except json.JSONDecodeError:
+                            return line or ""
+
+                    new.lore = Lore(map(parse_line, disp_dict["Lore"]))
+
+            if entity_tag:
+                new.entity_tag = entity_tag
+
+            if extra_tags:
+                new.extra_tags = nbt.Compound(select_dict(tag, extra_tags))
+
+        return new
+
+    @classmethod
+    def from_sbnt(cls, data: str) -> "Item":
+        """Produces an Item instance from a string of SNBT.
+
+        Parameters
+        ----------
+        data : :class:`str`
+            The item's NBT data, as a string.
+
+        Returns
+        -------
+        :class:`Item`
+            The Item instance representing this NBT data.
+
+        See Also
+        --------
+        :meth:`Item.from_nbt`
+        """
+
+        return cls.from_nbt(nbt.parse_nbt(data))
 
     def as_json_data(self) -> dict:
-        """Returns this item as valid DF json representation (as a :class:`dict`, not as a string).
+        """Returns this item as valid DF json representation (as a serializable :class:`dict`, not as a string).
 
         Returns
         -------
         :class:`dict`
+            A JSON-serializable dict.
         """
         return dict(
             id=constants.ITEM_ID_ITEM,
             data=dict(
-                item=self.as_nbt()  # it seems "DF_NBT = 1976" is just a means of representing version; can be ignored.
+                item=self.as_snbt()  # it seems "DF_NBT = 1976" is just a means of representing version; can be ignored.
             )
         )
 
-    def from_json_data(self) -> "Item":
-        pass  # TODO - ok now, this will be hard... gotta interpret NBT
+    @classmethod
+    def from_json_data(cls, data: dict) -> "Item":
+        """Produces an :class:`Item` instance from a valid parsed JSON dict.
+
+        Parameters
+        ----------
+        data : :class:`dict`
+            The parsed JSON data.
+
+        Returns
+        -------
+        :class:`Item`
+            The equivalent :class:`Item` instance.
+        """
+        if (
+            not isinstance(data, dict)
+            # or "id" not in data  # not really required
+            or "data" not in data
+            or not isinstance(data["data"], dict)
+            or "item" not in data["data"]
+            or not type(data["data"]["item"]) == str
+        ):
+            raise TypeError(
+                "Malformed Item parsed JSON data! Must be a dict with, at least, a 'data' dict and an 'item' str value."
+            )
+
+        return cls.from_sbnt(data["data"]["item"])
 
     def to_item(self) -> "Item":
-        return self  # well... yeah
+        """Obtains an Item representation of this Item instance.
 
-    def set(self, material: Material = DEFAULT_VAL, *args, **kwargs) -> None:
+        Returns
+        -------
+        :class:`Item`
+            An identical copy of this :class:`Item` .
+        """
+        return self.copy()  # well... yeah
+
+    def set(self, material: Material = DEFAULT_VAL, *args, **kwargs) -> "Item":
         """Refer to __init__'s documentation.
 
         Parameters
@@ -248,14 +425,13 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
 
         Returns
         -------
-        None
-            None
+        ``Item``
+            self to allow chaining.
 
-        Warnings
-        --------
-        This function is not done yet.
+        Todo
+        ----
+        Finish this function.
         """
-        # TODO: finish
         pass
 
     def copy(self) -> "Item":
@@ -445,7 +621,6 @@ class DFText(collections.UserString, DFType):
         ----------
         data : :class:`dict`
             The parsed JSON :class:`dict`.
-            
 
         Returns
         -------
@@ -455,7 +630,7 @@ class DFText(collections.UserString, DFType):
         Raises
         ------
         :exc:`TypeError`
-            If the data
+            If the data is malformed (does not follow the structure detailed above).
         """
         if (
             not isinstance(data, dict)
@@ -702,10 +877,10 @@ class DFLocation(DFType):
             The value of the z position.
     
         pitch : :class:`float`
-            The pitch value.
+            The pitch value (up/down rotation). Varies between ``-90.0`` and ``90.0``
     
         yaw : :class:`float`
-            The yaw value.
+            The yaw value (left/right rotation). Varies between ``-180.0`` and ``180.0``
     
         is_block : :class:`bool`
             Whether or not this location represents a solid (non-air) block. Defaults to False.
@@ -775,19 +950,19 @@ class DFLocation(DFType):
         Parameters
         ----------
         x : Union[:class:`int`, :class:`float`]
-            The value of the x position (:class:`float`).
+            The value of the x position.
 
         y : Union[:class:`int`, :class:`float`]
-            The value of the y position (:class:`float`).
+            The value of the y position.
 
         z : Union[:class:`int`, :class:`float`]
-            The value of the z position (:class:`float`).
+            The value of the z position.
 
         pitch : Union[:class:`int`, :class:`float`]
-            The pitch value (:class:`float`).
+            The pitch value (up/down rotation). Varies between ``-90.0`` and ``90.0`` (any higher/lower will be %'ed).
 
         yaw : Union[:class:`int`, :class:`float`]
-            The yaw value (:class:`float`).
+            The yaw value (left/right rotation). Varies between ``-180.0`` and ``180.0`` (any higher/lower will be %ed).
 
         is_block : :class:`bool`
             Whether or not this location represents a solid (non-air) block. (:class:`bool`) Defaults to False.
@@ -799,8 +974,13 @@ class DFLocation(DFType):
         self.x = float(x)
         self.y = float(y)
         self.z = float(z)
-        self.pitch = float(pitch)
-        self.yaw = float(yaw)
+
+        fl_pitch = float(pitch)
+        fl_yaw = float(yaw)
+
+        self.pitch = math.copysign(abs(fl_pitch) % MAX_PITCH_DEGREES, fl_pitch)
+        self.yaw = math.copysign(abs(fl_yaw) % MAX_YAW_DEGREES, fl_yaw)
+        
         self.is_block = bool(is_block)
         # self.world_least = None if world_least is None else :class:`int`(world_least)
         # self.world_most = None if world_most is None else :class:`int`(world_most)
@@ -1019,7 +1199,9 @@ class DFLocation(DFType):
 
             setattr(new_loc, attr, float(arithmetic(float(old_val), float(val))))
 
-        for mod_attr, val in zip(("pitch", "yaw"), (pitch, yaw)):  # gotta do this mod 360, they're rotation values.
+        for mod_attr, val, max_deg in zip(
+                ("pitch", "yaw"), (pitch, yaw), (MAX_PITCH_DEGREES, MAX_YAW_DEGREES)
+        ):  # gotta do this mod 360, they're rotation values.
             if val is None:
                 continue  # keep current value
 
@@ -1032,8 +1214,8 @@ class DFLocation(DFType):
                 arithmetic(float(old_val), float(val))
             )
             setattr(
-                new_loc, mod_attr, math.copysign(abs(result_val) % constants.MAX_DEGREES, result_val)
-            )                                                       # mod 360 degrees, while keeping the sign (- or +).
+                new_loc, mod_attr, math.copysign(abs(result_val) % max_deg, result_val)
+            )                                                       # mod 90/180 degrees, keeping the sign (- or +).
 
         return new_loc
 
@@ -1540,25 +1722,51 @@ class DFCustomSpawnEgg(DFType):
             self to allow chaining
 
         """
-        if not isinstance(egg_type, CustomSpawnEggType):
-            raise TypeError("Egg type must be an instance of CustomSpawnEggType enum.")
-
         self.egg_type = egg_type
 
         return self
 
-    def __post_init__(self):
-        if not isinstance(self.egg_type, CustomSpawnEggType):
-            raise TypeError("Egg type must be an instance of CustomSpawnEggType enum.")
+    def as_json_data(self) -> dict:
+        """Representation of this :class:`DFCustomSpawnEgg` as a valid json-serializable :class:`dict`.
 
-    def to_item(self):
-        pass  # TODO: egg lol
+        Returns
+        -------
+        :class:`dict`
+            JSON-serializable dict.
+        """
+        return self.to_item().as_json_data()
+
+    @classmethod
+    def from_json_data(cls, data: dict) -> "DFCustomSpawnEgg":
+        """Obtain :class:`DFCustomSpawnEgg` from pre-existing parsed JSON data.
+
+        Parameters
+        ----------
+        data : :class:`dict`
+            The parsed JSON :class:`dict`.
+
+        Returns
+        -------
+        :class:`DFCustomSpawnEgg`
+            :class:`DFCustomSpawnEgg` instance.
+
+        """
+        new_item: Item = Item.from_json_data(data)
+        type_name = new_item.name.replace(Color.YELLOW, "")
+
+        return cls(getattr(CustomSpawnEggType, type_name.upper()))
+
+    def to_item(self) -> Item:
+        return Item(
+            self.egg_type[0],
+            name=Color.YELLOW + self.egg_type[1]
+        )
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} egg_type={self.egg_type.value}>"
+        return f"<{self.__class__.__name__} egg_type={self.egg_type.name}>"
 
     def __str__(self) -> str:
-        return str(self.egg_type.value)
+        return str(self.egg_type.name)
 
     def __eq__(self, other: "DFCustomSpawnEgg") -> bool:
         return type(self) == type(other) and self.egg_type == other.egg_type
@@ -1568,8 +1776,6 @@ class DFCustomSpawnEgg(DFType):
 
     def __hash__(self):
         return hash(("DFCustomSpawnEgg", self.egg_type.value))
-
-    # TODO: Figure out json for Custom Spawn Egg.
 
 
 class DFPotion(DFType):
@@ -1675,13 +1881,66 @@ class DFPotion(DFType):
             id=constants.ITEM_ID_POTION,
             data=dict(
                 pot=self.effect.value,
-                dur=None,  # TODO: Figure out dur json; milliseconds?
+                dur=self.duration[0] * 60 * 20 + self.duration[1] * 20,  # (min; seconds) => ticks
                 amp=self.amplifier
             )
         )
 
-    def from_json_data(self) -> dict:
-        pass  # TODO: Figure out dur json then implement this
+    @classmethod
+    def from_json_data(cls, data: dict) -> "DFPotion":
+        """Obtain variable from pre-existing parsed JSON data.
+
+        Must be of the form (have at least those keys)::
+
+            { "data": { "pot": str, "dur": int, "amp": int } }
+
+        Where ``str`` or ``int`` are the respective types of the values.
+
+        Parameters
+        ----------
+        data : :class:`dict`
+            The parsed JSON :class:`dict`.
+
+        Returns
+        -------
+        :class:`DFPotion`
+            The equivalent :class:`DFPotion` instance.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the data is malformed (does not follow the structure detailed above).
+        """
+        if (
+            not isinstance(data, dict)
+            # or "id" not in data  # not really required
+            or "data" not in data
+            or not isinstance(data["data"], dict)
+            or "pot" not in data["data"]
+            or type(data["data"]["pot"]) != str
+            or "dur" not in data["data"]
+            or type(data["data"]["pot"]) not in (int, float)
+            or "amp" not in data["data"]
+            or type(data["data"]["pot"]) not in (int, float)
+        ):
+            raise TypeError(
+                "Malformed DFPotion parsed JSON data! Must be a dict with, at least, a 'data' dict containing"
+                "a 'pot' key of type str and 'dur' and 'amp' keys, both of type int."
+            )
+
+        in_data = data["data"]
+
+        pot = PotionEffect(in_data["pot"])
+
+        int_given_dur = int(in_data["dur"])
+        total_secs = int_given_dur / 20
+        minutes = total_secs // 60
+        seconds = total_secs % 60
+        dur = (minutes, seconds)
+
+        amp = int(in_data["amp"])
+
+        return cls(pot, dur, amp)
 
     def to_item(self) -> Item:
         pass  # TODO
@@ -1826,12 +2085,166 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return self
 
 
-# TODO: GameValue; DFVariable/DynamicVar
+class DFGameValue(DFType):
+    """Used for game values, that change depending on the plot's state.
 
-_classes = (Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion)
+    Attributes
+    ----------\u200b
+        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
+            The type of Game Value this is.
+
+        target : Optional[:class:`~py2df.enums.targets.Target`], optional
+            The target of this Game Value, or None. Defaults to None.
+
+    **Supported Comparisons**
+
+        ``a == b``: Checks if two :class:`DFGameValue` instances have the same `gval_type` and `target` attributes.
+
+        ``a != b``: Same as `not a == b`
+    """
+    __slots__ = ("gval_type", "target")
+
+    gval_type: GameValueType
+    target: typing.Optional[Target]
+
+    def __init__(self, gval_type: GameValueType, target: typing.Optional[Target] = None):
+        """
+        Initializes the Game Value.
+
+        Parameters
+        ----------
+        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
+            The type of Game Value this is.
+
+        target : Optional[:class:`~py2df.enums.targets.Target`], optional
+            The target of this Game Value, or None. Defaults to None.
+        """
+
+        self.gval_type = GameValueType(gval_type)
+        self.target = target or None
+
+    def set(
+        self, gval_type: GameValueType = DEFAULT_VAL, target: typing.Optional[Target] = DEFAULT_VAL
+    ) -> "DFGameValue":
+        """Configures this Game Value.
+
+        Parameters
+        ----------
+        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
+            The type of Game Value this is.
+
+        target : Optional[:class:`~py2df.enums.targets.Target`], optional
+            The target of this Game Value, or None.
+
+        Returns
+        -------
+        :class:`DFGameValue`
+            self to allow chaining.
+        """
+
+        if gval_type != DEFAULT_VAL:
+            self.gval_type = GameValueType(gval_type)
+
+        if target != DEFAULT_VAL:
+            self.target = target or None
+
+        return self
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} gval_type='{self.gval_type.value}'>"
+
+    def __str__(self):
+        return self.gval_type.value
+
+    def as_json_data(self) -> dict:
+        """Obtains a JSON-serializable dict representation of this Game Value.
+
+        Returns
+        -------
+        :class:`dict`
+            A JSON-serializable dict.
+        """
+        return dict(
+            id=constants.ITEM_ID_GAME_VALUE,
+            data=dict(
+                type=self.gval_type.value,
+                target=self.target.value if self.target else None
+            )
+        )
+    
+    @classmethod
+    def from_json_data(cls, data: dict):
+        """Obtain a Game Value from pre-existing parsed JSON data.
+
+        Must be of the form (have at least those keys)::
+
+            { "data": { "type": str, "target": str } }
+
+        Where ``str`` would be the type of the value.
+
+        Parameters
+        ----------
+        data : :class:`dict`
+            The parsed JSON :class:`dict`.
+
+        Returns
+        -------
+        :class:`DFGameValue`
+            :class:`DFGameValue` instance.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the data is malformed (does not follow the structure detailed above).
+        """
+        if (
+            not isinstance(data, dict)
+            # or "id" not in data  # not really required
+            or "data" not in data
+            or not isinstance(data["data"], dict)
+            or "type" not in data["data"]
+            or type(data["data"]["type"]) != str
+            or "target" not in data["data"]
+            or type(data["data"]["target"]) != str
+        ):
+            raise TypeError(
+                "Malformed DFGameValue parsed JSON data! Must be a dict with, at least, a 'data' dict containing"
+                "'type' and 'target' str values."
+            )
+        
+        in_data = data["data"]
+        target_str = in_data["target"]
+        target_instance = None
+        if target_str.lower() != "none":
+            try:
+                target_instance = PlayerTarget(target_str)
+            except ValueError:
+                try:
+                    target_instance = EntityTarget(target_str)
+                except ValueError as e:
+                    raise ValueError("Invalid target specified in Game Value JSON data.") from e
+        
+        return cls(GameValueType(in_data["type"]), target_instance)
+    
+    def to_item(self) -> "Item":
+        pass  # TODO: Apple
+
+    def __eq__(self, other: "DFGameValue") -> bool:
+        return all_attr_eq(self, other)
+
+    def __ne__(self, other: "DFGameValue") -> bool:
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.gval_type, str(self.target)))
+        
+
+# TODO: DFVariable/DynamicVar
+
+_classes = (Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion, DFGameValue)
 
 DFTyping = typing.Union[
     Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion
-]  # TODO: GameValue etc
+]  # TODO: Dynamic variable
 
 remove_u200b_from_doc(_classes)

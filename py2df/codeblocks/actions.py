@@ -382,29 +382,60 @@ class Control(ActionBlock, JSONData):
     @classmethod
     def wait(
             cls, duration: typing.Union[int, float, DFNumber] = DEFAULT_VAL,
-            *, time_unit: enums.CWaitTag = enums.CWaitTag.TICKS
+            *, time_unit: enums.CWaitTag = DEFAULT_VAL,
+            ticks: bool = True, seconds: bool = False, minutes: bool = False
     ) -> "Control":
         """Pauses the current line of code for a certain amount of ticks. seconds, or minutes.
 
         Parameters
         ----------
-        duration : Union[:class:`int`, :class:`float`, :class:`~py2df.classes.mc_types.DFNumber`]
+        duration : Union[:class:`int`, :class:`float`, :class:`~py2df.classes.mc_types.DFNumber`], optional
             The duration of time to wait for, according to the time unit specified in the ``time_unit`` param.
             Defaults to ``1``
 
-        time_unit : :class:`~py2df.enums.actions.CWaitTag`
+        time_unit : :class:`~py2df.enums.actions.CWaitTag`, optional
             The time unit that the duration was specified in. Defaults to :attr:`~py2df.enums.actions.CWaitTag.TICKS`.
+
+        ticks : :class:`bool`, optional
+            Alternatively, setting this to True sets time_unit to :attr:`~py2df.enums.actions.CWaitTag.TICKS`.
+            Defaults to ``True`` .
+
+        seconds : :class`bool`, optional
+            Alternatively, setting this to True sets time_unit to :attr:`~py2df.enums.actions.CWaitTag.SECONDS`.
+            Defaults to ``False`` .
+
+        minutes : :class:`bool`, optional
+            Alternatively, setting this to True sets time_unit to :attr:`~py2df.enums.actions.CWaitTag.MINUTES`.
+            Defaults to ``False`` .
 
         Returns
         -------
         :class:`Control`
             The generated :class:`Control` block.
+
+        Warnings
+        --------
+        Setting ``time_unit`` to anything will override the ``ticks`` , ``seconds`` and ``minutes`` params. Also,
+        note that you cannot set more than one of them to ``True``. If that happens, the first of the following line
+        ``[seconds, minutes, ticks]`` that is ``True`` is chosen as the unit.
         """
+        if time_unit == DEFAULT_VAL:
+            if seconds:
+                time_unit = enums.CWaitTag.SECONDS
+            elif minutes:
+                time_unit = enums.CWaitTag.MINUTES
+            else:
+                time_unit = enums.CWaitTag.TICKS
+
         return Control(
             ControlType.WAIT,
             Arguments(
                 items=[DFNumber(duration)] if duration != DEFAULT_VAL else None,
-                tags=[Tag("Time Unit", option=enums.CWaitTag(time_unit), action=ControlType.WAIT, block=cls.block)]
+                tags=[Tag(
+                    "Time Unit",
+                    option=enums.CWaitTag(time_unit),
+                    action=ControlType.WAIT, block=cls.block
+                )]
             ),
             append_to_reader=True
         )

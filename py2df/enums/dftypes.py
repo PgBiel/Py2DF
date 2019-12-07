@@ -1,5 +1,6 @@
 from .enum_util import AutoSnakeToCapitalizedWordsEnum
-from enum import auto, unique
+from .materials import Material
+from enum import auto, unique, Enum
 
 
 @unique
@@ -48,9 +49,15 @@ class ParticleType(AutoSnakeToCapitalizedWordsEnum):
     WITCH_MAGIC = auto()
 
 
-@unique  # <- still don't know which enum type to use! Snake->Words? Snake->Pascal?
-class CustomSpawnEggType(AutoSnakeToCapitalizedWordsEnum):
-    pass  # TODO: Use in Minecraft and find out its json; Ender Dragon, Giant, Iron/Snow Golem, etc
+@unique
+class CustomSpawnEggType(Enum):
+    IRON_GOLEM = (Material.POLAR_BEAR_SPAWN_EGG, "Iron Golem")
+    KILLER_BUNNY = (Material.RABBIT_SPAWN_EGG, "Killer Bunny")
+    SNOW_GOLEM = (Material.GHAST_SPAWN_EGG, "Snow Golem")
+    ILLUSIONER = (Material.VILLAGER_SPAWN_EGG, "Illusioner")
+    GIANT = (Material.ZOMBIE_SPAWN_EGG, "Giant")
+    WITHER = (Material.WITHER_SKELETON_SPAWN_EGG, "Wither")
+    ENDERDRAGON = (Material.ENDERMAN_SPAWN_EGG, "Enderdragon")
 
 
 @unique
@@ -90,4 +97,549 @@ class PotionEffect(AutoSnakeToCapitalizedWordsEnum):
 
 @unique
 class GameValueType(AutoSnakeToCapitalizedWordsEnum):
-    pass  # TODO: Use in Minecraft and find out its json
+    """Represents the types of Game Values there are in DiamondFire. In the Documentation of each item, the "Return
+    Type" is what the game value actually represents functionally.
+    """
+    ARMOR_ITEMS = auto()
+    """The items in the target's armor slots.
+
+    Returns
+    -------
+    List
+        Contains one Item entry for each armor slot (air if empty, 4 in total)
+    """
+
+    ARMOR_POINTS = auto()
+    """The target's armor points, which has a base value that can be altered by items.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 (no armor) to 20.0 (full bar)
+    """
+
+    ARMOR_TOUGHNESS = auto()
+    """The target's armor toughness, which has a base value that can be altered by items.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 or above (full set of diamond armor = 8.0)
+    """
+
+    ATTACK_DAMAGE = auto()
+    """The target's attack damage, which has a base value that can be altered by items.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 or higher (more damage)
+    """
+
+    ATTACK_SPEED = auto()
+    """The target's attack speed, which has a base value that can be altered by items.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 or higher (faster)
+    """
+
+    CPU_USAGE = auto()
+    """The percent of the plot's CPU (as seen in /lagslayer) being used this instant.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        Usage, from 0% to 100%
+    """
+
+    CLOSE_INVENTORY_EVENT_CAUSE = auto()
+    """The reason the player's inventory was closed in this event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Close Cause: "player", "code", "open_new",  "teleport", "unloaded",  "cant_use", "disconnect",  "death", "unknown"
+    """
+
+    CURSOR_ITEM = auto()
+    """The item on the target's cursor (used when moving items in the inventory).
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.Item`
+        Item on the cursor
+    """
+
+    DAMAGE_EVENT_CAUSE = auto()
+    """The type of damage taken or dealt in this event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Damage Cause: ``"block_explosion"``, ``"contact"`` (cactus),  ``"cramming"``, ``"custom"`` (damage action),
+        ``"dragon_breath"``, ``"drowning"``, ``"dryout"`` (fish on land), ``"entity_attack"``,  ``"entity_explosion"``,
+        ``"entity_sweep_attack"``,  ``"fall"``, ``"falling_block"``, ``"fire"`` (in fire block),  ``"fire_tick"``,
+        ``"fly_into_wall"``, ``"hot_floor"`` (magma block), ``"lava"``, ``"magic"``, ``"melting"`` (snowman),
+        ``"poison"``, ``"projectile"``,  ``"starvation"`` ``"suffocation"``, ``"thorns"``,  ``"void"``, ``"wither"``
+    """
+
+    ENTITY_TYPE = auto()
+    """The target's entity type.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Entity type, e.g. "tipped_arrow" or "cow"
+    """
+
+    EVENT_BLOCK_FACE = auto()
+    """The side of the block at which this event occurred.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Block Face: "up", "down", "north", "east",  "south", "west", "none"
+    """
+
+    EVENT_BLOCK_LOCATION = auto()
+    """The block this event occurred at.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFLocation`
+        Center of block
+    """
+
+    EVENT_BOW_POWER = auto()
+    """The force percentage the bow was drawn with in the Shoot Bow event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0% to 100.0% (fully charged)
+    """
+
+    EVENT_CLICKED_SLOT_INDEX = auto()
+    """The index of the clicked inventory slot in this event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        From 1 (first slot) up to the inventory's size
+    """
+
+    EVENT_CLICKED_SLOT_ITEM = auto()
+    """The inventory item clicked on in this event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.Item`
+        Item in slot (before the click event)
+    """
+
+    EVENT_CLICKED_SLOT_NEW_ITEM = auto()
+    """The inventory item clicked with in this event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.Item`
+        Item in slot (after the click event)
+    """
+
+    EVENT_COMMAND = auto()
+    """The entire command line entered in this event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Command, with the first "@" excluded
+    """
+
+    EVENT_COMMAND_ARGUMENTS = auto()
+    """The separated parts of the event command.
+
+    Returns
+    -------
+    List
+        Contains one Text entry for each word in the command (split by " ")
+    """
+
+    EVENT_DAMAGE = auto()
+    """The amount of damage dealt in this event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 or above
+    """
+
+    EVENT_ITEM = auto()
+    """Gets the item in an item related event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.Item`
+        Main item in event
+    """
+
+    EVENT_NEW_HELD_SLOT = auto()
+    """The hotbar slot the player is changing to in this event.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        1 (leftmost slot) to 9 (rightmost slot)
+    """
+
+    EXPERIENCE_LEVEL = auto()
+    """The target's experience level.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0 (no levels) or above
+    """
+
+    EXPERIENCE_PROGRESS = auto()
+    """The target's experience progress to the next level.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0% (no progress) to 100.0% (next level)
+    """
+
+    EYE_LOCATION = auto()
+    """The target's location, but adjusted to its eye height.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFLocation`
+        Eye location and rotation
+    """
+
+    FACING_DIRECTION = auto()
+    """The direction the target is looking in.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Direction: "north", "east", "south",  "west"
+    """
+
+    FALL_DISTANCE = auto()
+    """The target's distance fallen in blocks.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 (not falling) or higher (falling down)
+    """
+
+    FIRE_TICKS = auto()
+    """Burn ticks remaining on the target.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0 (not on fire) or above (burning)
+    """
+
+    FOOD_EXHAUSTION = auto()
+    """The target's exhaustion level, which is increased by the player's actions.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 (minimum) to 4.0 (reset point)
+    """
+
+    FOOD_LEVEL = auto()
+    """The target's remaining food points.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0 (starving) to 20 (full bar)
+    """
+
+    FOOD_SATURATION = auto()
+    """The target's saturation level, which depends on the types of food consumed.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 (minimum), up to the player's food level
+    """
+
+    HELD_SLOT = auto()
+    """The target's selected hotbar slot index.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        1 (leftmost slot) to 9 (rightmost slot)
+    """
+
+    HOTBAR_ITEMS = auto()
+    """The target's current hotbar items.
+
+    Returns
+    -------
+    List
+        Contains one Item entry for each hotbar slot (air if empty, 9 in total)
+    """
+
+    INVENTORY_ITEMS = auto()
+    """The target's inventory items (includes hotbar).
+
+    Returns
+    -------
+    List
+        Contains one Item entry for each inventory slot (air if empty, 36 in total)
+    """
+
+    INVENTORY_MENU_ITEMS = auto()
+    """The target's current inventory menu items.
+
+    Returns
+    -------
+    List
+        Contains one Item entry for each menu slot (air if empty)
+    """
+
+    LOCATION = auto()
+    """The target's location.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFLocation`
+        Location and rotation, at feet height
+    """
+
+    MAIN_HAND_ITEM = auto()
+    """The target's currently held item.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.Item`
+        Item in the selected hotbar slot
+    """
+
+    MAXIMUM_HEALTH = auto()
+    """The target's maximum health points.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        Maximum health, 1.0 or above
+    """
+
+    OFF_HAND_ITEM = auto()
+    """The target's currently held off hand item.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.Item`
+        Item in the offhand slot
+    """
+
+    OPEN_INVENTORY_TITLE = auto()
+    """The title of the target's opened inventory.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Inventory title, or "none" if no menu, or the player's inventory, is open
+    """
+
+    PITCH = auto()
+    """The pitch (up/down rotation) of the target's position.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        -90.0 to 90.0
+    """
+
+    PLAYER_COUNT = auto()
+    """The amount of players playing on the plot.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        Player count
+    """
+
+    POTION_EFFECTS = auto()
+    """The target's active potion effects.
+
+    Returns
+    -------
+    List
+        Contains one  Potion Effect entry for each active effect on the target
+    """
+
+    REMAINING_AIR = auto()
+    """The target's remaining air ticks.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0 (drowning) to 300 (maximum air)
+    """
+
+    REMAINING_HEALTH = auto()
+    """The target's remaining health points.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0.0 (dead) up to the target's maximum health (20.0 by default)
+    """
+
+    SADDLE_ITEM = auto()
+    """The target's currently worn saddle or carpet.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.Item`
+        Item in the saddle/decor slot
+    """
+
+    SELECTION_SIZE = auto()
+    """The amount of targets in the current selection.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        0 (no targets) or above
+    """
+
+    SELECTION_TARGET_NAMES = auto()
+    """The name of each target in the current selection.
+
+    Returns
+    -------
+    List
+        Contains one Text entry (name) for each target
+    """
+
+    SELECTION_TARGET_UUIDS = "Selection Target UUIDs"
+    """The UUID of each target in the current selection.
+
+    Returns
+    -------
+    List
+        Contains one Text entry (UUID) for each target
+    """
+
+    SERVER_TPS = auto()
+    """The amount of game Ticks Per Second the server is currently able to handle.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        20.0 (no server lag) or below (decreases with more lag)
+    """
+
+    SERVER_TIME = auto()
+    """Returns the server system time in seconds with millisecond precision.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        Server time
+    """
+
+    SPAWN_LOCATION = auto()
+    """The target's original spawn location.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFLocation`
+        Location this entity was created at
+    """
+
+    TARGET_BLOCK_FACE = auto()
+    """The side of the block the target is looking at.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Block Face: "up", "down", "north", "east",  "south", "west", "none"
+    """
+
+    TARGET_BLOCK_LOCATION = auto()
+    """The block the target is looking at.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFLocation`
+        Center of block
+    """
+
+    TARGET_FLUID_LOCATION = auto()
+    """The location of the block the target is looking at, also detecting fluids.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFLocation`
+        Center of block
+    """
+
+    TELEPORT_CAUSE = auto()
+    """The cause of teleportation in player teleport events.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Teleport Cause: "chorus_fruit", "end_gateway",  "end_portal", "ender_pearl",  "nether_portal", "spectate", 
+    """
+
+    UUID = "UUID"
+    """The target's universally unique identifier.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFText`
+        Target UUID
+    """
+
+    X_COORDINATE = "X-Coordinate"
+    """The X coordinate of the target's position.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        Coordinate
+    """
+
+    Y_COORDINATE = "Y-Coordinate"
+    """The Y coordinate of the target's position.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        Coordinate
+    """
+
+    YAW = auto()
+    """The yaw (left/right rotation) of the target's position.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        -180.0 to 180.0
+    """
+
+    Z_COORDINATE = "Z-Coordinate"
+    """The Z coordinate of the target's position.
+
+    Returns
+    -------
+    :class:`~py2df.classes.mc_types.DFNumber`
+        Coordinate
+    """

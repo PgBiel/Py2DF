@@ -38,6 +38,10 @@ class UtilityBlockType(CodeblockActionType):
     """
     pass
 
+
+keep_upper = ("XP", "AI", "TNT", "PFX", "HSL", "HSB", "RGB", "UUID", "UI", "CPU")  # strings to keep uppercase
+
+
 class AutoNameEnum(Enum):
     """
     An enum whose auto values are the respective names of the constants.
@@ -71,7 +75,6 @@ class AutoSnakeToPascalCaseNameEnum(Enum):
     """
 
     def _generate_next_value_(name, _start, _count, _last_values):
-        keep_upper = ("XP", "AI", "TNT", "PFX", "HSL", "HSB", "RGB")  # strings to keep uppercase
         return "".join(map(
             lambda s: s.upper() if s in keep_upper else s.capitalize(),
             name.split("_")
@@ -84,7 +87,6 @@ class AutoSnakeToCapitalizedWordsEnum(Enum):
     """
 
     def _generate_next_value_(name, _start, _count, _last_values):
-        keep_upper = ("XP", "AI", "TNT", "PFX", "HSL", "HSB", "RGB")  # strings to keep uppercase
         return "".join(map(
             lambda s: s.upper() if s in keep_upper else s.capitalize() + " ",
             name.split("_")

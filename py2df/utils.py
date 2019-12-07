@@ -1,22 +1,8 @@
 import typing
 import collections
-from dataclasses import dataclass
-
-
-class NBTWrapper(collections.UserString):
-    """Wraps SNBT (NBT string) to be input literally by :meth:`nbt_dict_to_str`.
-
-    Attributes\u200b
-    -----------
-        data : :class:`str`
-            The SBNT value that this instance represents.
-    """
-    __slots__ = ()
-
-
-def nbt_dict_to_str(nbt_dict: dict) -> str:
-    pass  # TODO: NBT Dict to str
-
+import nbtlib as nbt
+from nbtlib.tag import Base
+from array import array
 
 Docable = typing.Union[typing.Callable, type]
 IterOrSingleDocable = typing.Union[Docable, typing.Iterable[Docable]]
@@ -52,11 +38,15 @@ def remove_u200b_from_doc(obj: IterOrSingleDocable, *other_objs: IterOrSingleDoc
         remove_u200b_from_doc(o)
 
 
-def flatten(*args: typing.Any, allow_iterables: bool = True) -> list:
+def flatten(
+    *args: typing.Any, allow_iterables: typing.Iterable[type] = tuple(),
+    except_iterables: typing.Iterable[type] = tuple(), max_depth: typing.Optional[int] = None,
+    curr_depth: int = 0
+) -> list:
     """
-    Flatten a list or iterable (if ``allow_iterables = True`` of arbitrary length
+    Flatten a list or iterable of arbitrary length.
 
-        >>> from py2df import flatten
+        >>> from py2df.utils import flatten
         >>> flatten(1, 2, ['b', 'a' , ['c', 'd']], 3)
         [1, 2, 'b', 'a', 'c', 'd', 3]
 
@@ -65,8 +55,20 @@ def flatten(*args: typing.Any, allow_iterables: bool = True) -> list:
     args : Any
         Items and lists to be combined into a single list.
 
-    allow_iterables : :class:`bool`, optional
-        Whether or not to flatten any kind of Iterable, and not just :class:`list` or :class:`tuple`; defaults to True.
+    allow_iterables : Iterable[:class:`type`], optional
+        An iterable (list, etc.) which specifies the types (classes) of Iterables to flatten,
+        besides :class:`list` and :class:`tuple` (which are always checked by default) - they will be
+        checked with an ``isinstance()`` call. Defaults to ``tuple()`` (empty tuple - none).
+
+    except_iterables : Iterable[:class:`type`], optional
+        An iterable (list, etc.) which specifies the types (classes) of Iterables to NOT be flattened; i.e.,
+        all will be flattened except the given ones. This could have serious side-effects, so choose wisely.
+        Defaults to ``tuple()`` (empty tuple - none). If using this, **it is recommended to set `max_depth` ** .
+        **This parameter overrides `allow_iterables`. **
+
+    max_depth : Optional[int], optional
+        An integer that represents the maximum depth until which the list is flattened, or None for no limit.
+        Defaults to None.
 
     Returns
     -------
@@ -75,9 +77,10 @@ def flatten(*args: typing.Any, allow_iterables: bool = True) -> list:
 
     Warnings
     --------
-    If ``allow_iterables`` is set to ``True``, then ANY iterable will be flattened into the list, including, for
-    example, instances of :class:`dict` . Therefore, use this option wisely. The default is True for the purposes
-    of this library.
+    Pick the iterables in the ``allow_iterables`` list wisely, because **any instance of it will be flattened**. This
+    can produce unexpected results when accepting, for example, :class:`str` as a valid Iterable to be flattened.
+    This warning also applies (even more so) to ``except_iterables``: If it is specified, make sure to set ``max_depth``
+    in order to avoid further problems.
 
     Notes
     -----
@@ -85,20 +88,71 @@ def flatten(*args: typing.Any, allow_iterables: bool = True) -> list:
     """
 
     x = []
+    if except_iterables and allow_iterables:
+        allow_iterables = tuple()
+
     for el in args:
         is_iterable = isinstance(el, collections.Iterable)
         if (
-            not isinstance(el, (list, tuple))
-            and (not is_iterable if allow_iterables else True)
+            (is_iterable and except_iterables and isinstance(el, tuple(except_iterables)))  # if iterable in "except",
+            or not isinstance(el, (list, tuple, *(allow_iterables or tuple())))             # or not in "accept"...
         ):
-            el = [el]
+            el = [el]  # make it an one-element iterable for the for loop to work.
 
         for item in el:
-            if isinstance(item, (list, tuple)) or (allow_iterables and is_iterable):
-                x.extend(flatten(item))
-            else:
+            if (
+                (curr_depth < max_depth if max_depth else True)  # do not flatten any further than max depth.
+                and (  # if this is a valid iterable (not in "except" or in "accept"), flatten it!
+                    (is_iterable and except_iterables and not isinstance(el, tuple(except_iterables)))
+                    or isinstance(el, (list, tuple, *(allow_iterables or tuple())))
+                )
+            ):
+                x.extend(
+                    flatten(  # flatten
+                        item, allow_iterables=allow_iterables, except_iterables=except_iterables,
+                        max_depth=max_depth, curr_depth=curr_depth + 1
+                    )
+                )
+            else:  # don't flatten
                 x.append(item)
     return x
+
+
+AnyNumber = typing.Union[int, float]
+
+
+@typing.overload
+def clamp(num: int, min_: int, max_: int) -> int: ...
+
+
+@typing.overload
+def clamp(num: float, min_: float, max_: float) -> float: ...
+
+
+@typing.overload
+def clamp(num: AnyNumber, min_: AnyNumber, max_: AnyNumber) -> AnyNumber: ...
+
+
+def clamp(num: AnyNumber, min_: AnyNumber, max_: AnyNumber) -> AnyNumber:
+    """Clamps a number (int, float) between two bounds, inclusively.
+
+    Parameters
+    ----------
+    num : Union[:class:`int`, :class:`float`]
+        Number to be clamped.
+
+    min_ : Union[:class:`int`, :class:`float`]
+        Lower bound; the minimum value that this number can be, and is returned if ``num <= min_`` holds.
+
+    max_ : Union[:class:`int`, :class:`float`]
+        Upper bound; the maximum value that this number can be, and is returned if ``num => max_`` holds.
+
+    Returns
+    -------
+    Union[:class:`int`, :class:`float`]
+        The clamped number.
+    """
+    return min(max(min_, num), max_)
 
 
 T = typing.TypeVar("T")
@@ -128,4 +182,193 @@ def all_attr_eq(a: T, b: T) -> bool:
     )
 
 
-remove_u200b_from_doc(NBTWrapper)
+K = typing.TypeVar("K")
+V = typing.TypeVar("V")
+
+
+def select_dict(
+        obj: typing.Dict[K, V], *keys: typing.Union[str, typing.Iterable[str]],
+        ignore_missing: bool = False
+) -> typing.Dict[K, V]:
+    """
+    Selects certain keys from a dict.
+
+    Parameters
+    ----------
+    obj : :class:`dict`
+        The dictionary from which to select keys.
+
+    keys : Union[:class:`str`, Iterable[:class:`str`]]
+        Key, keys or iterables of keys to select.
+
+    ignore_missing : :class:`bool`, optional
+        Whether or not to ignore missing attributes in the dictionary (i.e., accept trying to select a key that is not
+        there). This defaults to False. (If False, it will raise a KeyError.)
+
+    Returns
+    -------
+    :class:`dict`
+        A dictionary with only the given keys.
+    """
+    flattened_keys = flatten(keys, except_iterables=(str,), max_depth=2)
+
+    def select_key(k: K) -> typing.Tuple[K, V]:
+        return (k, obj[k])
+
+    if ignore_missing:
+        def filter_key(k: K) -> bool:
+            return k in obj
+
+        gen = map(select_key, filter(filter_key, flattened_keys))
+    else:
+        gen = map(select_key, flattened_keys)
+
+    return {k: v for k, v in gen}
+
+
+@typing.overload  # String => str
+def nbt_to_python(obj: nbt.String, convert_items: bool = True) -> str: ...
+
+
+@typing.overload  # Int/Long/Short/Byte => int
+def nbt_to_python(obj: typing.Union[nbt.Int, nbt.Long, nbt.Short, nbt.Byte], convert_items: bool = True) -> int: ...
+
+
+@typing.overload  # Float/Double => float
+def nbt_to_python(obj: typing.Union[nbt.Float, nbt.Double], convert_items: bool = True) -> float: ...
+
+
+@typing.overload  # Compound => dict
+def nbt_to_python(obj: nbt.Compound, convert_items: bool = True) -> dict: ...
+
+
+ItemType = typing.TypeVar("ItemType")
+
+
+if hasattr(typing, "Literal"):
+    TrueLiteral: "typing.Literal[True]" = typing.Literal[True]
+    FalseLiteral: "typing.Literal[False]" = typing.Literal[False]
+else:  # support for py <3.8
+    TrueLiteral = FalseLiteral = typing.cast(typing.Any, bool)
+
+
+@typing.overload  # convert_items is False; List
+def nbt_to_python(obj: nbt.List[ItemType], convert_items: FalseLiteral) -> typing.List[ItemType]: ...
+
+
+@typing.overload  # convert_items is True; List
+def nbt_to_python(
+    obj: nbt.List, convert_items: TrueLiteral = True
+) -> typing.List[typing.Union[str, dict, list, array, int, float]]: ...
+
+
+@typing.overload  # arrays
+def nbt_to_python(
+    obj: typing.Union[nbt.ByteArray, nbt.LongArray, nbt.IntArray], convert_items: bool = True
+) -> array: ...
+
+
+@typing.overload  # general case
+def nbt_to_python(
+    obj: nbt.tag.Base, convert_items: bool = True
+) -> typing.Union[str, dict, list, array, int, float]: ...
+
+
+def nbt_to_python(obj: nbt.tag.Base, convert_items: bool = True) -> typing.Union[str, dict, list, array, int, float]:
+    """
+    Converts a NBT object (instance of :class:`nbtlib.tag.Base`, i.e., any NBT-related class) into its Python raw
+    type equivalent. Example::
+
+        >>> from py2df.utils import nbt_to_python
+        >>> import nbtlib
+        >>> converted = nbt_to_python(nbtlib.Byte(5))
+        >>> converted
+        5
+        >>> type(converted)
+        <class 'int'>
+
+    The full relation is:
+    
+    +-------------------------+----------------------------------------------------------------------------------------+
+    | Equivalent raw type     | NBT Type                                                                               |
+    +=========================+========================================================================================+
+    | :class:`str`            | :class:`nbtlib.String`                                                                 |
+    +-------------------------+----------------------------------------------------------------------------------------+
+    | :class:`int`            | :class:`nbtlib.Int`, :class:`nbtlib.Long`, :class:`nbtlib.Short`, :class:`nbtlib.Byte` |
+    +-------------------------+----------------------------------------------------------------------------------------+
+    | :class:`float`          | :class:`nbtlib.Float`, :class:`nbtlib.Double`                                          |
+    +-------------------------+----------------------------------------------------------------------------------------+
+    | :class:`dict`           | :class:`nbtlib.Compound`                                                               |
+    +-------------------------+----------------------------------------------------------------------------------------+
+    | :class:`list`           | :class:`nbtlib.List`                                                                   |
+    +-------------------------+----------------------------------------------------------------------------------------+
+    | :class:`~array.array`   | :class:`nbtlib.ByteArray`, :class:`nbtlib.IntArray`, :class:`nbtlib.LongArray`         |
+    +-------------------------+----------------------------------------------------------------------------------------+
+
+    Parameters
+    ----------
+    obj : :class:`nbtlib.tag.Base`
+        The NBT object to convert.
+
+    convert_items : :class:`bool`, optional
+        Whether or not should convert all items of list, array and dict-related types to python raw types as well.
+        Defaults to ``True`` .
+
+    Returns
+    -------
+    Union[:class:`str`, :class:`dict`, :class:`list`, :class:`~array.array`, :class:`int`, :class:`float`]
+        The resulting raw type.
+
+    Warnings
+    --------
+    Types that convert to a list or dict have each of their values converted as well. To disable this behavior,
+    specify ``convert_items=False`` .
+    """
+    relation_nbt = (
+        nbt.String,
+
+        nbt.Int, nbt.Long, nbt.Short, nbt.Byte,
+
+        nbt.Float, nbt.Double,
+
+        nbt.Compound,
+
+        nbt.List,
+
+        nbt.ByteArray, nbt.IntArray, nbt.LongArray
+    )
+
+    if obj not in relation_nbt:
+        return obj
+
+    relation_types = (
+        str,
+
+        int, int, int, int,
+
+        float, float,
+
+        dict,
+
+        list,
+
+        array, array, array
+    )
+
+    new_obj = None
+
+    if isinstance(obj, nbt.Compound) and convert_items:
+        new_obj = {k: nbt_to_python(v) for k, v in obj.items()}  # convert everything inside
+    else:
+        for nbt_, type_ in zip(relation_nbt, relation_types):
+            if isinstance(obj, nbt_):
+                if type_ in (list, array) and convert_items:
+                    new_obj = type_(map(lambda v: nbt_to_python(v), obj))
+                elif type_ == str:
+                    new_obj = type_(obj)
+                    new_obj = new_obj.strip(new_obj[0]) if new_obj[0] in ("\"", "'") else new_obj
+                else:
+                    new_obj = type_(obj)
+                break
+
+    return new_obj

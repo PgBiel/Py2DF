@@ -23,6 +23,14 @@ py2df.errors module
    :undoc-members:
    :show-inheritance:
 
+py2df.schemas module
+--------------------
+
+.. automodule:: py2df.schemas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 py2df.utils module
 ------------------
 
