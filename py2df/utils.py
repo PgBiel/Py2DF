@@ -94,16 +94,15 @@ def flatten(
         is_iterable = isinstance(el, collections.Iterable)
         if (
             (is_iterable and except_iterables and isinstance(el, tuple(except_iterables)))  # if iterable in "except",
-            or not isinstance(el, (list, tuple, *(allow_iterables or tuple())))             # or not in "accept"...
+            or not isinstance(el, (list, tuple, *(allow_iterables or [])))             # or not in "accept"...
         ):
             el = [el]  # make it an one-element iterable for the for loop to work.
-
         for item in el:
             if (
                 (curr_depth < max_depth if max_depth else True)  # do not flatten any further than max depth.
                 and (  # if this is a valid iterable (not in "except" or in "accept"), flatten it!
                     (is_iterable and except_iterables and not isinstance(el, tuple(except_iterables)))
-                    or isinstance(el, (list, tuple, *(allow_iterables or tuple())))
+                    or (not except_iterables and isinstance(item, (list, tuple, *(allow_iterables or tuple()))))
                 )
             ):
                 x.extend(

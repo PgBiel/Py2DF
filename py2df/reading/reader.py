@@ -403,7 +403,9 @@ class DFReader:
                             target=str(block.target.value)
                         ) if block.target and hasattr(block.target, "value") else dict()
                     )
-                ) for block in flatten(line, allow_iterables=True)  # flatten in order to include If code
+                ) for block in flatten(
+                    line, allow_iterables=(BracketedBlock, deque), max_depth=1
+                )  # flatten in order to include If code
             ]) for line in lines
         ]
 
