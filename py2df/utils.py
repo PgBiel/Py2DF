@@ -101,7 +101,7 @@ def flatten(
             if (
                 (curr_depth < max_depth if max_depth else True)  # do not flatten any further than max depth.
                 and (  # if this is a valid iterable (not in "except" or in "accept"), flatten it!
-                    (is_iterable and except_iterables and not isinstance(el, tuple(except_iterables)))
+                    (is_iterable and except_iterables and not isinstance(item, tuple(except_iterables)))
                     or (not except_iterables and isinstance(item, (list, tuple, *(allow_iterables or tuple()))))
                 )
             ):
