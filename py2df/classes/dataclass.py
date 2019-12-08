@@ -4,8 +4,8 @@ Dataclasses; classes whose only purpose is to hold specific data.
 import typing
 import math
 from .. import constants
-from .abc import JSONData, Settable
-from ..enums import Enchantments, TagType, CodeblockActionType, BlockType
+from .abc import JSONData, Settable, Block
+from ..enums import Enchantments, TagType, CodeblockActionType, BlockType, BracketDirection, BracketType
 from ..utils import remove_u200b_from_doc, all_attr_eq
 from ..constants import DEFAULT_VAL, ITEM_ID_TAG
 
@@ -15,6 +15,14 @@ AnyNumber = typing.Union[int, float]
 class Enchantment(Settable):
     """
     Represents an Enchantment to be used within :class:`~py2df.classes.mc_types.Item`.
+
+    Parameters\u200b
+    ----------
+    ench_type : :class:`~py2df.enums.misc_mc_enums.Enchantments`
+        The type of enchantment this is.
+
+    level : :class:`int`, optional
+        The level of this enchantments (default is 1).
     
     Attributes\u200b
     -----------
@@ -202,6 +210,20 @@ class Tag(JSONData):
     """
     Represents a tag, generally for internal use.
 
+    Parameters
+    ----------\u200b
+    tag : str
+        The tag's name.
+
+    option : Union[:class:`bool`, :class:`int`, :class:`~py2df.enums.enum_util.TagType`]
+        The option chosen for this tag.
+
+    action : :class:`~py2df.enums.enum_util.CodeblockActionType`
+        The action type of the codeblock this tag is in.
+
+    block : :class`~py2df.enums.parameters.BlockType`
+        The type of codeblock this tag is in.
+
     Attributes
     ----------\u200b
         tag : str
@@ -318,4 +340,66 @@ block={self.block}>"
         return hash((self.__class__.__name__, self.tag, str(self.option), str(self.action), str(self.block)))
 
 
-remove_u200b_from_doc(Enchantment, Tag)
+class Bracket(Block, JSONData):
+    """Represents a Bracket block (used within If's and Repeats).
+
+    Parameters
+    ----------\u200b
+    direction : :class:`~py2df.enums.parameters.BracketDirection`
+        The direction of this bracket (one of :attr:`~py2df.enums.parameters.BracketDirection.OPEN`
+        and :attr:`~py2df.enums.parameters.BracketDirection.CLOSE`).
+
+    bracket_type : :class:`~py2df.enums.parameters.BracketType`
+        The type of this bracket, determining where it is used (either used on If's, represented by
+        :attr:`~py2df.enums.parameters.BracketType.NORM`, or with a Repeat, represented by
+        :attr:`~py2df.enums.parameters.BracketType.REPEAT`).
+
+    Attributes
+    ----------\u200b
+    direction : :class:`~py2df.enums.parameters.BracketDirection`
+        The direction of this bracket (one of :attr:`~py2df.enums.parameters.BracketDirection.OPEN`
+        and :attr:`~py2df.enums.parameters.BracketDirection.CLOSE`).
+
+    bracket_type : :class:`~py2df.enums.parameters.BracketType`
+        The type of this bracket, determining where it is used (either used on If's, represented by
+        :attr:`~py2df.enums.parameters.BracketType.NORM`, or with a Repeat, represented by
+        :attr:`~py2df.enums.parameters.BracketType.REPEAT`).
+    """
+    __slots__ = ("direction", "bracket_type")
+    direction: BracketDirection
+    bracket_type: BracketType
+
+    def __init__(self, direction: BracketDirection, bracket_type: BracketType):
+        """
+        Inits this Bracket.
+
+        Parameters
+        ----------
+        direction : :class:`~py2df.enums.parameters.BracketDirection`
+            The direction of this bracket (one of :attr:`~py2df.enums.parameters.BracketDirection.OPEN`
+            and :attr:`~py2df.enums.parameters.BracketDirection.CLOSE`).
+
+        bracket_type : :class:`~py2df.enums.parameters.BracketType`
+            The type of this bracket, determining where it is used (either used on If's, represented by
+            :attr:`~py2df.enums.parameters.BracketType.NORM`, or with a Repeat, represented by
+            :attr:`~py2df.enums.parameters.BracketType.REPEAT`).
+        """
+        self.direction: BracketDirection = BracketDirection(direction)
+        self.bracket_type: BracketType = BracketType(bracket_type)
+
+    def as_json_data(self) -> dict:
+        """Produces a JSON-serializable dict representing this Bracket.
+
+        Returns
+        -------
+        :class:`dict`
+            A JSON-serializable dict representing this Bracket.
+        """
+        return dict(
+            id=constants.BRACKET_ID,
+            direct=self.direction.value,
+            type=self.bracket_type.value
+        )
+
+
+remove_u200b_from_doc(Enchantment, Tag, Bracket)

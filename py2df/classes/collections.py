@@ -14,6 +14,16 @@ class Arguments:
     """A container for arguments. In general, only holds the "items" attribute. This class is used in case any other
     properties are added in the future.
 
+    Parameters\u200b
+    ----------
+    items : Optional[Union[:class:`ItemCollection`, :class:`Arguments`, Iterable[Union[:class:`DFType`, \
+    :class:`JSONData`]]]], optional
+        The items held by this :class:`Arguments` instance.
+
+    tags : Optional[List[:class:`~py2df.classes.dataclass.Tag`]], optional
+        Optionally, tags to be added at the very end of items. **Be aware that this will override the last `n` items
+        of the item collection** (where `n` is the length of the list given for the ``tags`` parameter).
+
     Attributes
     ----------\u200b
         items : :class:`ItemCollection`
@@ -22,7 +32,9 @@ class Arguments:
     items: "ItemCollection"
 
     def __init__(
-        self, items: typing.Optional[typing.Union["ItemCollection", typing.Iterable["OAcceptableItem"]]] = None,
+        self, items: typing.Optional[
+            typing.Union["ItemCollection", "Arguments", typing.Iterable["OAcceptableItem"]]
+        ] = None,
         *, tags: typing.Optional[typing.List[Tag]] = None
     ):
         """
@@ -30,14 +42,18 @@ class Arguments:
         
         Parameters
         ----------
-        items : Optional[Union[:class:`ItemCollection`, Iterable[:class:`DFType`]]], optional
+        items : Optional[Union[:class:`ItemCollection`, :class:`Arguments`, Iterable[Union[:class:`DFType`, \
+        :class:`JSONData`]]]], optional
             The items held by this :class:`Arguments` instance.
             
         tags : Optional[List[:class:`~py2df.classes.dataclass.Tag`]], optional
             Optionally, tags to be added at the very end of items. **Be aware that this will override the last `n` items
             of the item collection** (where `n` is the length of the list given for the ``tags`` parameter).
         """
-        self.items = ItemCollection(items) if items else ItemCollection()
+        if isinstance(items, Arguments):
+            self.items = items.items
+        else:
+            self.items = ItemCollection(items) if items else ItemCollection()
 
         if tags:  # let's add them to the end of the item collection.
             n_tags = len(tags)
@@ -76,7 +92,23 @@ class ItemCollection(collections.UserList):  # [DFType]
     only turn the item into an empty slot (None).
     
     Also, `append()` will add to the empty slot with lowest index, erroring if there are not any. `extend()` will
-    execute in a similar condition to `append()` for every element in the iterable.
+    execute in a similar condition to `append()` for every element in the iterable (i.e., will append every element
+    over empty slots until there are None, when it errors).
+
+    The error for limit-related issues is always an instance of :exc:`~py2df.errors.LimitReachedError`.
+
+    Parameters
+    ----------\u200b
+    data : Optional[Union[Iterable[Union[:class:`~py2df.classes.abc.DFType`, :class:`~py2df.classes.abc.JSONData`]]\
+, Union[:class:`~py2df.classes.abc.DFType`, :class:`~py2df.classes.abc.JSONData`]]]
+        An iterable of items (:class:`list`, :class:`ItemCollection`, etc.) or a single
+        :class:`~py2df.classes.mc_types.Item`/DFType to be used with the `items` arg.
+
+    items : Optional[Union[:class:`~py2df.classes.abc.DFType`, :class:`~py2df.classes.abc.JSONData`]]
+        Any other items to add. If `data` is an iterable, this is not considered.
+
+    max_len : :class:`int`
+        The maximum length of this collection, defaults to 27 items (small chest).
     
     Attributes
     -------------\u200b
@@ -166,8 +198,8 @@ class ItemCollection(collections.UserList):  # [DFType]
 
         Returns
         -------
-        None
-            None
+        ``None``
+            ``None``
 
         Raises
         ------
@@ -254,17 +286,36 @@ class ItemCollection(collections.UserList):  # [DFType]
         """Amount of non-None items in the collection."""
         return len(list(filter(None, self.data)))
 
-    def __getitem__(self, ii: int) -> OAcceptableItem:
+    @typing.overload
+    def __getitem__(self, ii: slice) -> typing.List[OAcceptableItem]: ...
+
+    @typing.overload
+    def __getitem__(self, ii: int) -> OAcceptableItem: ...
+
+    def __getitem__(
+        self, item: typing.Union[int, slice]
+    ) -> typing.Union[OAcceptableItem, typing.Iterable[OAcceptableItem]]:
         """
         Get an item at an index. Returns None if there is no item.
 
-        :param ii: Index.
-        :return: :class:`~py2df.classes.mc_types.Item`, if any, otherwise None.
+        Parameters
+        ----------
+        ii : Union[:class:`int`, :class:`slice`]
+            The index(es) of the desired item(s).
+
+        Returns
+        -------
+        Optional[Union[:class:`~py2df.classes.abc.DFType`, :class:`~py2df.classes.abc.JSONData`]]
+            Returns the appropriate element, if any, otherwise None.
         """
+        ii = item.stop if type(item) == slice else item
         if (ii - 1) > self.max_len:
             raise IndexError(f"Item collection index out of range (max for this instance: {self.max_len - 1}).")
 
-        return super().__getitem__(ii)
+        if type(item) == slice:
+            return self.data[item]
+        else:
+            return super().__getitem__(item)
 
     def __delitem__(self, ii: int) -> None:
         """Delete an item from an index, turning it into an empty slot (None)."""

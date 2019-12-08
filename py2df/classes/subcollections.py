@@ -14,6 +14,11 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
 
     Subclasses :class:`collections.UserList`, so supports all :class:`list` -related operations.
 
+    Parameters
+    ----------\u200b
+    iter : Optional[Iterable[:class:`str`]], optional
+        List of lines as an Iterable. (Optional)
+
     Attributes\u200b
     -----------
         data : List[:class:`str`]

@@ -25,16 +25,24 @@ class _HideFlagMeta(EnumMeta, _StandaloneHideFlagMeta):
 
 @unique
 class HideFlags(Enum, metaclass=_HideFlagMeta):
-    """
-    List of flags to hide. Note that they can be summed to combine multiple flags. ALL has all flags combined.
+    """List of flags to hide. Note that they can be summed to combine multiple flags. ALL has all flags combined.
+
+    **Supported comparisons:**
+    ``a == b``: Checks if two HideFlags instances have the same value.
+
+    ``a != b``: Same as ``not a == b``
 
     **Supported operations:**
 
-    ``a + b``: Combines both flags. (E.g.: HideFlags.ENCHANTMENTS + HideFlags.ATTRIBUTE_MODIFIERS)
+    ``a + b``: Combines both flags. (E.g.: ``HideFlags.ENCHANTMENTS + HideFlags.ATTRIBUTE_MODIFIERS``)
 
     ``a | b``: Same as ``a + b``; combines flags.
 
-    ``a - b``: Removes a flag from a combination of flags. (E.g.: HideFlags.ALL - HideFlags.ENCHANTMENTS)
+    ``a - b``: Removes a flag from a combination of flags. (E.g.: ``HideFlags.ALL - HideFlags.ENCHANTMENTS``)
+
+    **Note:** Any of the operations listed above return a ``_HideFlagsSum`` instance, which represents an arbitrary
+    HideFlags value. However, in ``isinstance`` checks, it will return True as an instance of ``HideFlags`` (this
+    class).
     """
     ENCHANTMENTS = 1
     ATTRIBUTE_MODIFIERS = 2
@@ -64,7 +72,10 @@ class HideFlags(Enum, metaclass=_HideFlagMeta):
         if not isinstance(other, type(self)):
             raise TypeError(f"Incompatible operation types {type(self)} and {type(other)}")
 
-        return _HideFlagsSum(abs(self.value - other.value))
+        if self.value | other.value == self.value:
+            return _HideFlagsSum(abs(self.value - other.value))
+        else:
+            return HideFlags(self.value)
 
 
 class _HideFlagsSum(metaclass=_StandaloneHideFlagMeta):  # subclass to allow `isinstance` checks
@@ -108,70 +119,70 @@ class _HideFlagsSum(metaclass=_StandaloneHideFlagMeta):  # subclass to allow `is
 
 @unique
 class Enchantments(AutoLowerNameEnum):
-    AQUA_AFFINITY = auto()
-    BANE_OF_ARTHROPODS = auto()
-    BINDING_CURSE = auto()
-    BLAST_PROTECTION = auto()
-    CHANNELING = auto()
-    DEPTH_STRIDER = auto()
-    EFFICIENCY = auto()
-    FEATHER_FALLING = auto()
-    FIRE_ASPECT = auto()
-    FIRE_PROTECTION = auto()
-    FLAME = auto()
-    FORTUNE = auto()
-    FROST_WALKER = auto()
-    IMPALING = auto()
-    INFINITY = auto()
-    KNOCKBACK = auto()
-    LOOTING = auto()
-    LOYALTY = auto()
-    LUCK_OF_THE_SEA = auto()
-    LURE = auto()
-    MENDING = auto()
-    MULTISHOT = auto()
-    PIERCING = auto()
-    POWER = auto()
+    """Enchantment types in Minecraft 1.14.4."""
+    AQUA_AFFINITY         = auto()
+    BANE_OF_ARTHROPODS    = auto()
+    BINDING_CURSE         = auto()
+    BLAST_PROTECTION      = auto()
+    CHANNELING            = auto()
+    DEPTH_STRIDER         = auto()
+    EFFICIENCY            = auto()
+    FEATHER_FALLING       = auto()
+    FIRE_ASPECT           = auto()
+    FIRE_PROTECTION       = auto()
+    FLAME                 = auto()
+    FORTUNE               = auto()
+    FROST_WALKER          = auto()
+    IMPALING              = auto()
+    INFINITY              = auto()
+    KNOCKBACK             = auto()
+    LOOTING               = auto()
+    LOYALTY               = auto()
+    LUCK_OF_THE_SEA       = auto()
+    LURE                  = auto()
+    MENDING               = auto()
+    MULTISHOT             = auto()
+    PIERCING              = auto()
+    POWER                 = auto()
     PROJECTILE_PROTECTION = auto()
-    PROTECTION = auto()
-    PUNCH = auto()
-    QUICK_CHARGE = auto()
-    RESPIRATION = auto()
-    RIPTIDE = auto()
-    SHARPNESS = auto()
-    SILK_TOUCH = auto()
-    SMITE = auto()
-    SWEEPING = auto()
-    THORNS = auto()
-    UNBREAKING = auto()
-    VANISHING_CURSE = auto()
+    PROTECTION            = auto()
+    PUNCH                 = auto()
+    QUICK_CHARGE          = auto()
+    RESPIRATION           = auto()
+    RIPTIDE               = auto()
+    SHARPNESS             = auto()
+    SILK_TOUCH            = auto()
+    SMITE                 = auto()
+    SWEEPING              = auto()
+    THORNS                = auto()
+    UNBREAKING            = auto()
+    VANISHING_CURSE       = auto()
 
 
 class Color:
-    """
-    Represents all possible colors and formats of Minecraft. Accessing any attribute returns a string.
-    """
-    BLACK           = SECTION_SIGN + "0"
-    DARK_BLUE       = SECTION_SIGN + "1"
-    DARK_GREEN      = SECTION_SIGN + "2"
-    DARK_AQUA       = SECTION_SIGN + "3"
-    DARK_RED        = SECTION_SIGN + "4"
-    DARK_PURPLE     = SECTION_SIGN + "5"
-    GOLD            = SECTION_SIGN + "6"
-    GRAY            = SECTION_SIGN + "7"
-    DARK_GRAY       = SECTION_SIGN + "8"
-    BLUE            = SECTION_SIGN + "9"
-    GREEN           = SECTION_SIGN + "a"
-    AQUA            = SECTION_SIGN + "b"
-    RED             = SECTION_SIGN + "c"
-    LIGHT_PURPLE    = SECTION_SIGN + "d"
-    YELLOW          = SECTION_SIGN + "e"
-    WHITE           = SECTION_SIGN + "f"
-    OBFUSCATED      = SECTION_SIGN + "k"
-    BOLD            = SECTION_SIGN + "l"
-    STRIKETHROUGH   = SECTION_SIGN + "m"
-    UNDERLINE       = SECTION_SIGN + "n"
-    ITALIC          = SECTION_SIGN + "o"
-    RESET           = SECTION_SIGN + "r"
+    """Represents all possible colors and formats of Minecraft. Accessing any attribute returns a string."""
+    BLACK         = SECTION_SIGN + "0"
+    DARK_BLUE     = SECTION_SIGN + "1"
+    DARK_GREEN    = SECTION_SIGN + "2"
+    DARK_AQUA     = SECTION_SIGN + "3"
+    DARK_RED      = SECTION_SIGN + "4"
+    DARK_PURPLE   = SECTION_SIGN + "5"
+    GOLD          = SECTION_SIGN + "6"
+    GRAY          = SECTION_SIGN + "7"
+    DARK_GRAY     = SECTION_SIGN + "8"
+    BLUE          = SECTION_SIGN + "9"
+    GREEN         = SECTION_SIGN + "a"
+    AQUA          = SECTION_SIGN + "b"
+    RED           = SECTION_SIGN + "c"
+    LIGHT_PURPLE  = SECTION_SIGN + "d"
+    YELLOW        = SECTION_SIGN + "e"
+    WHITE         = SECTION_SIGN + "f"
+    OBFUSCATED    = SECTION_SIGN + "k"
+    BOLD          = SECTION_SIGN + "l"
+    STRIKETHROUGH = SECTION_SIGN + "m"
+    UNDERLINE     = SECTION_SIGN + "n"
+    ITALIC        = SECTION_SIGN + "o"
+    RESET         = SECTION_SIGN + "r"
+
 
 Colour = Color  # alias

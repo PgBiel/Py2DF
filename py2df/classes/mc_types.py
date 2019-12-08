@@ -10,7 +10,6 @@ import json
 import nbtlib as nbt
 from nbtlib.tag import Base
 from .. import constants
-from dataclasses import dataclass
 from ..enums.misc_mc_enums import _HideFlagsSum
 from ..enums import (
     Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect, Color, Enchantments,
@@ -29,10 +28,54 @@ from ..constants import (
 
 class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
     """Represents a Minecraft Item stack.
+
+    Parameters
+    ----------\u200b
+
+    material : :class:`Material`
+        Instance of the Materials enum; represents what this item actually is.
+
+    amount : :class:`int`
+        The amount of items in this item stack, between 1 and 64. By default, 1.
+
+    name : Optional[Union[:class:`str`, :class:`DFText`]]
+        An optional custom name to be given to this item, as a `:class:`str`` or :class:`DFText`. Default: None
+
+    lore : Union[`Lore`, Optional[Iterable[:class:`str`]]]
+        A Lore for this item (either Lore instance or list of `:class:`str``). Default: empty Lore instance.
+
+    enchantments : Optional[Iterable[:class:`~py2df.classes.dataclass.Enchantment`]]
+        A list of :class:`~py2df.classes.dataclass.Enchantment` instances.
+
+    damage : :class:`int`
+        The damage of this item (i.e., amount of uses so far). Defaults to 0 (not used).
+
+    unbreakable : :class:`bool`
+        Whether or not this item is unbreakable. Defaults to False.
+
+    hide_flags : Optional[:class:`~py2df.enums.misc_mc_enums.HideFlags`]
+        Flags to be hidden, such as unbreakability. See the enum documentation for more info.
+
+    Other Parameters
+    ----------------\u200b
+    leather_armor_color : Optional[:class:`int`]
+        If this is a piece of leather armor, specify its color through an integer. Tip: Use
+        ``0x......`` for hexadecimal colors.
+
+    entity_tag : Optional[Union[:class:`dict`, :class:`str`, :class:`nbtlib.Compound`]]
+        An optional TAG_Compound (NBT) representing Entity NBT tags applied on entities that are spawned
+        through this item. Applies to the materials: (X)_SPAWN_EGG; TROPICAL_FISH_BUCKET; ARMOR_STAND. Default:
+        None (Note: If this is given a string, it must be a valid SNBT string)
+
+    extra_tags : Optional[Union[:class:`dict`, :class:`str`]]
+        Any extra NBT tags you'd like to give your item, either as a :class:`dict` of NBT tags or a valid NBT
+        :class:`str`. Please ensure those tags do not conflict with the previous ones to avoid spooky errors in
+        DiamondFire. Default: ``None``.
+        (Please ensure this is a valid TAG_Compound in NBT, a.k.a. `:class:`dict` in pythonic language.)
     
-    Attributes\u200b
-    -------------
-    
+    Attributes
+    -------------\u200b
+
         material : :class:`~py2df.enums.materials.Material`
             Tells what kind of item this is.
     
@@ -90,8 +133,7 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
         entity_tag: typing.Optional[typing.Union[dict, str]] = None,
         extra_tags: typing.Optional[typing.Union[dict, str]] = None
     ):
-        """Initialize the item stack.
-
+        """
         Parameters
         ----------
 
@@ -118,28 +160,11 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
 
         hide_flags : Optional[:class:`~py2df.enums.misc_mc_enums.HideFlags`]
             Flags to be hidden, such as unbreakability. See the enum documentation for more info.
-
-        Other Parameters
-        ----------------
-        leather_armor_color : Optional[:class:`int`]
-            If this is a piece of leather armor, specify its color through an integer. Tip: Use
-            ``0x......`` for hexadecimal colors.
-
-        entity_tag : Optional[Union[:class:`dict`, :class:`str`, :class:`nbtlib.Compound`]]
-            An optional TAG_Compound (NBT) representing Entity NBT tags applied on entities that are spawned
-            through this item. Applies to the materials: (X)_SPAWN_EGG; TROPICAL_FISH_BUCKET; ARMOR_STAND. Default:
-            None (Note: If this is given a string, it must be a valid SNBT string)
-
-        extra_tags : Optional[Union[:class:`dict`, :class:`str`]]
-            Any extra NBT tags you'd like to give your item, either as a :class:`dict` of NBT tags or a valid NBT
-            :class:`str`. Please ensure those tags do not conflict with the previous ones to avoid spooky errors in
-            DiamondFire. Default: ``None``.
-            (Please ensure this is a valid TAG_Compound in NBT, a.k.a. `:class:`dict` in pythonic language.)
         """
         self.material: Material = material
         self._amount: int = 1
         self.amount = amount
-        self.name: str = str(name)
+        self.name: str = str(name) if name else None
         self.lore: Lore = Lore(lore)
 
         if enchantments and any(type(i) != Enchantment for i in enchantments):
@@ -210,18 +235,18 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
         if any([self.leather_armor_color is not None, self.name, self.lore]):
             display = ItemDisplaySchema()
             if self.name:
-                display["Name"] = json.dumps(dict(text=self.name))
+                display["Name"] = json.dumps(dict(text=str(self.name)))
 
             if self.lore:
                 display["Lore"] = self.lore.as_json_data()
 
             if self.leather_armor_color is not None:
-                display["color"] = self.leather_armor_color
+                display["color"] = int(self.leather_armor_color)
 
             tag["display"] = display
 
         if self.hide_flags and self.hide_flags.value:
-            tag["HideFlags"] = self.hide_flags.value
+            tag["HideFlags"] = int(self.hide_flags.value)
 
         if self.extra_tags:
             ext_t = self.extra_tags
@@ -449,7 +474,16 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
         )
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} minecraft:{self.material.value} x {self.amount} | name={self.name}>"
+        base_str = f"<{self.__class__.__name__} minecraft:{self.material.value} x {self.amount}"
+        extras = []
+        if self.name: extras.append(f"name={self.name}")
+        if self.unbreakable: extras.append(f"unbreakable=True")
+        
+        if extras:
+            base_str += f" | {' '.join(extras)}"
+        
+        base_str += ">"
+        return base_str
 
     def __str__(self):
         return f"minecraft:{self.material.value}"
@@ -539,7 +573,14 @@ class DFText(collections.UserString, DFType):
     """Represents a DiamondFire Text variable. (note: this is not a dynamic variable.)
     
     Subclasses `collections.UserString`; therefore, supports all :class:`str` operations.
-    
+
+    Parameters
+    ----------\u200b
+    text : :class:`str`
+        Text, defaults to "" (empty :class:`str`).
+    convert_color : :class:`bool`
+        Boolean; whether or not should convert &x to color codes (§x). (Defaults to True)
+
     Attributes
     ----------\u200b
         data : Union[:class:`str`, :class:`DFText`]
@@ -660,7 +701,12 @@ class DFNumber(DFType):
     """Represents a DiamondFire Number variable.
     
     Supports practically all :class:`int`/:class:`float`-related operations and comparisons.
-    
+
+    Parameters
+    ----------\u200b
+        value : Union[:class:`int`, :class:`float`]
+            Value of this :class:`DFNumber`. Defaults to ``0.0``
+
     Attributes\u200b
     ------------
         value : :class:`float`
@@ -863,7 +909,27 @@ class DFNumber(DFType):
 
 class DFLocation(DFType):
     """Represents a DiamondFire Location.
-    
+
+    Parameters
+    ----------\u200b
+    x : Union[:class:`int`, :class:`float`]
+        The value of the x position.
+
+    y : Union[:class:`int`, :class:`float`]
+        The value of the y position.
+
+    z : Union[:class:`int`, :class:`float`]
+        The value of the z position.
+
+    pitch : Union[:class:`int`, :class:`float`]
+        The pitch value (up/down rotation). Varies between ``-90.0`` and ``90.0`` (any higher/lower will be %'ed).
+
+    yaw : Union[:class:`int`, :class:`float`]
+        The yaw value (left/right rotation). Varies between ``-180.0`` and ``180.0`` (any higher/lower will be %ed).
+
+    is_block : :class:`bool`
+        Whether or not this location represents a solid (non-air) block. (:class:`bool`) Defaults to False.
+
     Attributes\u200b
     -------------
     
@@ -1414,6 +1480,22 @@ class DFLocation(DFType):
 
 class DFSound(DFType):
     """Used for DF Sounds (Blaze Death, XP Level up etc.)
+
+    Parameters\u200b
+    ----------
+        sound_type : :class:`SoundType`
+            The enum instance that specifies which sound is this.
+
+        pitch : :class:`float`
+            The pitch of this sound (between ``0.0`` and ``2.0``, inclusive). Defaults to 1.0
+
+        volume : :class:`float`
+            The volume of this sound. Defaults to 2.0
+
+    Raises
+    ------\u200b
+    :exc:`ValueError`
+        Raised if the given pitch is outside the range ``0.0 <= x <= 2.0`` .
     
     Attributes\u200b
     -------------
@@ -1424,28 +1506,55 @@ class DFSound(DFType):
         pitch : :class:`float`
             The pitch of this sound. Defaults to 1.0
 
-        volume : :class:`int`
-            The volume of this sound. Defaults to 2
+        volume : :class:`float`
+            The volume of this sound. Defaults to 2.0
 
     """
-    __slots__ = ("sound_type", "pitch", "volume")
+    __slots__ = ("sound_type", "_pitch", "volume")
     sound_type: SoundType
-    pitch: float
-    volume: int
+    _pitch: float
+    volume: float
 
     def __init__(
-        self, sound_type: SoundType, *, volume: int = DEFAULT_SOUND_VOL,
+        self, sound_type: SoundType, *, volume: float = DEFAULT_SOUND_VOL,
         pitch: AnyNumber = DEFAULT_SOUND_PITCH
     ):
-        if not isinstance(sound_type, SoundType):
-            raise TypeError("Sound type must be an instance of SoundType enum.")
+        """
+        Parameters
+        ----------
+            sound_type : :class:`SoundType`
+                The enum instance that specifies which sound is this.
 
-        self.sound_type: SoundType = sound_type
-        self.pitch: float = float(pitch)
-        self.volume: int = int(volume)
+            pitch : :class:`float`
+                The pitch of this sound (between ``0.0`` and ``2.0``, inclusive). Defaults to 1.0
+
+            volume : :class:`float`
+                The volume of this sound. Defaults to 2.0
+
+        Raises
+        ------
+        :exc:`ValueError`
+            Raised if the given pitch is outside the range ``0.0 <= x <= 2.0`` .
+        """
+        self.sound_type: SoundType = SoundType(sound_type)
+
+        self._pitch: float = 2.0
+        self.pitch = pitch  # trigger property setter
+        self.volume: float = float(volume)
+
+    @property
+    def pitch(self) -> float:
+        return float(self._pitch)
+
+    @pitch.setter
+    def pitch(self, val: float) -> None:
+        if not 0.0 <= val <= 2.0:
+            raise ValueError("Sound pitch must be between 0.0 and 2.0")
+
+        self._pitch = float(val)
 
     def set(
-        self, sound_type: SoundType = DEFAULT_VAL, pitch: AnyNumber = DEFAULT_VAL, volume: int = DEFAULT_VAL
+        self, sound_type: SoundType = DEFAULT_VAL, pitch: AnyNumber = DEFAULT_VAL, volume: float = DEFAULT_VAL
     ) -> "DFSound":
         """Immediately modify this :class:`DFSound`. Note that this is not changed dynamically, in DiamondFire.
         For that, use a dynamic variable.
@@ -1455,10 +1564,12 @@ class DFSound(DFType):
         sound_type : :class:`SoundType`
             The new sound type. (Can be omitted)
             (Default value = DEFAULT_VAL)
+
         pitch : Union[:class:`int`, :class:`float`]
             The new sound pitch. (Can be omitted)
             (Default value = DEFAULT_VAL)
-        volume : :class:`int`
+
+        volume : :class:`float`
             The new volume. (Can be omitted)
             (Default value = DEFAULT_VAL)
 
@@ -1467,12 +1578,16 @@ class DFSound(DFType):
         :class:`DFSound`
             self to allow chaining
         """
-        if not isinstance(sound_type, SoundType) and sound_type != DEFAULT_VAL:
-            raise TypeError("Sound type must be an instance of SoundType enum.")
 
-        self.sound_type = self.sound_type if sound_type == DEFAULT_VAL else sound_type
-        self.pitch = float(self.pitch if pitch == DEFAULT_VAL else pitch)
-        self.volume = int(self.volume if volume == DEFAULT_VAL else volume)
+        if sound_type != DEFAULT_VAL:
+            self.sound_type = SoundType(sound_type)
+
+        if pitch != DEFAULT_VAL:
+            self.pitch = float(pitch)
+
+        if volume != DEFAULT_VAL:
+            self.volume = float(volume)
+
         return self
 
     def set_to_other(self, other: "DFSound") -> "DFSound":
@@ -1519,7 +1634,7 @@ class DFSound(DFType):
             data=dict(
                 sound=self.sound_type.value,
                 pitch=float(self.pitch),
-                vol=int(self.volume)
+                vol=float(self.volume)
             )
         )
 
@@ -1553,7 +1668,7 @@ class DFSound(DFType):
         pitch: float = float(given_pitch if given_pitch is not None else DEFAULT_SOUND_PITCH)
 
         given_vol = data["data"].get("vol")
-        vol: int = int(given_vol if given_vol is not None else DEFAULT_SOUND_VOL)
+        vol: float = float(given_vol if given_vol is not None else DEFAULT_SOUND_VOL)
         return cls(SoundType(data["data"]["sound"]), pitch=pitch, volume=vol)
 
     def __repr__(self):
@@ -1573,6 +1688,11 @@ class DFSound(DFType):
 
 class DFParticle(DFType):
     """Used for DF Particles (Smoke, Large Smoke etc.)
+
+    Parameters
+    ----------\u200b
+    particle_type : :class:`~py2df.enums.dftypes.ParticleType`
+        The enum instance that specifies which particle is this.
     
     Attributes\u200b
     -------------
@@ -1687,6 +1807,12 @@ class DFParticle(DFType):
 class DFCustomSpawnEgg(DFType):
     """Used for the custom spawn egg types provided by DiamondFire (Giant, Iron Golem etc.)
 
+    Parameters\u200b
+    ----------
+
+        egg_type : :class:`py2df.enums.dftypes.CustomSpawnEggType`
+            The enum instance that specifies which spawn egg is this.
+
     Attributes\u200b
     ---------------
 
@@ -1781,6 +1907,18 @@ class DFCustomSpawnEgg(DFType):
 class DFPotion(DFType):
     """
     Used for potion effects in potion-effect-related actions.
+
+    Parameters\u200b
+    --------------
+
+        effect : :class:`PotionEffect`
+            The PotionEffect enum instance that specifies which potion effect this :class:`DFPotion` represents.
+
+        amplifier : :class:`int`
+            Represents the strength of the effect. This should vary between -255 and 255.
+
+        duration: Tuple[:class:`int`, :class:`int`]
+            Tuple (:class:`int`, :class:`int`). Represents the duration of the effect in the form (min, seconds).
 
     Attributes\u200b
     --------------
@@ -2087,6 +2225,14 @@ duration={self.duration[0]}:{self.duration[1]}>"
 
 class DFGameValue(DFType):
     """Used for game values, that change depending on the plot's state.
+
+    Parameters
+    ----------\u200b
+    gval_type : :class:`~py2df.enums.dftypes.GameValueType`
+        The type of Game Value this is.
+
+    target : Optional[:class:`~py2df.enums.targets.Target`], optional
+        The target of this Game Value, or None. Defaults to None.
 
     Attributes
     ----------\u200b

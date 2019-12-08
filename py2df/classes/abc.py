@@ -14,8 +14,14 @@ if typing.TYPE_CHECKING:
 
 
 class Block(metaclass=abc.ABCMeta):
-    """An ABC that describes any block in code -- either Codeblock or Bracket."""
-    pass
+    """An ABC that describes any block in code -- either Codeblock or Bracket.
+
+    Attributes
+    ----------\u200b
+    length : :class:`int`
+        The length of this Block.
+    """
+    length: int
 
 
 class Codeblock(Block, metaclass=abc.ABCMeta):
@@ -172,14 +178,50 @@ class EventBlock(Codeblock, metaclass=abc.ABCMeta):
 class BracketedBlock(Codeblock, metaclass=abc.ABCMeta):
     """
     An ABC that describes any codeblock with brackets. Can be used on a `with` construct. Must implement
-    :class:`CodeBlock`."""
+    :class:`Codeblock`. This is only used for If-related and Repeat classes.
+
+    For all the iterable-related methods, please refer to :class:`~collections.deque` .
+
+    Attributes\u200b
+    ----------
+
+    block : Union[:attr:`~py2df.enums.parameters.IF_PLAYER`, :attr:`~py2df.enums.parameters.IF_ENTITY`, \
+:attr:`~py2df.enums.parameters.IF_GAME`, :attr:`~py2df.enums.parameters.IF_VAR`, :attr:`~py2df.enums.parameters.REPEAT`]
+        The type of block this is.
+
+    args : :class:`~py2df.classes.collections.Arguments`
+        The Arguments of this block.
+
+    action : Union[:class:`~py2df.enums.enum_util.IfType`, :class:`~py2df.enums.utilityblock.RepeatType`]
+        The condition (If)/specific type (Repeat) of this bracketed block.
+
+    sub_action : Optional[:class:`~py2df.enums.enum_util.IfType`]
+        If this is a Repeat and action is :attr:`~py2df.enums.utilityblock.RepeatType.WHILE_COND`,
+        the condition to check (it will repeat while that condition is true).
+
+    length : :class:`int`
+        The length of this codeblock, excluding brackets, in Minecraft blocks. Should always be equal to 1.
+
+    total_length : :class`int`
+        The sum of all lengths of all codeblocks inside this Bracketed Block, including itself and brackets
+        (so, 3 + inner length).
+
+    data : ``None``
+        (Bracketed blocks do not have extra data.)
+
+    codeblocks : Deque[:class:`Block`]
+        The blocks (brackets and inner codeblocks) contained within this If.
+
+    target : Optional[:class:`~py2df.enums.targets.Target`]
+        The target of this If (for If Player and If Entity), or None for the current selection.
+    """
     block: BlockType
     args: "Arguments"
     action: typing.Union[IfType, RepeatType]
-    sub_action: typing.Optional[CodeblockActionType]
-    length: int
-    data: None
-    codeblocks: typing.Deque[Codeblock]  # TODO: Document all of this
+    sub_action: typing.Optional[IfType]
+    length: int = 1
+    data: None = None
+    codeblocks: typing.Deque[Block]  # TODO: Document all of this
     target: typing.Optional[Target]
     __slots__ = ()
 
@@ -209,11 +251,63 @@ class BracketedBlock(Codeblock, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def __exit__(self):
+    def __exit__(self, *args):
         """Places the CLOSE bracket. Can have two types: :attr:`~py2df.enums.parameters.BracketType.NORM`
         and :attr:`~py2df.enums.parameters.BracketType.REPEAT`
         """
         raise NotImplementedError
+
+    @property
+    def total_length(self) -> int:
+        """The total length of this Bracketed Block, in blocks. This sums the lengths of all codeblocks inside,
+        including the If itself (1) and the two brackets (1 + 1 = 2).
+
+        Returns
+        -------
+        :class:`int`
+            The length.
+        """
+        def get_length(block: Block):
+            return getattr(block, "total_length", block.length)
+
+        return sum(map(get_length, self.codeblocks))
+
+    def __iter__(self):
+        for codeblock in self.codeblocks:
+            yield codeblock
+
+    def __contains__(self, item):
+        return item in self.codeblocks
+
+    def __getitem__(self, item):
+        return self.codeblocks.__getitem__(item)
+
+    def __setitem__(self, key, value):
+        return self.codeblocks.__setitem__(key, value)
+
+    def __delitem__(self, key):
+        return self.codeblocks.__delitem__(key)
+
+    def append(self, item: Block):
+        return self.codeblocks.append(item)
+
+    def appendleft(self, item: Block):
+        return self.codeblocks.appendleft(item)
+
+    def extend(self, sequence: typing.Iterable[Block]):
+        return self.codeblocks.extend(sequence)
+
+    def extendleft(self, sequence: typing.Iterable[Block]):
+        return self.codeblocks.extendleft(sequence)
+
+    def pop(self, index: int):
+        return self.codeblocks.pop(index)
+
+    def popleft(self):
+        return self.codeblocks.popleft()
+
+    def rotate(self, n):
+        return self.codeblocks.rotate(n)
 
 
 class CallableBlock(Codeblock, metaclass=abc.ABCMeta):

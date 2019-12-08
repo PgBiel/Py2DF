@@ -13,6 +13,22 @@ from ..reading.reader import DFReader
 class PlayerAction(ActionBlock, JSONData):
     """A Player Action.
 
+    Parameters
+    ----------\u200b
+    action : :class:`~py2df.enums.actions.PlayerActionType`
+        The type of player action this is.
+
+    args : :class:`~py2df.classes.collections.Arguments`
+        The arguments of this Player Action.
+
+    target : :class:`~py2df.enums.targets.PlayerTarget`, optional
+        The target of this Player Action. Defaults to :attr:`~py2df.enums.targets.PlayerTarget.DEFAULT` (Default
+        Player).
+
+    append_to_reader : :class:`bool`, optional
+        Whether or not this newly-created :class:`PlayerAction` should be already appended to the
+        :class:`~py2df.reading.reader.DFReader`. Defaults to ``True``.
+
     Attributes
     ----------\u200b
     block : :attr:`~py2df.enums.parameters.BlockType.PLAYER_ACTION`
@@ -97,6 +113,21 @@ class PlayerAction(ActionBlock, JSONData):
 class EntityAction(ActionBlock, JSONData):
     """An Entity Action.
 
+    Parameters
+    ----------\u200b
+    action : :class:`~py2df.enums.actions.EntityActionType`
+        The type of entity action this is.
+
+    args : :class:`~py2df.classes.collections.Arguments`
+        The arguments of this Entity Action.
+
+    target : :class:`~py2df.enums.targets.EntityTarget`, optional
+        The target of this Entity Action. Defaults to :attr:`~py2df.enums.targets.EntityTarget.LAST_MOB`.
+
+    append_to_reader : :class:`bool`, optional
+        Whether or not this newly-created :class:`EntityAction` should be already appended to the
+        :class:`~py2df.reading.reader.DFReader`. Defaults to ``True``.
+
     Attributes
     ----------\u200b
     block : :attr:`~py2df.enums.parameters.BlockType.ENTITY_ACTION`
@@ -180,6 +211,18 @@ class EntityAction(ActionBlock, JSONData):
 class GameAction(ActionBlock, JSONData):
     """A Game Action.
 
+    Parameters
+    ----------\u200b
+    action : :class:`~py2df.enums.actions.GameActionType`
+        The type of game action this is.
+
+    args : :class:`~py2df.classes.collections.Arguments`
+        The arguments of this Game Action.
+
+    append_to_reader : :class:`bool`, optional
+        Whether or not this newly-created :class:`GameAction` should be already appended to the
+        :class:`~py2df.reading.reader.DFReader`. Defaults to ``True``.
+
     Attributes
     ----------\u200b
     block : :attr:`~py2df.enums.parameters.BlockType.GAME_ACTION`
@@ -261,6 +304,19 @@ class Control(ActionBlock, JSONData):
         def on_join():
             # ... do actions ...
             Control.wait(5, time_unit=CWaitTag.SECONDS)  # waits 5 seconds
+            Control.line_return()  # returns
+
+    Parameters
+    ----------\u200b
+    action : :class:`~py2df.enums.actions.ControlType`
+        The type of Control block this is.
+
+    args : :class:`~py2df.classes.collections.Arguments`
+        The arguments of this Control block.
+
+    append_to_reader : :class:`bool`, optional
+        Whether or not this newly-created :class:`Control` should be already appended to the
+        :class:`~py2df.reading.reader.DFReader`. Defaults to ``True``. (All classmethods will set this to ``True``)
 
     Attributes
     ----------\u200b
@@ -321,8 +377,7 @@ class Control(ActionBlock, JSONData):
             DFReader().append_codeblock(self)
 
     def as_json_data(self) -> dict:
-        """
-        Produces a JSON-serializable dict representing this Control block.
+        """Produces a JSON-serializable dict representing this Control block.
 
         Returns
         -------
@@ -387,6 +442,18 @@ class Control(ActionBlock, JSONData):
     ) -> "Control":
         """Pauses the current line of code for a certain amount of ticks. seconds, or minutes.
 
+        Examples of usage::
+
+            @PlayerEvent.join
+            def on_join():
+                # ... actions ...
+                Control.wait(40)  # TICKS by default; = 2 seconds
+                Control.wait(40, ticks=True)  # same as above
+                Control.wait(10, seconds=True)  # 10 seconds
+                Control.wait(2, minutes=True)  # 2 minutes
+                Control.wait(10, time_unit=CWaitTag.SECONDS)  # 10 seconds
+                Control.wait(20, time_unit=TimeUnit.SECONDS)  # 20 seconds
+
         Parameters
         ----------
         duration : Union[:class:`int`, :class:`float`, :class:`~py2df.classes.mc_types.DFNumber`], optional
@@ -416,7 +483,7 @@ class Control(ActionBlock, JSONData):
         Warnings
         --------
         Setting ``time_unit`` to anything will override the ``ticks`` , ``seconds`` and ``minutes`` params. Also,
-        note that you cannot set more than one of them to ``True``. If that happens, the first of the following line
+        note that **you cannot set more than one of them** to ``True``. If that happens, the first of the following line
         ``[seconds, minutes, ticks]`` that is ``True`` is chosen as the unit.
         """
         if time_unit == DEFAULT_VAL:

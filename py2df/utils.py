@@ -1,7 +1,6 @@
 import typing
 import collections
 import nbtlib as nbt
-from nbtlib.tag import Base
 from array import array
 
 Docable = typing.Union[typing.Callable, type]
@@ -39,8 +38,8 @@ def remove_u200b_from_doc(obj: IterOrSingleDocable, *other_objs: IterOrSingleDoc
 
 
 def flatten(
-    *args: typing.Any, allow_iterables: typing.Iterable[type] = tuple(),
-    except_iterables: typing.Iterable[type] = tuple(), max_depth: typing.Optional[int] = None,
+    *args: typing.Any, allow_iterables: typing.Iterable[typing.Type[typing.Iterable]] = tuple(),
+    except_iterables: typing.Iterable[typing.Type[typing.Iterable]] = tuple(), max_depth: typing.Optional[int] = None,
     curr_depth: int = 0
 ) -> list:
     """

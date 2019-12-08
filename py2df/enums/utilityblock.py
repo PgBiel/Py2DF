@@ -16,6 +16,7 @@ class RepeatType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     N_TIMES = "N Times"  #: Repeats code multiple times.
     WHILE_COND = auto()  #: Repeats code while a certain condition is true.
 
+
 @unique
 class SetVarType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Set Variable blocks."""

@@ -13,6 +13,15 @@ py2df.codeblocks.actions module
    :show-inheritance:
 
 
+py2df.codeblocks.ifs module
+-------------------------------
+
+.. automodule:: py2df.codeblocks.ifs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 Module contents
 ---------------
 

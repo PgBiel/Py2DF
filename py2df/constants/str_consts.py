@@ -10,6 +10,7 @@ ITEM_ID_DYNAMIC_VAR = "var"
 ITEM_ID_TAG = "bl_tag"
 
 BLOCK_ID = "block"
+BRACKET_ID = "bracket"
 
 DEFAULT_AUTHOR = "Unknown"
 
