@@ -532,12 +532,12 @@ class DFReader:
                     Count=1,
                     tag=ItemTagSchema(
                         PublicBukkitValues=nbt.Compound({
-                            "hypercube:codetemplatedata": nbt.Compound(
-                                author=nbt.String(str(self.author or DEFAULT_AUTHOR)),
-                                name=nbt.String(get_line_name(i)),
-                                version=nbt.String(SNBT_EXPORT_VERSION),
-                                code=nbt.String(encoded)
-                            )
+                            "hypercube:codetemplatedata": nbt.String(json.dumps(dict(
+                                author=str(self.author or DEFAULT_AUTHOR),
+                                name=get_line_name(i),
+                                version=SNBT_EXPORT_VERSION,
+                                code=encoded
+                            )))
                         }),
                         display=dict(
                             Name=json.dumps(get_line_name(i))
