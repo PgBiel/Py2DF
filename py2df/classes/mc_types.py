@@ -215,7 +215,7 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
 
         Returns
         -------
-        :class`nbtlib.Compound`
+        :class:`nbtlib.Compound`
             A NBT Tag_Compound (dictionary-like structure) representing this item.
         """
         tag = ItemTagSchema()

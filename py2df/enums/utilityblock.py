@@ -161,6 +161,7 @@ class SetVarType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     )  #: Gets a Worley noise value: A cellular noise in which the distance between two cells' nuclei is calculated.
     WRAP_NUMBER = auto()  #: Checks if a number is between two bounds and if not, wraps it around the farthest bound.
 
+
 @unique
 class SelectObjectType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     """Contains all types of Select Object blocks."""

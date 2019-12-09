@@ -370,3 +370,19 @@ def nbt_to_python(obj: nbt.tag.Base, convert_items: bool = True) -> typing.Union
                 break
 
     return new_obj
+
+
+def snake_to_capitalized_words(snake_case: str) -> str:
+    """Converts a snake_case or SNAKE_CASE string to Capitalized Words format.
+
+    Parameters
+    ----------
+    snake_case : :class:`str`
+        The snake_case string.
+
+    Returns
+    -------
+    :class:`str`
+        The resulting Capitalized Words string.
+    """
+    return " ".join(map(lambda s: s.capitalize(), snake_case.split("_")))

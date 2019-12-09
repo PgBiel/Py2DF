@@ -6,8 +6,8 @@ from .. import enums
 from ..enums import (
     PlayerTarget, EntityTarget, BlockType, IfPlayerType, IfEntityType, IfGameType, IfVariableType,
     SelectionTarget,
-    BracketDirection, BracketType)
-from ..classes import JSONData, Arguments, BracketedBlock, Tag, DFNumber, Block, Bracket
+    BracketDirection, BracketType, IfType)
+from ..classes import JSONData, Arguments, BracketedBlock, Block, Bracket
 from ..utils import remove_u200b_from_doc
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
@@ -78,7 +78,7 @@ class IfBlock(BracketedBlock, JSONData):
 
     block: BlockType = NotImplemented
     args: Arguments
-    action: IfPlayerType
+    action: IfType
     codeblocks: typing.Deque[Block]
     invert: bool
     sub_action: None = None

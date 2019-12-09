@@ -320,7 +320,7 @@ class Control(ActionBlock, JSONData):
 
     Attributes
     ----------\u200b
-    block : :attr:`~py2df.enums.parameters.BlockType.ENTITY_ACTION`
+    block : :attr:`~py2df.enums.parameters.BlockType.CONTROL`
         The type of this codeblock (Control).
 
     args : :class:`~py2df.classes.collections.Arguments`
@@ -467,7 +467,7 @@ class Control(ActionBlock, JSONData):
             Alternatively, setting this to True sets time_unit to :attr:`~py2df.enums.actions.CWaitTag.TICKS`.
             Defaults to ``True`` .
 
-        seconds : :class`bool`, optional
+        seconds : :class:`bool`, optional
             Alternatively, setting this to True sets time_unit to :attr:`~py2df.enums.actions.CWaitTag.SECONDS`.
             Defaults to ``False`` .
 

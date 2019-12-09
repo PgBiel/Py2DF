@@ -387,10 +387,10 @@ class DFReader:
                     **(
                         dict(
                             sub_action=(
-                                "E" if block.action in (
+                                "E" if block.sub_action in (
                                     IfEntityType.NAME_EQUALS, IfEntityType.IS_NEAR, IfEntityType.STANDING_ON
                                 ) else ""  # ENameEquals; EIsNear; EStandingOn => separate from IfPlayer's.
-                            ) + str(block.action.value)
+                            ) + str(block.sub_action.value)
                         ) if block.sub_action and hasattr(block.sub_action, "value") else dict()
                     ),
                     **(

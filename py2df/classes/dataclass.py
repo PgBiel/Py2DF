@@ -215,13 +215,13 @@ class Tag(JSONData):
     tag : str
         The tag's name.
 
-    option : Union[:class:`bool`, :class:`int`, :class:`~py2df.enums.enum_util.TagType`]
+    option : Union[:class:`bool`, :class:`int`, :class:`str`, :class:`~py2df.enums.enum_util.TagType`]
         The option chosen for this tag.
 
     action : :class:`~py2df.enums.enum_util.CodeblockActionType`
         The action type of the codeblock this tag is in.
 
-    block : :class`~py2df.enums.parameters.BlockType`
+    block : :class:`~py2df.enums.parameters.BlockType`
         The type of codeblock this tag is in.
 
     Attributes
@@ -229,13 +229,13 @@ class Tag(JSONData):
         tag : str
             The tag's name.
 
-        option : Union[:class:`bool`, :class:`int`, :class:`~py2df.enums.enum_util.TagType`]
+        option : Union[:class:`bool`, :class:`int`, :class:`str`, :class:`~py2df.enums.enum_util.TagType`]
             The option chosen for this tag.
 
         action : :class:`~py2df.enums.enum_util.CodeblockActionType`
             The action type of the codeblock this tag is in.
 
-        block : :class`~py2df.enums.parameters.BlockType`
+        block : :class:`~py2df.enums.parameters.BlockType`
             The type of codeblock this tag is in.
     """
     tag: str
@@ -244,7 +244,7 @@ class Tag(JSONData):
     block: BlockType
 
     def __init__(
-        self, tag: str, option: typing.Union[bool, int, TagType], action: CodeblockActionType, block: BlockType
+        self, tag: str, option: typing.Union[bool, int, str, TagType], action: CodeblockActionType, block: BlockType
     ):
         """
         Initializes this tag.
@@ -254,13 +254,13 @@ class Tag(JSONData):
         tag : str
             The tag's name.
 
-        option : Union[:class:`bool`, :class:`int`, :class:`~py2df.enums.enum_util.TagType`]
+        option : Union[:class:`bool`, :class:`int`, :class:`str`, :class:`~py2df.enums.enum_util.TagType`]
             The option chosen for this tag.
 
         action : :class:`~py2df.enums.enum_util.CodeblockActionType`
             The action type of the codeblock this tag is in.
 
-        block : :class`~py2df.enums.parameters.BlockType`
+        block : :class:`~py2df.enums.parameters.BlockType`
             The type of codeblock this tag is in.
         """
         self.tag = str(tag)
@@ -304,7 +304,7 @@ class Tag(JSONData):
         action : :class:`~py2df.enums.enum_util.CodeblockActionType`, optional
             The action type of the codeblock this tag is in.
 
-        block : :class`~py2df.enums.parameters.BlockType`, optional
+        block : :class:`~py2df.enums.parameters.BlockType`, optional
             The type of codeblock this tag is in.
 
         Returns

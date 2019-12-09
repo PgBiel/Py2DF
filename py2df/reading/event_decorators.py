@@ -401,7 +401,7 @@ class PlayerEvent(FunctionHolder, Codeblock, JSONData):
 
     @classmethod
     def fall_damage(cls, func: typing.Callable) -> "PlayerEvent":
-        """"??? Decorator.
+        """"Decorator.
 
         Parameters
         ----------
