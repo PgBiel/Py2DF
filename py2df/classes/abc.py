@@ -296,7 +296,7 @@ class Codeblock(Block, metaclass=abc.ABCMeta):
             **(
                 dict(
                     args=self.args.as_json_data()
-                ) if self.args and isinstance(self.args, Arguments) else dict()
+                ) if self.args and isinstance(self.args, JSONData) else dict()
             ),
             **(
                 dict(
@@ -305,11 +305,11 @@ class Codeblock(Block, metaclass=abc.ABCMeta):
             ),
             **(
                 dict(
-                    sub_action=(
-                                   "E" if self.sub_action in (
-                                       IfEntityType.NAME_EQUALS, IfEntityType.IS_NEAR, IfEntityType.STANDING_ON
-                                   ) else ""  # ENameEquals; EIsNear; EStandingOn => separate from IfPlayer's.
-                               ) + str(self.sub_action.value)
+                    subAction=(
+                        "E" if self.sub_action in (
+                            IfEntityType.NAME_EQUALS, IfEntityType.IS_NEAR, IfEntityType.STANDING_ON
+                        ) else ""  # ENameEquals; EIsNear; EStandingOn => separate from IfPlayer's.
+                    ) + str(self.sub_action.value)
                 ) if self.sub_action and hasattr(self.sub_action, "value") else dict()
             ),
             **(

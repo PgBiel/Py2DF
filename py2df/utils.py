@@ -386,3 +386,16 @@ def snake_to_capitalized_words(snake_case: str) -> str:
         The resulting Capitalized Words string.
     """
     return " ".join(map(lambda s: s.capitalize(), snake_case.split("_")))
+
+
+class DFSerializer(nbt.Serializer):  # override nbt.Serializer to fix numeric tags.
+    def serialize_numeric(self, tag: nbt.tag.Base):
+        """Return the literal representation of a numeric tag."""
+        class_func = int if isinstance(tag, int) else float
+        return str(class_func(tag)) + tag.suffix
+
+
+def serialize_tag(tag, *, indent=None, compact=False, quote=None):
+    """Serialize an nbt tag to its literal representation."""
+    serializer = DFSerializer(indent=indent, compact=compact, quote=quote)
+    return serializer.serialize(tag)

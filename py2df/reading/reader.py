@@ -6,9 +6,11 @@ import json
 import base64
 import gzip
 import functools
+import nbtlib as nbt
 from collections import deque
 from .. import constants
-from ..utils import remove_u200b_from_doc, flatten
+from ..schemas import ItemSchema, ItemTagSchema
+from ..utils import remove_u200b_from_doc, flatten, serialize_tag
 from ..enums import PlotSizes, IfEntityType, Color
 from ..constants import DEFAULT_VAL, DEFAULT_AUTHOR, SNBT_EXPORT_VERSION
 from ..classes import Codeblock, FunctionHolder, JSONData, Arguments, Material, BracketedBlock
@@ -524,21 +526,22 @@ class DFReader:
                 return Color.GOLD + Color.BOLD + "Code line"
 
         return [
-            json.dumps(
-                dict(
-                    id=Material.ENDER_CHEST.value,
-                    Count="1b",
-                    tag=dict(PublicBukkitValues={
-                        "hypercube:codetemplatedata": dict(
-                            author=str(self.author or DEFAULT_AUTHOR),
-                            name=get_line_name(i),
-                            version=SNBT_EXPORT_VERSION,
-                            code=encoded
+            serialize_tag(
+                ItemSchema(
+                    id=str(Material.ENDER_CHEST.value),
+                    Count=1,
+                    tag=ItemTagSchema(
+                        PublicBukkitValues=nbt.Compound({
+                            "hypercube:codetemplatedata": nbt.Compound(
+                                author=nbt.String(str(self.author or DEFAULT_AUTHOR)),
+                                name=nbt.String(get_line_name(i)),
+                                version=nbt.String(SNBT_EXPORT_VERSION),
+                                code=nbt.String(encoded)
+                            )
+                        }),
+                        display=dict(
+                            Name=json.dumps(get_line_name(i))
                         )
-                    }),
-
-                    display=dict(
-                        Name=json.dumps(get_line_name(i))
                     )
                 )
             ) for i, encoded in enumerate(self.output_encoded_str(read))

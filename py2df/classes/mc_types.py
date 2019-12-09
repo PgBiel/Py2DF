@@ -18,7 +18,7 @@ from ..enums import (
 from .subcollections import Lore
 from .dataclass import Enchantment
 from .abc import DFType
-from ..utils import remove_u200b_from_doc, clamp, select_dict, nbt_to_python, all_attr_eq
+from ..utils import remove_u200b_from_doc, clamp, select_dict, nbt_to_python, all_attr_eq, serialize_tag
 from ..schemas import ItemSchema, ItemTagSchema, ItemDisplaySchema, ItemEnchantmentSchema
 from ..constants import (
     DEFAULT_VAL, DEFAULT_SOUND_PITCH, DEFAULT_SOUND_VOL, MAX_PITCH_DEGREES, MAX_YAW_DEGREES,
@@ -251,7 +251,7 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
         if self.extra_tags:
             ext_t = self.extra_tags
             tag.update(
-                nbt.serialize_tag(
+                serialize_tag(
                     ext_t
                 ) if isinstance(ext_t, (str, collections.UserString)) else ext_t
             )
@@ -271,7 +271,7 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
         :class:`str`
             SBNT string.
         """
-        return nbt.serialize_tag(self.as_nbt())
+        return serialize_tag(self.as_nbt())
 
     @classmethod
     def from_nbt(cls, data: typing.Union[typing.Dict[str, Base], nbt.Compound]) -> "Item":
