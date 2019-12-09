@@ -246,7 +246,7 @@ class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or C
             tag["display"] = display
 
         if self.hide_flags and self.hide_flags.value:
-            tag["HideFlags"] = int(self.hide_flags.value)
+            tag["HideFlags"] = int(typing.cast(int, self.hide_flags.value))
 
         if self.extra_tags:
             ext_t = self.extra_tags

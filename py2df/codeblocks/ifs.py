@@ -29,15 +29,15 @@ class IfBlock(BracketedBlock, JSONData):
         (if exists) or it will be ignored (if it doesn't, as occurs in 'If Game' and 'If Var')
 
     append_to_reader : :class:`bool`, optional
-        Whether or not this newly-created :class:`IfPlayer` should be already appended to the
+        Whether or not this newly-created If should be already appended to the
         :class:`~py2df.reading.reader.DFReader`. Defaults to ``True``.
 
     invert : :class:`bool`, optional
-        If ``True`` , then this If Player's code will only execute when the condition is false (i.e., applies NOT).
+        If ``True`` , then this If's code will only execute when the condition is false (i.e., applies NOT).
         Default: ``False``
 
-    codeblocks : Deque[:class:`~py2df.classes.abc.Block`], optional
-        The blocks, including Brackets, inside this If Player. Defaults to empty deque (None).
+    codeblocks : Iterable[:class:`~py2df.classes.abc.Block`], optional
+        The blocks, including Brackets, inside this If. Defaults to empty deque (None).
 
     Attributes
     ----------\u200b
@@ -162,7 +162,7 @@ class IfPlayer(IfBlock):
         If ``True`` , then this If Player's code will only execute when the condition is false (i.e., applies NOT).
         Default: ``False``
 
-    codeblocks : Deque[:class:`~py2df.classes.abc.Block`], optional
+    codeblocks : Iterable[:class:`~py2df.classes.abc.Block`], optional
         The blocks, including Brackets, inside this If Player. Defaults to empty deque (None).
 
     Attributes
@@ -210,7 +210,7 @@ class IfPlayer(IfBlock):
     def __init__(
         self, action: IfPlayerType, args: Arguments = Arguments(),
         target: typing.Union[PlayerTarget, SelectionTarget] = DEFAULT_VAL,
-        *, append_to_reader: bool = False, invert: bool = False, codeblocks: typing.Deque[Block] = None
+        *, append_to_reader: bool = False, invert: bool = False, codeblocks: typing.Iterable[Block] = None
     ):
         """
         Initialize this If Player.
@@ -236,7 +236,7 @@ class IfPlayer(IfBlock):
             If ``True`` , then this If Player's code will only execute when the condition is false (i.e., applies NOT).
             Default: ``False``
 
-        codeblocks : Deque[:class:`~py2df.classes.abc.Block`], optional
+        codeblocks : Iterable[:class:`~py2df.classes.abc.Block`], optional
             The blocks, including Brackets, inside this If Player. Defaults to empty deque (None).
         """
         self.action = IfPlayerType(action)
@@ -280,7 +280,7 @@ class IfEntity(IfBlock):
         If ``True`` , then this If Entity's code will only execute when the condition is false (i.e., applies NOT).
         Default: ``False``
 
-    codeblocks : Deque[:class:`~py2df.classes.abc.Block`], optional
+    codeblocks : Iterable[:class:`~py2df.classes.abc.Block`], optional
         The blocks, including Brackets, inside this If Entity. Defaults to empty deque (None).
 
     Attributes
@@ -328,7 +328,7 @@ class IfEntity(IfBlock):
     def __init__(
         self, action: IfEntityType, args: Arguments = Arguments(),
         target: typing.Union[EntityTarget, SelectionTarget] = DEFAULT_VAL,
-        *, append_to_reader: bool = False, invert: bool = False, codeblocks: typing.Deque[Block] = None
+        *, append_to_reader: bool = False, invert: bool = False, codeblocks: typing.Iterable[Block] = None
     ):
         """
         Initialize this If Entity.
@@ -396,7 +396,7 @@ class IfGame(IfBlock):
         If ``True`` , then this If Game's code will only execute when the condition is false (i.e., applies NOT).
         Default: ``False``
 
-    codeblocks : Deque[:class:`~py2df.classes.abc.Block`], optional
+    codeblocks : Iterable[:class:`~py2df.classes.abc.Block`], optional
         The blocks, including Brackets, inside this If Game. Defaults to empty deque (None).
 
     Attributes
@@ -443,7 +443,7 @@ class IfGame(IfBlock):
 
     def __init__(
         self, action: IfGameType, args: Arguments = Arguments(),
-        *, append_to_reader: bool = False, invert: bool = False, codeblocks: typing.Deque[Block] = None
+        *, append_to_reader: bool = False, invert: bool = False, codeblocks: typing.Iterable[Block] = None
     ):
         """
         Initialize this If Game.
@@ -503,7 +503,7 @@ class IfVariable(IfBlock):
         If ``True`` , then this If Variable's code will only execute when the condition is false (i.e., applies NOT).
         Default: ``False``
 
-    codeblocks : Deque[:class:`~py2df.classes.abc.Block`], optional
+    codeblocks : Iterable[:class:`~py2df.classes.abc.Block`], optional
         The blocks, including Brackets, inside this If Variable. Defaults to empty deque (None).
 
     Attributes
@@ -550,7 +550,7 @@ class IfVariable(IfBlock):
 
     def __init__(
         self, action: IfVariableType, args: Arguments = Arguments(),
-        *, append_to_reader: bool = False, invert: bool = False, codeblocks: typing.Deque[Block] = None
+        *, append_to_reader: bool = False, invert: bool = False, codeblocks: typing.Iterable[Block] = None
     ):
         """
         Initialize this If Variable.
