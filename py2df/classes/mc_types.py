@@ -17,7 +17,7 @@ from ..enums import (
 )
 from .subcollections import Lore
 from .dataclass import Enchantment
-from .abc import DFType
+from .abc import DFType, Itemable
 from ..utils import remove_u200b_from_doc, clamp, select_dict, nbt_to_python, all_attr_eq, serialize_tag
 from ..schemas import ItemSchema, ItemTagSchema, ItemDisplaySchema, ItemEnchantmentSchema
 from ..constants import (
@@ -26,7 +26,7 @@ from ..constants import (
 )
 
 
-class Item(DFType):  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
+class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
     """Represents a Minecraft Item stack.
 
     Parameters
@@ -687,8 +687,8 @@ class DFText(collections.UserString, DFType):
 
         return cls(data["data"]["name"])
 
-    def to_item(self) -> Item:
-        pass  # TODO: implement this as book and stuff
+    # def to_item(self) -> Item:
+    #     pass  # TODO: implement this as book and stuff
 
     def __repr__(self):
         return f"<{self.__class__.__name__} data='{self.data}'>"
@@ -815,8 +815,8 @@ class DFNumber(DFType):
         """
         return DFNumber(self.value)
 
-    def to_item(self) -> Item:
-        pass  # TODO: implement this as slimeball and stuff
+    # def to_item(self) -> Item:
+    #     pass  # TODO: implement this as slimeball and stuff
 
     @staticmethod
     def _extract_val(possible_num: typing.Union[int, float, "DFNumber"]):
@@ -1285,8 +1285,8 @@ class DFLocation(DFType):
 
         return new_loc
 
-    def to_item(self) -> "Item":
-        pass  # TODO: paper thing
+    # def to_item(self) -> "Item":
+    #     pass  # TODO: paper thing
 
     def __eq__(self, other: "DFLocation") -> bool:
         attrs_to_check = set(self.__class__.__slots__)  # - {"world_least", "world_most"}
@@ -1607,8 +1607,8 @@ class DFSound(DFType):
         self.set(sound_type=other.sound_type, pitch=other.pitch, volume=other.volume)
         return self
 
-    def to_item(self) -> "Item":
-        pass  # TODO: Sea shell and crap
+    # def to_item(self) -> "Item":
+    #     pass  # TODO: Sea shell and crap
 
     def copy(self) -> "DFSound":
         """
@@ -1744,8 +1744,8 @@ class DFParticle(DFType):
 
         return self
 
-    def to_item(self):
-        pass  # TODO: Sparkly thing and stuff
+    # def to_item(self):
+    #     pass  # TODO: Sparkly thing and stuff
 
     def as_json_data(self) -> dict:
         """Representation of this :class:`DFParticle` as a valid json-serializable :class:`dict`.
@@ -1804,7 +1804,7 @@ class DFParticle(DFType):
         return not self.__eq__(other)
 
 
-class DFCustomSpawnEgg(DFType):
+class DFCustomSpawnEgg(DFType, Itemable):
     """Used for the custom spawn egg types provided by DiamondFire (Giant, Iron Golem etc.)
 
     Parameters\u200b
@@ -1946,9 +1946,10 @@ class DFPotion(DFType):
     
         ``a + b``, ``a - b``, ``a * b``, ``a / b``, ``a // b``, ``a % b``, ``a ** b``: Applies the respective operations
         between the amplifiers of the potions, generating a new :class:`DFPotion` (e.g. amplifier 5 pot - amplifier 2
-        pot = amplifier 3 pot). Worth noting that those operations also work between one :class:`DFPotion` and one
+        pot = amplifier 3 pot; note that the leftmost potion determines the resulting effect).
+        Worth noting that those operations also work between one :class:`DFPotion` and one
         :class:`int`/:class:`float`, however the result is always rounded down, since amplifiers can only
-        be `:class:`int``s. (e.g. :class:`DFPotion`(amp=5) + 6 => :class:`DFPotion`(amp=11))
+        be ints. (e.g. DFPotion(amplifier=5) + 6 => DFPotion(amplifier=11))
     
         ``a += b``, ``a -= b``, ...: Applies each of the operations above, in a similar fashion.
     
@@ -2080,8 +2081,8 @@ class DFPotion(DFType):
 
         return cls(pot, dur, amp)
 
-    def to_item(self) -> Item:
-        pass  # TODO
+    # def to_item(self) -> Item:
+    #     pass  # TODO
 
     def copy(self) -> "DFPotion":
         """Creates an identical copy of this :class:`DFPotion`.
@@ -2372,8 +2373,8 @@ class DFGameValue(DFType):
         
         return cls(GameValueType(in_data["type"]), target_instance)
     
-    def to_item(self) -> "Item":
-        pass  # TODO: Apple
+    # def to_item(self) -> "Item":
+    #     pass  # TODO: Apple
 
     def __eq__(self, other: "DFGameValue") -> bool:
         return all_attr_eq(self, other)

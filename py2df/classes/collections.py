@@ -35,7 +35,7 @@ class Arguments:
         self, items: typing.Optional[
             typing.Union["ItemCollection", "Arguments", typing.Iterable["OAcceptableItem"]]
         ] = None,
-        *, tags: typing.Optional[typing.List[Tag]] = None
+        *, tags: typing.Optional[typing.Iterable[Tag]] = None
     ):
         """
         Initialize :class:`Arguments` .
@@ -46,7 +46,7 @@ class Arguments:
         :class:`JSONData`]]]], optional
             The items held by this :class:`Arguments` instance.
             
-        tags : Optional[List[:class:`~py2df.classes.dataclass.Tag`]], optional
+        tags : Optional[Iterable[:class:`~py2df.classes.dataclass.Tag`]], optional
             Optionally, tags to be added at the very end of items. **Be aware that this will override the last `n` items
             of the item collection** (where `n` is the length of the list given for the ``tags`` parameter).
         """
@@ -56,13 +56,14 @@ class Arguments:
             self.items = ItemCollection(items) if items else ItemCollection()
 
         if tags:  # let's add them to the end of the item collection.
-            n_tags = len(tags)
+            l_tags = list(tags)
+            n_tags = len(l_tags)
             max_len = self.items.max_len
             if n_tags > max_len:
                 raise errors.LimitReachedError(f"Can not assign {n_tags} tags to {max_len} items.")
             
             start_pos = max_len - n_tags
-            self.items.data[start_pos:] = tags
+            self.items.data[start_pos:] = l_tags
 
     def as_json_data(self) -> dict:
         return dict(items=self.items.as_json_data() if self.items else dict())

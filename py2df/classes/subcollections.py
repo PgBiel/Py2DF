@@ -16,31 +16,40 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
 
     Parameters
     ----------\u200b
-    iter : Optional[Iterable[:class:`str`]], optional
+    iter_ : Optional[Iterable[:class:`str`]], optional
         List of lines as an Iterable. (Optional)
 
     Attributes\u200b
     -----------
         data : List[:class:`str`]
             Internal list containing lore lines.
+
+    Notes
+    -----\u200b
+    Set item is usable for any index under the limit of lore lines ({0}), even if no line was appended there. So::
+
+        >>> lore = Lore()
+        >>> lore[54] = "55th line"
+        >>> lore[54]
+        '55th line'
     """
     __slots__ = ()
 
-    def __init__(self, iter: typing.Optional[typing.Iterable[str]] = None):
+    def __init__(self, iter_: typing.Optional[typing.Iterable[typing.Optional[str]]] = None):
         """
         Init a Lore collection.
 
         Parameters
         ----------
-        iter : Optional[Iterable[:class:`str`]], optional
+        iter_ : Optional[Iterable[:class:`str`]], optional
             List of lines as an Iterable. (Optional)
         """
-        if type(iter) == Lore:
-            self.data = iter.data[:]  # allow easy and efficient use of Lore(Lore(...))
+        if type(iter_) == Lore:
+            self.data = iter_.data[:]  # allow easy and efficient use of Lore(Lore(...))
             super().__init__()
         else:
-            if iter:
-                super().__init__(map(str, iter))
+            if iter_:
+                super().__init__(map(str, iter_))
             else:
                 super().__init__()
 
@@ -65,7 +74,7 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
         :exc:`LimitReachedError`
             If there was an attempt to surpass the limit of lore lines (100).
         :exc:`TypeError`
-            If None was given.
+            If ``None`` was given.
 
         """
         if len(self.data) == MAX_LORE_LINES:
@@ -76,20 +85,20 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
         if text is None:
             raise TypeError("Line to append must not be None.")
 
-        self.data.append(text)
+        self.data.append(str(text))
 
-    def extend(self, other: typing.Optional[typing.Iterable[str]]) -> None:
-        f"""Extends the lore line list.
+    def extend(self, other: typing.Iterable[str]) -> None:
+        """Extends the lore line list.
 
         Parameters
         ----------
-        other : Optional[Iterable[str]
+        other : Iterable[:class:`str`]
             Iterable to be added into the line list.
 
         Raises
         ------
         :exc:`LimitReachedError`
-            If there was an attempt to surpass the limit of lore lines ({MAX_LORE_LINES}).
+            If there was an attempt to surpass the limit of lore lines ({0}).
 
         """
         for item in other:
@@ -128,7 +137,10 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
 
             self.data.extend([None] * (val_to_check - curr_data_len + 1))
             
-        super().__setitem__(key, value)
+        super().__setitem__(key, str(value))
 
 
 remove_u200b_from_doc(Lore)
+
+Lore.__doc__ = str(Lore.__doc__).format(MAX_LORE_LINES)
+Lore.extend.__doc__ = str(Lore.extend.__doc__).format(MAX_LORE_LINES)

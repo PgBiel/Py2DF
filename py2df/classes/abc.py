@@ -199,7 +199,7 @@ class FunctionHolder(metaclass=abc.ABCMeta):
         return NotImplemented
 
 
-class DFType(Itemable, BuildableJSONData, Settable, metaclass=abc.ABCMeta):
+class DFType(BuildableJSONData, Settable, metaclass=abc.ABCMeta):
     """Represents a DiamondFire variable type."""
     pass
 
@@ -515,7 +515,9 @@ class BracketedBlock(Codeblock, metaclass=abc.ABCMeta):
             yield codeblock
 
     def __contains__(self, item):
-        return item in self.codeblocks
+        return item in self.codeblocks or any(item in it for it in filter(
+            lambda o: isinstance(o, BracketedBlock), self.codeblocks
+        ))
 
     def __getitem__(self, item):
         return self.codeblocks.__getitem__(item)

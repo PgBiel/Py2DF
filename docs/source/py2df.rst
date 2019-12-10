@@ -31,6 +31,14 @@ py2df.schemas module
    :undoc-members:
    :show-inheritance:
 
+py2df.typings module
+--------------------
+
+.. automodule:: py2df.typings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 py2df.utils module
 ------------------
 

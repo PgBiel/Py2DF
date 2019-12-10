@@ -1,6 +1,8 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum, UtilityBlockType
-from enum import unique, auto
+from .enum_util import AutoSnakeToPascalCaseNameEnum, UtilityBlockType, TagType
+from enum import unique, auto, Enum
 
+
+# region:types
 
 @unique
 class RepeatType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
@@ -14,6 +16,7 @@ class RepeatType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     GRID = auto(
     )  #: Repeats code once for every block in a region. Each iteration, the var is set to the curr. block's location.
     N_TIMES = "N Times"  #: Repeats code multiple times.
+    SPHERE = auto()  #: Repeats code once for every evenly distributed sphere point.
     WHILE_COND = auto()  #: Repeats code while a certain condition is true.
 
 
@@ -191,3 +194,16 @@ class SelectObjectType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     SHOOTER = auto()  #: Selects the shooter in a projectile-related event.
     VICTIM = auto(
     )  #: Selects the victim in a kill-related or damage-related event. The victim can be a player or an entity.
+
+# endregion:types
+
+# region:tags
+
+
+class RAdjacentPattern(TagType, Enum):
+    CARDINAL = "Cardinal (4 blocks)"
+    SQUARE = "Square (8 blocks)"
+    ADJACENT = "Adjacent (6 blocks)"
+    CUBE = "Cube (26 blocks)"
+
+# endregion:tags

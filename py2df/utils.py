@@ -3,6 +3,9 @@ import collections
 import nbtlib as nbt
 from array import array
 
+if typing.TYPE_CHECKING:  # avoid cyclic import
+    from .typings import Numeric
+
 Docable = typing.Union[typing.Callable, type]
 IterOrSingleDocable = typing.Union[Docable, typing.Iterable[Docable]]
 
@@ -37,10 +40,15 @@ def remove_u200b_from_doc(obj: IterOrSingleDocable, *other_objs: IterOrSingleDoc
         remove_u200b_from_doc(o)
 
 
+class _DoNotFlatten:
+    def __init__(self, val):
+        self.val = val
+
+
 def flatten(
     *args: typing.Any, allow_iterables: typing.Iterable[typing.Type[typing.Iterable]] = tuple(),
     except_iterables: typing.Iterable[typing.Type[typing.Iterable]] = tuple(), max_depth: typing.Optional[int] = None,
-    curr_depth: int = 0
+    keep_iterables: typing.Iterable[typing.Type[typing.Iterable]] = tuple(), curr_depth: int = 0
 ) -> list:
     """
     Flatten a list or iterable of arbitrary length.
@@ -69,6 +77,12 @@ def flatten(
         An integer that represents the maximum depth until which the list is flattened, or None for no limit.
         Defaults to None.
 
+    keep_iterables : Iterable[:class:`type`], optional
+        List of iterable types to keep; i.e., flatten them, but keep them there regardless (one position before). E.g.::
+
+            >>> flatten(1, (1, 2), keep_iterables=[tuple])
+            [1, (1, 2), 1, 2]
+
     Returns
     -------
     :class:`list`
@@ -92,27 +106,46 @@ def flatten(
 
     for el in args:
         is_iterable = isinstance(el, collections.Iterable)
+
+        do_keep = keep_iterables and isinstance(el, tuple(keep_iterables)) and curr_depth == 0  # prevent dupes
+
+        if do_keep:  # if we should keep it in the list
+            x.append(el)
+
         if (
             (is_iterable and except_iterables and isinstance(el, tuple(except_iterables)))  # if iterable in "except",
-            or not isinstance(el, (list, tuple, *(allow_iterables or [])))             # or not in "accept"...
+            or not isinstance(el, (list, tuple, *(allow_iterables or [])))                  # or not in "accept"...
         ):
             el = [el]  # make it an one-element iterable for the for loop to work.
+
         for item in el:
-            if (
+            if do_keep and item == el:
+                continue
+
+            if (  # if this is a valid iterable according to the given parameters, then flatten it
                 (curr_depth < max_depth if max_depth else True)  # do not flatten any further than max depth.
                 and (  # if this is a valid iterable (not in "except" or in "accept"), flatten it!
                     (is_iterable and except_iterables and not isinstance(item, tuple(except_iterables)))
                     or (not except_iterables and isinstance(item, (list, tuple, *(allow_iterables or tuple()))))
                 )
             ):
+                if keep_iterables and isinstance(item, tuple(keep_iterables)):
+                    x.append(item)
+
                 x.extend(
                     flatten(  # flatten
-                        item, allow_iterables=allow_iterables, except_iterables=except_iterables,
-                        max_depth=max_depth, curr_depth=curr_depth + 1
+                        item,
+                        allow_iterables=allow_iterables, except_iterables=except_iterables,
+                        max_depth=max_depth, curr_depth=curr_depth + 1, keep_iterables=keep_iterables
                     )
                 )
             else:  # don't flatten
                 x.append(item)
+
+    if keep_iterables and curr_depth == 0 and False:
+        print(f"bruh moment {curr_depth=} {len(list(filter(lambda t: type(t) == _DoNotFlatten, x)))}")
+        return [el.val if type(el) == _DoNotFlatten else el for el in x]
+
     return x
 
 
@@ -243,11 +276,11 @@ def nbt_to_python(obj: nbt.Compound, convert_items: bool = True) -> dict: ...
 ItemType = typing.TypeVar("ItemType")
 
 
-if hasattr(typing, "Literal"):
+if hasattr(typing, "Literal"):  # py 3.8
     TrueLiteral: "typing.Literal[True]" = typing.Literal[True]
     FalseLiteral: "typing.Literal[False]" = typing.Literal[False]
-else:  # support for py <3.8
-    TrueLiteral = FalseLiteral = typing.cast(typing.Any, bool)
+else:  # support for py <3.8  - just accept any bool
+    TrueLiteral = FalseLiteral = typing.cast(typing.Any, bool)  # type: typing.Type[bool]
 
 
 @typing.overload  # convert_items is False; List

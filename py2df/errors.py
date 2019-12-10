@@ -1,18 +1,15 @@
 """
 Custom errors used by py2df.
 
-Exception Tree:
----------------
+Exception Hierarchy
+-------------------
 
-``
-    Exception
+.. exception_hierarchy::
 
-    +-- Py2DfError
-
-        +-- Py2DfCollectionError
-
-            +-- LimitReachedError
-``
+    - :exc:`Exception`
+        - :exc:`Py2DFError`
+            - :exc:`Py2DFCollectionError`
+                - :exc:`LimitReachedError`
 """
 
 

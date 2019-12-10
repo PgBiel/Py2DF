@@ -1,20 +1,34 @@
 import typing
 from collections import deque
 
-from ..classes import UtilityBlock, JSONData, Arguments, Block, Bracket, BracketedBlock
+from ..classes import UtilityBlock, JSONData, Arguments, Block, Bracket, BracketedBlock, DFLocation, Tag, DFNumber, \
+    ItemCollection
 from ..enums import BlockType, IfPlayerType, IfType, BracketDirection, BracketType, IfEntityType, \
-    RepeatType, SetVarType, SelectObjectType
+    RepeatType, SetVarType, SelectObjectType, RAdjacentPattern
 from ..reading.reader import DFReader
 from ..constants import BLOCK_ID
+from ..typings import Numeric, Textable, Listable, Locatable, convert_numeric, convert_text
 from ..utils import remove_u200b_from_doc
+from .ifs import IfPlayer, IfEntity, IfGame, IfVariable, IfBlock
+
+AnyIf = typing.Union[IfPlayer, IfEntity, IfGame, IfVariable]
 
 
 class Repeat(BracketedBlock, UtilityBlock, JSONData):
-    """A Codeblock that repeats code inside it.
+    """A Codeblock that repeats code inside it. Look for the humanized classmethods in the documentation.
+    Example usage::
+
+        @PlayerEvent.join
+        def on_join():
+            # ... code ...
+            with Repeat.n_times(5):
+                # ... code to repeat 5 times ...
+
+            # ... more code, outside the Repeat ...
 
     Parameters
     ----------\u200b
-    action : :class:`~py2df.enums.actions.RepeatType`
+    action : :class:`~py2df.enums.utilityblock.RepeatType`
         The type of Repeat.
 
     args : :class:`~py2df.classes.collections.Arguments`
@@ -28,11 +42,11 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         Whether or not this newly-created :class:`Repeat` should be already appended to the
         :class:`~py2df.reading.reader.DFReader`. Defaults to ``False`` (is already done on __enter__).
 
-    codeblocks : Deque[:class:`~py2df.classes.abc.Block`], optional
+    codeblocks : Iterable[:class:`~py2df.classes.abc.Block`], optional
         The blocks, including Brackets, inside this Repeat. Defaults to empty deque (None).
 
     invert : :class:`bool`, optional
-            If this is a :attr:`~py2df.enums.actions.RepeatType.WHILE_COND`, then this determines whether or not
+            If this is a :attr:`~py2df.enums.utilityblock.RepeatType.WHILE_COND`, then this determines whether or not
             the Repeat should only occur while the condition is False (i.e., NOT). Defaults to ``False``.
 
     Attributes
@@ -54,7 +68,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         that determines if the Repeat will keep going.
 
     invert : :class:`bool`
-            If this is a :attr:`~py2df.enums.actions.RepeatType.WHILE_COND`, then this determines whether or not
+            If this is a :attr:`~py2df.enums.utilityblock.RepeatType.WHILE_COND`, then this determines whether or not
             the Repeat should only occur while the condition is False (i.e., NOT). Defaults to ``False``.
 
     length : :class:`int`
@@ -89,7 +103,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         """
         Parameters
         ----------
-        action : :class:`~py2df.enums.actions.RepeatType`
+        action : :class:`~py2df.enums.utilityblock.RepeatType`
             The condition to check.
 
         args : :class:`~py2df.classes.collections.Arguments`
@@ -103,7 +117,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
             The blocks, including Brackets, inside this Repeat Player. Defaults to empty deque (None).
 
         invert : :class:`bool`, optional
-            If this is a :attr:`~py2df.enums.actions.RepeatType.WHILE_COND`, then this determines whether or not
+            If this is a :attr:`~py2df.enums.utilityblock.RepeatType.WHILE_COND`, then this determines whether or not
             the Repeat should only occur while the condition is False (i.e., NOT). Defaults to ``False``.
         """
         self.action = RepeatType(action)
@@ -179,13 +193,254 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
     def __invert__(self):
         return self.__neg__()
 
+    # region:humanized_repeat
+
+    @classmethod
+    def adjacent(
+        cls, var, center: Locatable,
+        *, change_rotation: bool = False, include_origin: bool = False,
+        pattern: RAdjacentPattern = RAdjacentPattern.ADJACENT
+    ) -> "Repeat":
+        """Repeats code once for each block adjacent to a location. Each iteration, the var is set to the current block.
+
+        Parameters
+        ----------
+        var
+            The variable that represents the location of the current block on each iteration. Location.
+
+        center : :attr:`~.Locatable`
+            The center block around which to obtain the adjacent locations from.
+
+        change_rotation : :class:`bool`, optional
+            Defaults to ``False``
+
+        include_origin : :class:`bool`, optional
+            Whether or not to include the origin/center block in the iteration. Defaults to False
+
+        pattern : :class:`~.RAdjacentPattern`
+            The pattern to follow (Cardinal, Square, Adjacent or Cube). Defaults to
+            :attr:`~py2df.enums.utilityblock.RAdjacentPattern.ADJACENT`
+
+        Returns
+        -------
+        :class:`Repeat`
+            The generated Repeat instance.
+        """
+
+        return cls(
+            action=RepeatType.ADJACENT,
+            args=Arguments(
+                [var, center],
+                tags=[
+                    Tag(
+                        "Change Location Rotation", option=bool(change_rotation), action=RepeatType.ADJACENT,
+                        block=BlockType.REPEAT
+                    ),
+                    Tag(
+                        "Include Origin Block", option=bool(include_origin), action=RepeatType.ADJACENT,
+                        block=BlockType.REPEAT
+                    ),
+                    Tag(
+                        "Pattern", option=pattern, action=RepeatType.ADJACENT,
+                        block=BlockType.REPEAT
+                    )
+                ]
+            ),
+            append_to_reader=False
+        )
+
+    @classmethod
+    def for_each(cls, var, list_to_iterate: Listable, *, allow_list_changes: bool = True) -> "Repeat":
+        """Repeats code once for every index of a list. Each iteration, the var is set to the value at
+        the current index.
+
+        Parameters
+        ----------
+        var
+            The variable that is set to the current list element on each iteration.
+
+        list_to_iterate : :attr:`~.Listable`
+            The list to iterate over.
+
+        allow_list_changes : :class:`bool`, optional
+            If the list should be able to be changed while the loop is running. Defaults to ``True`` (if ``False``, a
+            copy of the list is used).
+
+        Returns
+        -------
+        :class:`Repeat`
+            The generated Repeat instance.
+        """
+
+        return cls(
+            action=RepeatType.FOR_EACH,
+            args=Arguments(
+                [var, list_to_iterate],
+                tags=[Tag(
+                    "Allow List Changes", option=True if allow_list_changes else "False (Use Copy of List)",
+                    action=RepeatType.FOR_EACH, block=BlockType.REPEAT
+                )]
+            ),
+            append_to_reader=False
+        )
+
+    @classmethod
+    def forever(cls) -> "Repeat":
+        """Repeats code forever.
+
+        Returns
+        -------
+        :class:`Repeat`
+            The generated Repeat instance.
+        """
+
+        return cls(
+            action=RepeatType.FOREVER,
+            args=Arguments(),
+            append_to_reader=False
+        )
+
+    @classmethod
+    def grid(cls, var, start_pos: Locatable, end_pos: Locatable) -> "Repeat":
+        """Repeats code once for every block in a region. Each iteration, the var is set to the curr. block's location.
+
+        Parameters
+        ----------
+        var
+            The variable that is set to the location of the current block on each iteration.
+
+        start_pos : :attr:`~.Locatable`
+            The start position of the region to repeat over.
+
+        end_pos : :attr:`~.Locatable`
+            The end position of the region to repeat over.
+
+        Returns
+        -------
+        :class:`Repeat`
+            The generated Repeat instance.
+        """
+
+        return cls(
+            action=RepeatType.GRID,
+            args=Arguments([var, start_pos, end_pos]),
+            append_to_reader=False
+        )
+
+    @classmethod
+    def n_times(cls, amount: Numeric) -> "Repeat":
+        """Repeats code multiple times.
+
+        Parameters
+        ----------
+        amount : :attr:`~.Numeric`
+            The amount of times to repeat.
+
+        Returns
+        -------
+        :class:`Repeat`
+            The generated Repeat instance.
+        """
+
+        return cls(
+            action=RepeatType.N_TIMES,
+            args=Arguments([convert_numeric(amount)]),
+            append_to_reader=False
+        )
+
+    @classmethod
+    def sphere(
+        cls, var, center: Locatable, radius: Numeric, points: Numeric, *, point_locs_inwards: bool = False
+    ) -> "Repeat":
+        """Repeats code once for every evenly distributed sphere point.
+
+        Parameters
+        ----------
+        var
+            The variable that is set to the location on each iteration.
+
+        center : :attr:`~.Locatable`
+            The center of the sphere.
+
+        radius : :attr:`~.Numeric`
+            The radius of the sphere, in blocks.
+
+        points : :attr:`~.Numeric`
+            The amount of points in the sphere ("resolution").
+
+        point_locs_inwards : :class:`bool`, optional
+            Whether or not the locations should have their pitches and yaws changed to always point to the center.
+            Defaults to ``False``
+
+        Returns
+        -------
+        :class:`Repeat`
+            The generated Repeat instance.
+        """
+
+        return cls(
+            action=RepeatType.SPHERE,
+            args=Arguments(
+                [var, center, convert_numeric(radius), convert_numeric(points)],
+                tags=[Tag(
+                    "Point Locations Inwards",
+                    option=bool(point_locs_inwards),
+                    action=RepeatType.SPHERE,
+                    block=BlockType.REPEAT
+                )]
+            ),
+            append_to_reader=False
+        )
+
+    @classmethod
+    def while_cond(cls, cond: AnyIf) -> "Repeat":
+        """Repeats code while a certain condition is true.
+
+        Parameters
+        ----------
+        cond : :class:`~.IfBlock`
+            The condition that will determine if this loop will continue to run. Note that this must be a
+            pre-made If block.
+
+        Returns
+        -------
+        :class:`Repeat`
+            The generated Repeat instance.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the condition given was not an If Block (:class:`~.IfPlayer`, :class:`~.IfEntity`, :class:`~.IfGame` or
+            :class:`~.IfVariable`).
+
+        Todo
+        ----
+        Add example.
+        """
+        if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
+            raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
+
+        args = cond.args
+        sub_action = cond.action
+        invert = cond.invert
+
+        return cls(
+            action=RepeatType.WHILE_COND,
+            args=Arguments(args),
+            sub_action=sub_action,
+            append_to_reader=False,
+            invert=bool(invert)
+        )
+
+    # endregion:humanized_repeat
+
 
 class SetVar(UtilityBlock, JSONData):
     """Used to set the value of a dynamic variable.
 
     Parameters
     ----------\u200b
-    action : :class:`~py2df.enums.actions.SetVarType`
+    action : :class:`~py2df.enums.utilityblock.SetVarType`
         The type of SetVar block this is.
 
     args : :class:`~py2df.classes.collections.Arguments`
@@ -203,7 +458,7 @@ class SetVar(UtilityBlock, JSONData):
     args : :class:`~py2df.classes.collections.Arguments`
         The arguments of this SetVar block.
 
-    action : :class:`~py2df.enums.actions.SetVarType`
+    action : :class:`~py2df.enums.utilityblock.SetVarType`
         The type of SetVar block this is.
 
     sub_action : ``None``
@@ -237,7 +492,7 @@ class SetVar(UtilityBlock, JSONData):
 
         Parameters
         ----------
-        action : :class:`~py2df.enums.actions.SetVarType`
+        action : :class:`~py2df.enums.utilityblock.SetVarType`
             The type of SetVar block this is.
 
         args : :class:`~py2df.classes.collections.Arguments`
@@ -271,18 +526,27 @@ class SetVar(UtilityBlock, JSONData):
 class SelectObj(UtilityBlock, JSONData):
     """Used to change the selection on the current line of code, which will affect the targets of most code blocks.
 
+    Example usage::
+
+        @PlayerEvent.join
+        def on_join():
+            # ... code ...
+            SelectObj.all_players()  # selects all players
+            SelectObj.none()  # selects nothing
+            # ...
+
     Parameters
     ----------\u200b
-    action : :class:`~py2df.enums.actions.SelectObjectType`
+    action : :class:`~py2df.enums.utilityblock.SelectObjectType`
         The new selection, which will be the type of Select Object block.
 
     args : :class:`~py2df.classes.collections.Arguments`
         The arguments of this SelectObj block.
 
     sub_action : Optional[:class:`~py2df.enums.enum_util.IfType`], optional
-        If the SelectObj type is one of :attr:`~py2df.enums.actions.SelectObjectType.ENTITIES_COND`,
-        :attr:`~py2df.enums.actions.SelectObjectType.MOBS_COND` or
-        :attr:`~py2df.enums.actions.SelectObjectType.PLAYERS_COND`, then this attribute represents the specific
+        If the SelectObj type is one of :attr:`~py2df.enums.utilityblock.SelectObjectType.ENTITIES_COND`,
+        :attr:`~py2df.enums.utilityblock.SelectObjectType.MOBS_COND` or
+        :attr:`~py2df.enums.utilityblock.SelectObjectType.PLAYERS_COND`, then this attribute represents the specific
         condition that determines whether an entity/mob/player is selected or not. Otherwise, this is ``None``.
         Defaults to ``None``.
 
@@ -303,13 +567,13 @@ class SelectObj(UtilityBlock, JSONData):
     args : :class:`~py2df.classes.collections.Arguments`
         The arguments of this SelectObj block.
 
-    action : :class:`~py2df.enums.actions.SelectObjectType`
+    action : :class:`~py2df.enums.utilityblock.SelectObjectType`
         The type of SelectObj block this is.
 
     sub_action : Optional[:class:`~py2df.enums.enum_util.IfType`]
-        If the SelectObj type is one of :attr:`~py2df.enums.actions.SelectObjectType.ENTITIES_COND`,
-        :attr:`~py2df.enums.actions.SelectObjectType.MOBS_COND` or
-        :attr:`~py2df.enums.actions.SelectObjectType.PLAYERS_COND`, then this attribute represents the specific
+        If the SelectObj type is one of :attr:`~py2df.enums.utilityblock.SelectObjectType.ENTITIES_COND`,
+        :attr:`~py2df.enums.utilityblock.SelectObjectType.MOBS_COND` or
+        :attr:`~py2df.enums.utilityblock.SelectObjectType.PLAYERS_COND`, then this attribute represents the specific
         condition that determines whether an entity/mob/player is selected or not. Otherwise, this is ``None``.
 
     invert : :class:`bool`
@@ -346,16 +610,16 @@ class SelectObj(UtilityBlock, JSONData):
 
         Parameters
         ----------
-        action : :class:`~py2df.enums.actions.SelectObjectType`
+        action : :class:`~py2df.enums.utilityblock.SelectObjectType`
             The type of SelectObj block this is.
 
         args : :class:`~py2df.classes.collections.Arguments`
             The arguments of this SelectObj block.
 
         sub_action : Optional[:class:`~py2df.enums.enum_util.IfType`], optional
-            If the SelectObj type is one of :attr:`~py2df.enums.actions.SelectObjectType.ENTITIES_COND`,
-            :attr:`~py2df.enums.actions.SelectObjectType.MOBS_COND` or
-            :attr:`~py2df.enums.actions.SelectObjectType.PLAYERS_COND`, then this attribute represents the specific
+            If the SelectObj type is one of :attr:`~py2df.enums.utilityblock.SelectObjectType.ENTITIES_COND`,
+            :attr:`~py2df.enums.utilityblock.SelectObjectType.MOBS_COND` or
+            :attr:`~py2df.enums.utilityblock.SelectObjectType.PLAYERS_COND`, then this attribute represents the specific
             condition that determines whether an entity/mob/player is selected or not. Otherwise, this is ``None``.
             Defaults to ``None``.
 
@@ -411,6 +675,442 @@ class SelectObj(UtilityBlock, JSONData):
 
     def __invert__(self):
         return self.__neg__()
+
+    # region:humanized_selobj
+
+    @classmethod
+    def all_entities(cls) -> "SelectObj":
+        """Selects all entities on the plot.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.ALL_ENTITIES,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def all_mobs(cls) -> "SelectObj":
+        """Selects all mobs on the plot.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.ALL_MOBS,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def all_players(cls) -> "SelectObj":
+        """Selects all players that are on the plot.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.ALL_PLAYERS,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def damager(cls) -> "SelectObj":
+        """Selects the damager in a damage-related event. The damager can be a player or an entity.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.DAMAGER,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def default_entity(cls) -> "SelectObj":
+        """Selects the main entity involved in the current Player/Entity Event, or the last spawned entity if none.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.DEFAULT_ENTITY,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def default_player(cls) -> "SelectObj":
+        """Selects the main player involved in the current Player Event or Loop.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.DEFAULT_PLAYER,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def entities_by_cond(cls, cond: AnyIf) -> "SelectObj":
+        """Selects all entities that meet a certain condition.
+
+        Parameters
+        ----------
+        cond : :class:`~py2df.codeblocks.ifs.IfBlock`
+            The condition with which to match entities.
+        
+        Warnings
+        --------
+        This does not select players.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the condition given was not an If Block (:class:`~.IfPlayer`, :class:`~.IfEntity`, :class:`~.IfGame` or
+            :class:`~.IfVariable`).
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
+            raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
+
+        return cls(
+            SelectObjectType.ENTITIES_COND,
+            args=cond.args,
+            sub_action=cond.action,
+            append_to_reader=True,
+            invert=bool(cond.invert)
+        )
+
+    @classmethod
+    def entity_name(cls, name: Textable) -> "SelectObj":
+        """Selects all entities whose names are equal to the text specified.
+
+        Parameters
+        ----------
+        name : :attr:`~.Textable`
+            The name of the entity(ies) to select.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.ENTITY_NAME,
+            args=Arguments([convert_text(name)]),
+            append_to_reader=True
+        )
+
+    @classmethod
+    def filter_selection(cls, cond: AnyIf) -> "SelectObj":
+        """Filters the current selection by selecting all objects that meet a certain condition.
+        
+        Parameters
+        ----------
+        cond : :class:`~py2df.codeblocks.ifs.IfBlock`
+            The condition with which to filter the current selection.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the condition given was not an If Block (:class:`~.IfPlayer`, :class:`~.IfEntity`, :class:`~.IfGame` or
+            :class:`~.IfVariable`).
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
+            raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
+        
+        return cls(
+            SelectObjectType.FILTER_SELECT,
+            args=cond.args,
+            sub_action=cond.action,
+            append_to_reader=True,
+            invert=bool(cond.invert)
+        )
+
+    @classmethod
+    def killer(cls) -> "SelectObj":
+        """Selects the killer in a kill-related event. The killer can be a player or an entity.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.KILLER,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def last_entity(cls) -> "SelectObj":
+        """Selects the most recently spawned entity.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.LAST_ENTITY,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def last_mob(cls) -> "SelectObj":
+        """Selects the most recently spawned mob.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.LAST_MOB,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def mob_name(cls, name: Textable) -> "SelectObj":
+        """Selects all mobs whose names are equal to the text specified.
+
+        Parameters
+        ----------
+        name : :attr:`~.Textable`
+            The name of the mob(s) to select.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.MOB_NAME,
+            args=Arguments([convert_text(Textable)]),
+            append_to_reader=True
+        )
+
+    @classmethod
+    def mobs_by_cond(cls, cond: AnyIf) -> "SelectObj":
+        """Selects all mobs that meet a certain condition.
+
+        Parameters
+        ----------
+        cond : :class:`~py2df.codeblocks.ifs.IfBlock`
+            The condition with which to match mobs.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the condition given was not an If Block (:class:`IfPlayer`, :class:`IfEntity`, :class:`IfGame` or
+            :class:`IfVariable`).
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
+            raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
+
+        return cls(
+            SelectObjectType.MOBS_COND,
+            args=cond.args,
+            sub_action=cond.action,
+            append_to_reader=True,
+            invert=bool(cond.invert)
+        )
+
+    @classmethod
+    def none(cls) -> "SelectObj":
+        """Selects nothing. All code blocks will act like they normally would if nothing was selected.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.NONE,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def player_name(cls, name: Textable) -> "SelectObj":
+        """Selects the player whose name is equal to the text specified.
+
+        Parameters
+        ----------
+        name : :attr:`~.Textable`
+            The username(s)/UUID(s) of the player(s) to select.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.PLAYER_NAME,
+            args=Arguments([convert_text(name)]),
+            append_to_reader=True
+        )
+
+    @classmethod
+    def players_by_cond(cls, cond: AnyIf) -> "SelectObj":
+        """Selects all players that meet a certain condition.
+
+        Parameters
+        ----------
+        cond : :class:`~py2df.codeblocks.ifs.IfBlock`
+            The condition with which to match players.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the condition given was not an If Block (:class:`IfPlayer`, :class:`IfEntity`, :class:`IfGame` or
+            :class:`IfVariable`).
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
+            raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
+
+        return cls(
+            SelectObjectType.PLAYERS_COND,
+            args=cond.args,
+            sub_action=cond.action,
+            append_to_reader=True,
+            invert=bool(cond.invert)
+        )
+
+    @classmethod
+    def projectile(cls) -> "SelectObj":
+        """Selects the projectile in a projectile-related event.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.PROJECTILE,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def random_entity(cls) -> "SelectObj":
+        """Selects a random entity.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.RANDOM_ENTITY,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def random_mob(cls) -> "SelectObj":
+        """Selects a random mob.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.RANDOM_MOB,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def random_player(cls) -> "SelectObj":
+        """Selects a random player.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.RANDOM_PLAYER,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def select_randomly(cls, amount: Numeric) -> "SelectObj":
+        """Filters the current selection by selecting one or more random objects from it.
+
+        Parameters
+        ----------
+        amount : :attr:`~.Numeric`
+            Number of objects to randomly select from the previous selection.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.RANDOM_SELECTED,
+            args=Arguments([convert_numeric(amount)]),
+            append_to_reader=True
+        )
+
+    @classmethod
+    def shooter(cls) -> "SelectObj":
+        """Selects the shooter in a projectile-related event.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.SHOOTER,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def victim(cls) -> "SelectObj":
+        """Selects the victim in a kill-related or damage-related event. The victim can be a player or an entity.
+
+        Returns
+        -------
+        :class:`SelectObj`
+            The generated SelectObj instance.
+        """
+        return cls(
+            SelectObjectType.VICTIM,
+            append_to_reader=True
+        )
+
+    # endregion:humanized_selobj
 
 
 remove_u200b_from_doc(Repeat, SetVar, SelectObj)
