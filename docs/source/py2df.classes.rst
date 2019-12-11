@@ -5,7 +5,7 @@ Submodules
 ----------
 
 py2df.classes.abc module
--------------------------
+------------------------
 
 .. automodule:: py2df.classes.abc
    :members:
@@ -40,6 +40,14 @@ py2df.classes.subcollections module
 -----------------------------------
 
 .. automodule:: py2df.classes.subcollections
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+py2df.classes.variable module
+-----------------------------
+
+.. automodule:: py2df.classes.variable
    :members:
    :undoc-members:
    :show-inheritance:

@@ -26,7 +26,7 @@ class DFReader:
             DFReader(PlotSizes.LARGE_PLOT, auto_split=True)  # changes config
             ...
 
-    To output the Paste item NBT, use :meth:`DFReader.output_sbnt` .
+    To output the Paste item NBT, use :meth:`DFReader.output_snbt` .
 
     Attributes
     ----------\u200b

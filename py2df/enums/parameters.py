@@ -8,7 +8,7 @@ from .enum_util import AutoLowerNameEnum
 @unique
 class BlockType(AutoLowerNameEnum):  # TODO: Verify Function, Process and Player Event json data
     """Contains all types of different codeblocks."""
-    CALL_FUNCTION = auto(
+    CALL_FUNC = auto(
     )  #: Calls functions made by a Function block. Code will not continue past this until the Function completes.
     CONTROL = auto()  #: Used to control the execution of some or all code blocks after it.
     ELSE = auto(

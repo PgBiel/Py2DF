@@ -721,7 +721,7 @@ class CallerBlock(Codeblock, metaclass=abc.ABCMeta):
 
     Attributes\u200b
     ------------
-        block : Union[:attr:`~py2df.enums.parameters.BlockType.CALL_FUNCTION`, \
+        block : Union[:attr:`~py2df.enums.parameters.BlockType.CALL_FUNC`, \
 :attr:`~py2df.enums.parameters.BlockType.START_PROCESS`]
             The type of the callable block - `Call Function` or `Start Process`.
     """
@@ -747,7 +747,7 @@ class CallerBlock(Codeblock, metaclass=abc.ABCMeta):
                 return NotImplemented
 
             try:
-                if BlockType(getattr(o_cls, "block")) in (BlockType.CALL_FUNCTION, BlockType.START_PROCESS):
+                if BlockType(getattr(o_cls, "block")) in (BlockType.CALL_FUNC, BlockType.START_PROCESS):
                     return True
             except ValueError:  # not a valid block type
                 return NotImplemented  # not a CallerBlock

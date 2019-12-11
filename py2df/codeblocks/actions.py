@@ -6,6 +6,7 @@ from ..enums import (
 )
 from ..classes import JSONData, Arguments, ActionBlock, Tag, DFNumber
 from ..utils import remove_u200b_from_doc
+from ..typings import p_check, Numeric
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
 
@@ -456,11 +457,11 @@ class Control(ActionBlock, JSONData):
 
         Parameters
         ----------
-        duration : Union[:class:`int`, :class:`float`, :class:`~py2df.classes.mc_types.DFNumber`], optional
+        duration : :attr:`~.Numeric`, optional
             The duration of time to wait for, according to the time unit specified in the ``time_unit`` param.
             Defaults to ``1``
 
-        time_unit : :class:`~py2df.enums.actions.CWaitTag`, optional
+        time_unit : :class:`~.CWaitTag`, optional
             The time unit that the duration was specified in. Defaults to :attr:`~py2df.enums.actions.CWaitTag.TICKS`.
 
         ticks : :class:`bool`, optional
@@ -497,7 +498,7 @@ class Control(ActionBlock, JSONData):
         return Control(
             ControlType.WAIT,
             Arguments(
-                items=[DFNumber(duration)] if duration != DEFAULT_VAL else None,
+                items=[p_check(duration, Numeric, "duration")] if duration != DEFAULT_VAL else None,
                 tags=[Tag(
                     "Time Unit",
                     option=enums.CWaitTag(time_unit),

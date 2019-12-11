@@ -159,6 +159,7 @@ class EntityActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     NO_PROJ_COLL = auto()  #: Prevents projectiles from hitting the mob.
     PLAYER_DISGUISE = auto()  #: Disguises the entity as a player.
     PROJ_COLL = auto()  #: Allows projectiles to hit the mob.
+    PROJECTILE_ITEM = auto()  #: Sets the item the projectile displays as.
     REMOVE = auto()  #: Deletes the entity.
     REMOVE_EFFECT = auto()  #: Removes one or more potion effects from the mob.
     RIDE_ENTITY = auto()  #: Mounts the entity on top of another player or entity.
@@ -169,12 +170,16 @@ class EntityActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     SET_COLOR = auto()  #: Sets the color of a mob.
     SET_FALL_DISTANCE = auto()  #: Sets the entity's fall distance, affecting fall damage upon landing.
     SET_FIRE_TICKS = auto()  #: Sets the entity on fire for a certain number of ticks.
+    SET_FOX_TYPE = auto()  #: Sets the fur type of a fox.
     SET_HAND_ITEM = auto()  #: Sets the item in the mob's main hand or off hand.
     SET_HORSE_ARMOR = auto()  #: Sets the armor of a horse.
     SET_HORSE_CHEST = auto()  #: Sets whether a horse has a chest equipped.
+    SET_ITEM_OWNER = auto()  #: Sets an item's owner.
     SET_MAX_HEALTH = auto()  #: Sets the maximum amount of health that the mob can have.
     SET_NAME = auto()  #: Changes the name of the entity.
+    SET_PANDA_GENES = auto()  #: Sets the genes (traits) of a panda.
     SET_PARROT_VARIANT = auto()  #: Sets the skin variant of a parrot.
+    SET_PICKUP_DELAY = auto()  #: Sets an item's pickup delay.
     SET_POSE = auto()  #: Sets the three-dimensional rotation of an armor stand part.
     SET_RABBIT_TYPE = auto()  #: Sets the skin type of a rabbit.
     SET_SADDLE = auto()  #: Sets the saddle or carpet item of a mob.
@@ -184,11 +189,14 @@ class EntityActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     SET_SNOWMAN_PUMP = auto()  #: Sets whether a snowman is wearing a pumpkin.
     SET_TARGET = auto()  #: Instructs the mob's AI to target a specific mob or player.
     SET_TROP_FISH_TYPE = auto()  #: Sets the skin type of a tropical fish.
+    SET_VILLAGER_PROF = auto()  #: Sets a villager's profession.
+    SET_VILLAGER_TYPE = auto()  #: Sets the biome type of a villager.
     SET_WOLF_ANGRY = auto()  #: Sets whether a wolf is angry.
     SHEAR_SHEEP = auto()  #: Causes a sheep to be sheared.
     SHEEP_EAT = auto()  #: Causes a sheep to eat grass.
     SHOW_NAME = auto()  #: Shows the name tag of the entity.
     SILENCE = auto()  #: Prevents the entity from making any sounds.
+    SNOWMAN_PUMPKIN = auto() #: Sets whether a snowman is wearing a pumpkin.
     TAME = auto()  #: Tames the mob (if possible).
     TELEPORT = auto()  #: Teleports the entity to a specified location.
     TP_SEQUENCE = auto()  #: Teleports the entity to multiple locations, with a delay between each teleport.
@@ -237,6 +245,7 @@ class GameActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     FIREWORK_EFFECT = auto()  #: Creates a firework explosion at a certain location.
     HIDE_SIDEBAR = auto()  #: Disables the scoreboard sidebar on the plot.
     LAUNCH_PROJ = auto()  #: Launches a projectile.
+    LOCK_CONTAINER = auto()  #: Sets a container's lock key.
     PLAY_PARTICLE_EFFECT = "Particle FX"  #: Plays a particle effect at a certain location.
     REMOVE_HOLOGRAM = auto()  #: Removes a hologram.
     REMOVE_SCORE = auto()  #: Removes a score from the scoreboard.

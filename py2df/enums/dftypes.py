@@ -1,4 +1,4 @@
-from .enum_util import AutoSnakeToCapitalizedWordsEnum
+from .enum_util import AutoSnakeToCapitalizedWordsEnum, AutoLowerNameEnum
 from .materials import Material
 from enum import auto, unique, Enum
 
@@ -93,6 +93,14 @@ class PotionEffect(AutoSnakeToCapitalizedWordsEnum):
     WATER_BREATHING = auto()  #: Prevents the loss of breath underwater
     WEAKNESS = auto()  #: Reduces melee-dealt damage by ``4 * level``
     WITHER = auto()  #: Deals 1 damage every ``2 * level`` seconds (and can kill)
+
+
+@unique
+class VariableScope(AutoLowerNameEnum):
+    """Represents the possible Variable Scopes."""
+    UNSAVED = auto()
+    SAVED = auto()
+    LOCAL = auto()
 
 
 @unique

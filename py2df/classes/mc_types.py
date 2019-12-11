@@ -25,6 +25,9 @@ from ..constants import (
     MAX_ITEM_STACK_SIZE, MIN_ITEM_STACK_SIZE
 )
 
+if typing.TYPE_CHECKING:
+    from .variable import DFVariable
+
 
 class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
     """Represents a Minecraft Item stack.
@@ -363,7 +366,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         return new
 
     @classmethod
-    def from_sbnt(cls, data: str) -> "Item":
+    def from_snbt(cls, data: str) -> "Item":
         """Produces an Item instance from a string of SNBT.
 
         Parameters
@@ -424,7 +427,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
                 "Malformed Item parsed JSON data! Must be a dict with, at least, a 'data' dict and an 'item' str value."
             )
 
-        return cls.from_sbnt(data["data"]["item"])
+        return cls.from_snbt(data["data"]["item"])
 
     def to_item(self) -> "Item":
         """Obtains an Item representation of this Item instance.
@@ -766,17 +769,30 @@ class DFNumber(DFType):
         return self
 
     def as_json_data(self) -> dict:
-        """Obtain this variable represented as a JSON object (:class:`dict`)."""
+        """Obtain this variable represented as a JSON object (:class:`dict`).
+
+        Returns
+        -------
+        :class:`dict`
+        """
+        val = self.value
+        int_val = int(val)
         return dict(
             id=constants.ITEM_ID_NUMBER_VAR,
             data=dict(
-                name=str(self.value)
+                name=json.dumps(int_val if int_val == val else val)
             )
         )
 
     @classmethod
     def from_json_data(cls, data: dict) -> "DFNumber":
-        """Obtain variable from pre-existing parsed JSON data.
+        """Obtain a DFNumber from pre-existing parsed JSON data (a dict).
+
+        Must have, at least, the following keys (the following structure)::
+
+            { "data": { "name": str } }
+
+        where `str` represents the type of the value.
 
         Parameters
         ----------
@@ -796,7 +812,7 @@ class DFNumber(DFType):
             or "data" not in data
             or not isinstance(data["data"], dict)
             or "name" not in data["data"]
-            or not type(data["data"]["name"]) in (int, float, str)
+            or type(data["data"]["name"]) not in (int, float, str)
         ):
             raise TypeError(
                 "Malformed DFNumber parsed JSON data! Must be a dict with, at least, a 'data' dict and a name value."
@@ -1252,7 +1268,7 @@ class DFLocation(DFType):
             pitch, yaw = [None] * 2
 
         else:
-            raise TypeError(f"Invalid type for DFLocation {op_name}: {type(other)}!")
+            return NotImplemented
 
         for attr, val in zip(("x", "y", "z"), (x, y, z)):
             if val is None:
@@ -1297,28 +1313,28 @@ class DFLocation(DFType):
 
     def __gt__(self, other: "DFLocation") -> bool:
         if not isinstance(other, type(self)):
-            raise TypeError(f"Incompatible comparison types {type(self)} and {type(other)}.")
+            return NotImplemented
 
         positional_attrs = ("x", "y", "z")
         return any(getattr(self, attr) > getattr(other, attr) for attr in positional_attrs)
 
     def __ge__(self, other: "DFLocation") -> bool:
         if not isinstance(other, type(self)):
-            raise TypeError(f"Incompatible comparison types {type(self)} and {type(other)}.")
+            return NotImplemented
 
         positional_attrs = ("x", "y", "z")
         return all(getattr(self, attr) >= getattr(other, attr) for attr in positional_attrs)
 
     def __lt__(self, other: "DFLocation") -> bool:
         if not isinstance(other, type(self)):
-            raise TypeError(f"Incompatible comparison types {type(self)} and {type(other)}.")
+            return NotImplemented
 
         positional_attrs = ("x", "y", "z")
         return any(getattr(self, attr) < getattr(other, attr) for attr in positional_attrs)
 
     def __le__(self, other: "DFLocation") -> bool:
         if not isinstance(other, type(self)):
-            raise TypeError(f"Incompatible comparison types {type(self)} and {type(other)}.")
+            return NotImplemented
 
         positional_attrs = ("x", "y", "z")
         return all(getattr(self, attr) <= getattr(other, attr) for attr in positional_attrs)
@@ -2115,31 +2131,46 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return not self.__eq__(other)
 
     def __gt__(self, other: "DFPotion") -> bool:
-        if not type(self) == type(other) or not self.effect == other.effect:
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if not type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be compared with another DFPotion of same effect.")
 
         return self.amplifier > other.amplifier
 
     def __ge__(self, other: "DFPotion") -> bool:
-        if not type(self) == type(other) or not self.effect == other.effect:
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if not type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be compared with another DFPotion of same effect.")
 
         return self.amplifier >= other.amplifier
 
     def __lt__(self, other: "DFPotion") -> bool:
-        if not type(self) == type(other) or not self.effect == other.effect:
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if not type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be compared with another DFPotion of same effect.")
 
         return self.amplifier < other.amplifier
 
     def __le__(self, other: "DFPotion") -> bool:
-        if not type(self) == type(other) or not self.effect == other.effect:
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if not type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be compared with another DFPotion of same effect.")
 
         return self.amplifier <= other.amplifier
 
     def __add__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
-        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be added with another DFPotion of same effect, or with an int/float.")
 
         copy = self.copy()
@@ -2151,7 +2182,10 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return self.__add__(other)
 
     def __mul__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
-        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be multiplied with another DFPotion of same effect, or with an int/float.")
 
         copy = self.copy()
@@ -2163,7 +2197,10 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return self.__mul__(other)
 
     def __sub__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
-        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be subtracted from another DFPotion of same effect, or from an int/float.")
 
         copy = self.copy()
@@ -2172,7 +2209,10 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return copy
 
     def __pow__(self, other: typing.Union["DFPotion", AnyNumber], modulo=None) -> "DFPotion":
-        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(
                 f"DFPotion must be taken to the power of another DFPotion of same effect, or of an int/float."
             )
@@ -2185,7 +2225,10 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return copy
 
     def __truediv__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
-        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be subtracted from another DFPotion of same effect, or from an int/float.")
 
         copy = self.copy()
@@ -2194,7 +2237,10 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return copy
 
     def __floordiv__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
-        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be subtracted from another DFPotion of same effect, or from an int/float.")
 
         copy = self.copy()
@@ -2203,7 +2249,10 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return copy
 
     def __mod__(self, other: typing.Union["DFPotion", AnyNumber]) -> "DFPotion":
-        if (type(self) == type(other) or not self.effect == other.effect) or not type(other) in (int, float):
+        if type(self) != type(other) and type(other) not in (int, float):
+            return NotImplemented
+
+        if type(self) == type(other) and not self.effect == other.effect:
             raise TypeError(f"DFPotion must be subtracted from another DFPotion of same effect, or from an int/float.")
 
         copy = self.copy()
@@ -2391,7 +2440,7 @@ class DFGameValue(DFType):
 _classes = (Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion, DFGameValue)
 
 DFTyping = typing.Union[
-    Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion
-]  # TODO: Dynamic variable
+    Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion, "DFVariable"
+]
 
 remove_u200b_from_doc(_classes)

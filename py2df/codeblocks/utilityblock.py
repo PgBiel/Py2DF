@@ -2,12 +2,12 @@ import typing
 from collections import deque
 
 from ..classes import UtilityBlock, JSONData, Arguments, Block, Bracket, BracketedBlock, DFLocation, Tag, DFNumber, \
-    ItemCollection
+    ItemCollection, DFVariable
 from ..enums import BlockType, IfPlayerType, IfType, BracketDirection, BracketType, IfEntityType, \
     RepeatType, SetVarType, SelectObjectType, RAdjacentPattern
 from ..reading.reader import DFReader
 from ..constants import BLOCK_ID
-from ..typings import Numeric, Textable, Listable, Locatable, convert_numeric, convert_text
+from ..typings import Numeric, Textable, Listable, Locatable, p_check
 from ..utils import remove_u200b_from_doc
 from .ifs import IfPlayer, IfEntity, IfGame, IfVariable, IfBlock
 
@@ -197,7 +197,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
 
     @classmethod
     def adjacent(
-        cls, var, center: Locatable,
+        cls, var: DFVariable, center: Locatable,
         *, change_rotation: bool = False, include_origin: bool = False,
         pattern: RAdjacentPattern = RAdjacentPattern.ADJACENT
     ) -> "Repeat":
@@ -205,7 +205,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
 
         Parameters
         ----------
-        var
+        var : :class:`~.DFVariable`
             The variable that represents the location of the current block on each iteration. Location.
 
         center : :attr:`~.Locatable`
@@ -230,7 +230,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         return cls(
             action=RepeatType.ADJACENT,
             args=Arguments(
-                [var, center],
+                [var, p_check(center, Locatable, "center")],
                 tags=[
                     Tag(
                         "Change Location Rotation", option=bool(change_rotation), action=RepeatType.ADJACENT,
@@ -250,13 +250,13 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         )
 
     @classmethod
-    def for_each(cls, var, list_to_iterate: Listable, *, allow_list_changes: bool = True) -> "Repeat":
+    def for_each(cls, var: DFVariable, list_to_iterate: Listable, *, allow_list_changes: bool = True) -> "Repeat":
         """Repeats code once for every index of a list. Each iteration, the var is set to the value at
         the current index.
 
         Parameters
         ----------
-        var
+        var : :class:`~.DFVariable`
             The variable that is set to the current list element on each iteration.
 
         list_to_iterate : :attr:`~.Listable`
@@ -275,7 +275,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         return cls(
             action=RepeatType.FOR_EACH,
             args=Arguments(
-                [var, list_to_iterate],
+                [var, p_check(list_to_iterate, Listable)],
                 tags=[Tag(
                     "Allow List Changes", option=True if allow_list_changes else "False (Use Copy of List)",
                     action=RepeatType.FOR_EACH, block=BlockType.REPEAT
@@ -301,12 +301,12 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         )
 
     @classmethod
-    def grid(cls, var, start_pos: Locatable, end_pos: Locatable) -> "Repeat":
+    def grid(cls, var: DFVariable, start_pos: Locatable, end_pos: Locatable) -> "Repeat":
         """Repeats code once for every block in a region. Each iteration, the var is set to the curr. block's location.
 
         Parameters
         ----------
-        var
+        var : :class:`~.DFVariable`
             The variable that is set to the location of the current block on each iteration.
 
         start_pos : :attr:`~.Locatable`
@@ -323,7 +323,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
 
         return cls(
             action=RepeatType.GRID,
-            args=Arguments([var, start_pos, end_pos]),
+            args=Arguments([var, p_check(start_pos, Locatable, "start_pos"), p_check(end_pos, Locatable, "end_pos")]),
             append_to_reader=False
         )
 
@@ -344,19 +344,19 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
 
         return cls(
             action=RepeatType.N_TIMES,
-            args=Arguments([convert_numeric(amount)]),
+            args=Arguments([p_check(amount, Numeric, "amount")]),
             append_to_reader=False
         )
 
     @classmethod
     def sphere(
-        cls, var, center: Locatable, radius: Numeric, points: Numeric, *, point_locs_inwards: bool = False
+        cls, var: DFVariable, center: Locatable, radius: Numeric, points: Numeric, *, point_locs_inwards: bool = False
     ) -> "Repeat":
         """Repeats code once for every evenly distributed sphere point.
 
         Parameters
         ----------
-        var
+        var : :class:`~.DFVariable`
             The variable that is set to the location on each iteration.
 
         center : :attr:`~.Locatable`
@@ -381,7 +381,8 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         return cls(
             action=RepeatType.SPHERE,
             args=Arguments(
-                [var, center, convert_numeric(radius), convert_numeric(points)],
+                [var, p_check(center, Locatable, "center"),
+                 p_check(radius, Numeric, "radius"), p_check(points, Numeric, "points")],
                 tags=[Tag(
                     "Point Locations Inwards",
                     option=bool(point_locs_inwards),
@@ -813,7 +814,7 @@ class SelectObj(UtilityBlock, JSONData):
         """
         return cls(
             SelectObjectType.ENTITY_NAME,
-            args=Arguments([convert_text(name)]),
+            args=Arguments([p_check(name, Textable, "name")]),
             append_to_reader=True
         )
 
@@ -906,7 +907,7 @@ class SelectObj(UtilityBlock, JSONData):
         """
         return cls(
             SelectObjectType.MOB_NAME,
-            args=Arguments([convert_text(Textable)]),
+            args=Arguments([p_check(name, Textable, "name")]),
             append_to_reader=True
         )
 
@@ -971,7 +972,7 @@ class SelectObj(UtilityBlock, JSONData):
         """
         return cls(
             SelectObjectType.PLAYER_NAME,
-            args=Arguments([convert_text(name)]),
+            args=Arguments([p_check(name, Textable, "name")]),
             append_to_reader=True
         )
 
@@ -1078,7 +1079,7 @@ class SelectObj(UtilityBlock, JSONData):
         """
         return cls(
             SelectObjectType.RANDOM_SELECTED,
-            args=Arguments([convert_numeric(amount)]),
+            args=Arguments([p_check(amount, Numeric, "amount")]),
             append_to_reader=True
         )
 
