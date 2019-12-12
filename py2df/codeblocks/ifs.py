@@ -7,7 +7,7 @@ from ..enums import (
     PlayerTarget, EntityTarget, BlockType, IfPlayerType, IfEntityType, IfGameType, IfVariableType,
     SelectionTarget,
     BracketDirection, BracketType, IfType)
-from ..classes import JSONData, Arguments, BracketedBlock, Block, Bracket
+from ..classes import JSONData, Arguments, BracketedBlock, Block, Bracket, DFVariable
 from ..utils import remove_u200b_from_doc
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
@@ -98,7 +98,7 @@ class IfBlock(BracketedBlock, JSONData):
         self.codeblocks.appendleft(Bracket(BracketDirection.OPEN, BracketType.NORM))
         reader = DFReader()
 
-        if self not in reader.curr_code_loc:
+        if reader.curr_code_loc and self not in reader.curr_code_loc:
             reader.append_codeblock(self)
 
         reader.curr_code_loc = self
@@ -245,7 +245,7 @@ class IfPlayer(IfBlock):
             target.value if SelectionTarget in (target, type(target)) else target
         ) if target else None
 
-        self.codeblocks = deque(codeblocks) or deque()
+        self.codeblocks = deque(codeblocks) if codeblocks else deque()
         self.invert = invert
 
         if append_to_reader:
@@ -363,7 +363,7 @@ class IfEntity(IfBlock):
             target.value if SelectionTarget in (target, type(target)) else target
         ) if target else None
 
-        self.codeblocks = deque(codeblocks) or deque()
+        self.codeblocks = deque(codeblocks) if codeblocks else deque()
         self.invert = invert
 
         if append_to_reader:
@@ -471,7 +471,7 @@ class IfGame(IfBlock):
         self.action = IfGameType(action)
         self.args = args
 
-        self.codeblocks = deque(codeblocks) or deque()
+        self.codeblocks = deque(codeblocks) if codeblocks else deque()
         self.invert = invert
 
         if append_to_reader:
@@ -536,7 +536,7 @@ class IfVariable(IfBlock):
     target : ``None``
         (If Variable has no target.)
     """
-    __slots__ = ("args", "action", "invert", "codeblocks")
+    __slots__ = ("args", "action", "invert", "codeblocks", "_called_by_var")
 
     block: BlockType = BlockType.IF_VAR
     args: Arguments
@@ -578,17 +578,35 @@ class IfVariable(IfBlock):
         self.action = IfVariableType(action)
         self.args = args
 
-        self.codeblocks = deque(codeblocks) or deque()
+        self.codeblocks = deque(codeblocks) if codeblocks else deque()
         self.invert = invert
 
         if append_to_reader:
             DFReader().append_codeblock(self)
+
+        self._called_by_var: bool = False
 
     def __neg__(self):
         return IfVariable(
             self.action, self.args, append_to_reader=False, invert=-self.invert,
             codeblocks=self.codeblocks
         )
+
+    def __bool__(self):
+        if self._called_by_var:
+            if self.action in (IfVariableType.EQUALS, IfVariableType.NOT_EQUALS):
+                arg_1 = self.args.items[0]
+                arg_2 = self.args.items[1]
+                res = False
+                if isinstance(arg_1, DFVariable) or isinstance(arg_2, DFVariable):
+                    res = arg_1.name == arg_2.name and arg_1.scope == arg_2.scope if isinstance(arg_1, DFVariable) \
+                        and isinstance(arg_2, DFVariable) else False
+                else:
+                    res = arg_1 == arg_2
+
+                return not res if self.action == IfVariableType.NOT_EQUALS else res
+
+        return True
 
 
 remove_u200b_from_doc(IfBlock, IfPlayer, IfEntity, IfGame, IfVariable)

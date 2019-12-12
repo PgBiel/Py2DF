@@ -2343,7 +2343,7 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return self
 
 
-class DFGameValue(DFType):
+class DFGameValue(DFType):  # TODO: Add custom comparisons and operations for DFGameValue, like in DFVariable
     """Used for game values, that change depending on the plot's state.
 
     Parameters

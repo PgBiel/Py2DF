@@ -9,12 +9,13 @@ from .mc_types import DFText
 from .collections import Arguments
 from .dataclass import Tag
 from ..utils import remove_u200b_from_doc, flatten, TrueLiteral, FalseLiteral
-from ..enums import SetVarType, VariableScope, BlockType
+from ..enums import SetVarType, VariableScope, BlockType, IfVariableType
 from ..constants import ITEM_ID_DYNAMIC_VAR, DEFAULT_VAL
 from ..errors import LimitReachedError
 
 if typing.TYPE_CHECKING:
     from .. import typings as _tp
+    from ..codeblocks.ifs import IfVariable, IfVariable as _IfVariable
     from ..codeblocks.utilityblock import SetVar  # lazy import in Var init
     from ..typings import Param, Numeric, Locatable
 
@@ -314,6 +315,53 @@ class DFVariable(DFType):
         between successive plot uses (when the amount of players reaches 0, the variable is reset).
 
 
+    .. container:: comparisons
+
+        .. describe:: a == b, a != b
+
+            Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
+
+            1. **Is used to compare the variables with an If Var.** Example usage::
+
+                with var_a == var_b:
+                    # code that is only executed in DiamondFire if 'var_a' and 'var_b' are equal in value.
+
+                with var_c != var_d:
+                    # code that is only executed in DiamondFire if 'var_c' and 'var_d' are different in value.
+
+            2. **Is used to compare, IN PYTHON, the variables' names and scopes** (by calling :func:`bool` on the \
+    generated IfVariable block). Example usage::
+
+                if var_a == var_b:
+                    # code that is only read, IN PYTHON, if 'var_a' and 'var_b' have the same 'name' and 'scope' attrs.
+
+                if var_c != var_d:
+                    # code that is only read, IN PYTHON, if 'var_c' and 'var_b' have a different 'name' or 'scope' attr.
+
+        .. describe:: a > b, a >= b, a < b, a <= b
+
+            Returns the equivalent :class:`~.IfVariable` block for the given comparison. **Its only usage is as
+            a Codeblock** (in a `with`).
+            For example::
+
+                with var_a > var_b:
+                    # code that is only executed in DiamondFire if 'var_a' is bigger than 'var_b' in value.
+
+                with var_c < var_d:
+                    # code that is only executed in DiamondFire if 'var_c' is less than 'var_d' in value.
+
+            .. note::
+
+                Those comparisons are not usable in Python if's; if a :func:`bool` is attempted on the resulting
+                IfVariable block, it will always return True. This mechanism is only implemented for ``==`` and ``!=``.
+
+            .. warning::
+
+                Assuming that one of them is a DFVariable, the other has to be a valid :attr:`~.Numeric` parameter.
+                Otherwise, a TypeError may be raised (if the given type does not support operations with DFVariable,
+                which is likely).
+
+
     .. container:: operations
 
         .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
@@ -381,9 +429,10 @@ class DFVariable(DFType):
         *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
         saved: bool = False, local: bool = False
     ):
-        global _SetVar, _tp
+        global _SetVar, _tp, _IfVariable
         from ..codeblocks.utilityblock import SetVar  # lazy import to avoid cyclic imports
-        from .. import typings                # ^
+        from .. import typings                        # ^
+        from ..codeblocks.ifs import IfVariable       # ^
 
         self.name: str = str(name)
 
@@ -398,6 +447,7 @@ class DFVariable(DFType):
 
         _SetVar = SetVar
         _tp = typings
+        _IfVariable = IfVariable
 
         if init_value:
             self.set(init_value)
@@ -517,9 +567,80 @@ class DFVariable(DFType):
     def __str__(self):
         return f"%var({self.name})"
 
+    # region:var_comparison
+
+    def __eq__(self, other: "Param") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Param):
+            return NotImplemented
+
+        gen_if = _IfVariable(  # allow "with var_a == var_b:"
+            action=IfVariableType.EQUALS,
+            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
+            append_to_reader=False
+        )
+        gen_if._called_by_var = True  # allow "if var_a == var_b"
+
+        return gen_if
+
+    def __ne__(self, other: "Param") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Param):
+            return NotImplemented
+
+        gen_if = _IfVariable(  # allow "with var_a != var_b:"
+            action=IfVariableType.NOT_EQUALS,
+            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
+            append_to_reader=False
+        )
+        gen_if._called_by_var = True  # allow "if var_a != var_b"
+
+        return gen_if
+
+    def __gt__(self, other: "Numeric") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Numeric):
+            return NotImplemented
+
+        return _IfVariable(
+            action=IfVariableType.GREATER_THAN,
+            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
+            append_to_reader=False
+        )
+
+    def __ge__(self, other: "Numeric") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Numeric):
+            return NotImplemented
+
+        return _IfVariable(
+            action=IfVariableType.GREATER_THAN_OR_EQUAL_TO,
+            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
+            append_to_reader=False
+        )
+
+    def __lt__(self, other: "Numeric") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Numeric):
+            return NotImplemented
+
+        return _IfVariable(
+            action=IfVariableType.LESS_THAN,
+            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
+            append_to_reader=False
+        )
+
+    def __le__(self, other: "Numeric") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Numeric):
+            return NotImplemented
+
+        return _IfVariable(
+            action=IfVariableType.LESS_THAN_OR_EQUAL_TO,
+            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
+            append_to_reader=False
+        )
+
+    # endregion:var_comparison
+
     # region:var_ops
 
     def __add__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, typing.Union[_tp.Numeric, _tp.Locatable]
         ):
@@ -578,6 +699,25 @@ class DFVariable(DFType):
 
         return VarOp(SetVarType.SET_TO_POWER, self, power)
 
+    def __rpow__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if isinstance(other, VarOp):
+            vars = other.vars
+            if len(vars) > 1:
+                raise LimitReachedError("Cannot realize operation '**' between more than two variables.")
+
+            if other.setv_type != SetVarType.SET_TO_POWER:
+                raise TypeError(
+                    "Cannot have different types of operations between variables at the same time; each kind "
+                    "should be evaluated in its own .set()."
+                )
+
+            other = vars[0]
+
+        if not isinstance(other, DFVariable) and not _tp.p_bool_check(other, _tp.Numeric):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_POWER, other, self)
+
     def __mod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
         if isinstance(other, VarOp):
             vars = other.vars
@@ -597,13 +737,41 @@ class DFVariable(DFType):
 
         return VarOp(SetVarType.SET_TO_MOD, self, other)
 
+    def __rmod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if isinstance(other, VarOp):
+            vars = other.vars
+            if len(vars) > 1:
+                raise LimitReachedError("Cannot realize operation '%' between more than two variables.")
+
+            if other.setv_type != SetVarType.SET_TO_MOD:
+                raise TypeError(
+                    "Cannot have different types of operations between variables at the same time; each kind "
+                    "should be evaluated in its own .set()."
+                )
+
+            other = vars[0]
+
+        if not isinstance(other, DFVariable) and not _tp.p_bool_check(other, _tp.Numeric):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_MOD, other, self)  # notice the change in order.
+
     def __truediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
             return NotImplemented
 
         return VarOp(
             SetVarType.SET_TO_QUOTIENT, self, other,
-            tags=[Tag("Divison Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
+            tags=[Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
+        )
+
+    def __rtruediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
+            return NotImplemented
+
+        return VarOp(
+            SetVarType.SET_TO_QUOTIENT, other, self,
+            tags=[Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
         )
 
     def __floordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
@@ -613,7 +781,18 @@ class DFVariable(DFType):
         return VarOp(
             SetVarType.SET_TO_QUOTIENT, self, other,
             tags=[Tag(
-                "Divison Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR
+                "Division Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR
+            )]
+        )
+
+    def __rfloordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
+            return NotImplemented
+
+        return VarOp(
+            SetVarType.SET_TO_QUOTIENT, other, self,
+            tags=[Tag(
+                "Division Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR
             )]
         )
 

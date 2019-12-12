@@ -134,17 +134,17 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
 
     def __enter__(self) -> "Repeat":
         """
-        Triggers the creation of an opening bracket and the addition of all codeblocks into this If Player.
+        Triggers the creation of an opening bracket and the addition of all codeblocks into this Repeat.
 
         Returns
         -------
-        :class:`IfPlayer`
+        :class:`Repeat`
             self (The current instance)
         """
         self.codeblocks.appendleft(Bracket(BracketDirection.OPEN, BracketType.REPEAT))
         reader = DFReader()
 
-        if self not in reader.curr_code_loc:
+        if reader.curr_code_loc and self not in reader.curr_code_loc:
             reader.append_codeblock(self)
 
         reader.curr_code_loc = self
