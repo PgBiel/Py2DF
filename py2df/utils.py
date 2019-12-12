@@ -114,7 +114,7 @@ def flatten(
 
         if (
             (is_iterable and except_iterables and isinstance(el, tuple(except_iterables)))  # if iterable in "except",
-            or not isinstance(el, (list, tuple, *(allow_iterables or [])))                  # or not in "accept"...
+            or (not except_iterables and not isinstance(el, (list, tuple, *(allow_iterables or []))))  # !"accept"...
         ):
             el = [el]  # make it an one-element iterable for the for loop to work.
 
@@ -122,10 +122,11 @@ def flatten(
             if do_keep and item == el:
                 continue
 
+            item_is_iter = isinstance(item, collections.Iterable)
             if (  # if this is a valid iterable according to the given parameters, then flatten it
                 (curr_depth < max_depth if max_depth else True)  # do not flatten any further than max depth.
                 and (  # if this is a valid iterable (not in "except" or in "accept"), flatten it!
-                    (is_iterable and except_iterables and not isinstance(item, tuple(except_iterables)))
+                    (item_is_iter and except_iterables and not isinstance(item, tuple(except_iterables)))
                     or (not except_iterables and isinstance(item, (list, tuple, *(allow_iterables or tuple()))))
                 )
             ):
@@ -451,7 +452,3 @@ def identity(obj: _TT) -> _TT:
         The given object.
     """
     return obj
-
-
-def identity_none(obj: _TT) -> _TT:
-    """Returns None, while """

@@ -141,7 +141,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         :class:`IfPlayer`
             self (The current instance)
         """
-        self.codeblocks.extendleft([self, Bracket(BracketDirection.OPEN, BracketType.REPEAT)])
+        self.codeblocks.appendleft(Bracket(BracketDirection.OPEN, BracketType.REPEAT))
         reader = DFReader()
 
         if self not in reader.curr_code_loc:

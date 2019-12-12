@@ -406,7 +406,7 @@ class DFReader:
                         ) if block.target and hasattr(block.target, "value") else dict()
                     )
                 ) for block in flatten(
-                    line, allow_iterables=(BracketedBlock, deque), max_depth=1
+                    line, allow_iterables=(BracketedBlock, deque), keep_iterables=(BracketedBlock,)
                 )  # flatten in order to include If code
             ]) for line in lines
         ]
@@ -492,7 +492,7 @@ class DFReader:
 
     def output_snbt(self, read: bool = True) -> typing.List[str]:
         """
-        Outputs the SBNT format of the Paste item of each read line. It consists of the SNBT of an Ender Chest
+        Outputs the SNBT format of the Paste item of each read line. It consists of the SNBT of an Ender Chest
         appropriately named as the first block in the code line.
 
         Parameters
@@ -503,7 +503,7 @@ class DFReader:
         Returns
         -------
         List[:class:`str`]
-            List of SBNT strings (one for every code line given); they're all formatted in base 64
+            List of SNBT strings (one for every code line given); they're all formatted in base 64
             (encoded in UTF-8).
 
         Warnings

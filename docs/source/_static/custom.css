@@ -1,0 +1,41 @@
+.container.operations {
+  padding: 10px;
+  border: 1px solid #C6C9CB;
+  background-color: white;
+  margin-bottom: 20px;
+  -webkit-box-shadow: 1px 1px 1px #d8d8d8;
+  -moz-box-shadow: 1px 1px 1px #d8d8d8;
+}
+
+.container.operations::before {
+  content: 'Supported Operations:';
+  color: #212224;
+  display: block;
+  padding-bottom: 5px;
+  font-weight: bold;
+}
+
+/* .container.operations > dl.describe > dt {
+  background-color: #f8f8f8;
+} */
+
+.container.comparisons {
+  padding: 10px;
+  border: 1px solid #C6C9CB;
+  background-color: white;
+  margin-bottom: 20px;
+  -webkit-box-shadow: 1px 1px 1px #d8d8d8;
+  -moz-box-shadow: 1px 1px 1px #d8d8d8;
+}
+
+.container.comparisons::before {
+  content: 'Supported Comparisons:';
+  color: #212224;
+  display: block;
+  padding-bottom: 5px;
+  font-weight: bold;
+}
+
+/* .container.comparisons > dl.describe > dt {
+  background-color: #f8f8f8;
+} */

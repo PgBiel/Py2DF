@@ -274,7 +274,7 @@ class Codeblock(Block, metaclass=abc.ABCMeta):
 
     def __repr__(self):
         attrs = " ".join(
-            f"{attr}={getattr(self, attr)}" for attr in filter(lambda t: not str(t).startswith("_"), getattr(
+            f"{attr}={repr(getattr(self, attr))}" for attr in filter(lambda t: not str(t).startswith("_"), getattr(
                 self.__class__, "__slots__", self.__class__.__dict__
             ))
         )
@@ -290,13 +290,14 @@ class Codeblock(Block, metaclass=abc.ABCMeta):
         -------
         :class:`dict`
         """
+        from .collections import Arguments
         return dict(
             id=constants.BLOCK_ID,
             block=self.block.value,
             **(
                 dict(
-                    args=self.args.as_json_data()
-                ) if self.args and isinstance(self.args, JSONData) else dict()
+                    args=(self.args if self.args and isinstance(self.args, JSONData) else Arguments()).as_json_data()
+                )
             ),
             **(
                 dict(
@@ -314,7 +315,7 @@ class Codeblock(Block, metaclass=abc.ABCMeta):
             ),
             **(
                 dict(
-                    data=str(self.data)
+                    data=str(self.data)[:constants.MAX_FUNC_NAME_LEN]
                 ) if self.data else dict()
             ),
             **(
@@ -582,6 +583,10 @@ class CallableBlock(Codeblock, FunctionHolder, metaclass=abc.ABCMeta):
     item_icon : Optional[:class:`~py2df.classes.mc_types.Item`], optional
         An optional item that represents this Function/Process in the Call Function/Start Process menu.
 
+    Warnings
+    --------\u200b
+    The function name cannot exceed 16 characters.
+
     Attributes
     ----------\u200b
     block : Union[:attr:`~py2df.enums.parameters.BlockType.FUNCTION`, \
@@ -605,10 +610,10 @@ class CallableBlock(Codeblock, FunctionHolder, metaclass=abc.ABCMeta):
         An optional item that represents this Function/Process in the Call Function/Start Process menu.
 
     length : :class:`int`
-        The length of a Function codeblock, in blocks. This is always 2.
+        The length of a Function/Process codeblock, in blocks. This is always 2.
 
     name : :class:`str`
-        The name of this function/process.
+        The name of this function/process. Note that **this cannot exceed 16 characters**.
 
     data : :class:`str`
         The name of this function/process (same as :attr:`name`).
@@ -647,12 +652,14 @@ class CallableBlock(Codeblock, FunctionHolder, metaclass=abc.ABCMeta):
             Whether or not this Function/Process is hidden in the Call Function (Function)/Start Process (Process)
             menu. Defaults to ``False``.
         """
+        self.function: typing.Callable = typing.cast(typing.Callable, None)
         if callable(name_or_func):  # the class was used directly as a decorator
             self.data: str = str(snake_to_capitalized_words(name_or_func.__name__))
             self.__call__(name_or_func)
         else:  # generate decorator
             self.data: str = str(name_or_func)
 
+        self.name = self.data  # run checks
         self.hidden: bool = bool(hidden)
 
         self.item_icon: Item = item_icon
@@ -664,6 +671,11 @@ class CallableBlock(Codeblock, FunctionHolder, metaclass=abc.ABCMeta):
 
     @name.setter
     def name(self, new_name: str) -> None:
+        string = str(new_name)
+        if len(string) > constants.MAX_FUNC_NAME_LEN:
+            raise ValueError(
+                f"{self.__class__.__name__} name must not exceed {constants.MAX_FUNC_NAME_LEN} characters."
+            )
         self.data = str(new_name)
 
     @property
@@ -717,13 +729,32 @@ class CallableBlock(Codeblock, FunctionHolder, metaclass=abc.ABCMeta):
 class CallerBlock(Codeblock, metaclass=abc.ABCMeta):
     """An ABC that describes any caller - Call Function or Start Process. Must implement :class:`Codeblock`.
 
-    Includes all of :class:`Codeblock` 's attributes, plus:
-
     Attributes\u200b
     ------------
-        block : Union[:attr:`~py2df.enums.parameters.BlockType.CALL_FUNC`, \
+    block : Union[:attr:`~py2df.enums.parameters.BlockType.CALL_FUNC`, \
 :attr:`~py2df.enums.parameters.BlockType.START_PROCESS`]
-            The type of the callable block - `Call Function` or `Start Process`.
+        The type of the callable block - `Call Function` or `Start Process`.
+
+    args : ``None``
+        (Caller codeblocks have no arguments.)
+
+    action : ``None``
+        (Caller codeblocks have no action.)
+
+    sub_action : ``None``
+        (Caller codeblocks have no sub-actions.)
+
+    length : :class:`int`
+        The length of a Caller codeblock, in blocks. This is always 2.
+
+    name : :class:`str`
+        The name of the function/process to call. Note that **this cannot exceed 16 characters.**
+
+    data : :class:`str`
+        The name of the function/process to call (same as :attr:`name`).
+
+    target : ``None``
+        (Caller codeblocks have no targets.)
     """
     block: BlockType
     args: None
@@ -733,6 +764,20 @@ class CallerBlock(Codeblock, metaclass=abc.ABCMeta):
     data: str  # Name
     target: None
     __slots__ = ()
+
+    @property
+    def name(self) -> str:
+        """The name of the function/process to call."""
+        return self.data
+
+    @name.setter
+    def name(self, new_name: str) -> None:
+        string = str(new_name)
+        if len(string) > constants.MAX_FUNC_NAME_LEN:
+            raise ValueError(
+                f"{self.__class__.__name__} name must not exceed {constants.MAX_FUNC_NAME_LEN} characters."
+            )
+        self.data = str(new_name)
 
     @classmethod
     def __subclasshook__(cls, o_cls: type):

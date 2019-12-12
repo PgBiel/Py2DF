@@ -43,7 +43,6 @@ parameter."""
     """Union[:attr:`Numeric`, :attr:`Textable`, :attr:`Listable`, :attr:`Potionable`, :attr:`ItemParam`] : All the \
 possible parameter types."""
 
-
 Numeric = ParamTypes.Numeric
 
 Textable = ParamTypes.Textable
@@ -183,8 +182,12 @@ def p_check(obj: _P, typeof: typing.Type[_P], arg_name: typing.Optional[str] = N
     --------
     :func:`p_bool_check`
     """
+    class _Check:  # kinda hacky solution, but...
+        _val: typeof
+
+    p_typeof = typing.get_type_hints(_Check, globalns=None, localns=None)['_val']
     valid_types: typing.List[type] = flatten(
-        [getattr(type_, "__args__", type_) for type_ in getattr(typeof, "__args__", [typeof])]
+        [getattr(type_, "__args__", type_) for type_ in getattr(p_typeof, "__args__", [p_typeof])]
     )  # ^this allows Union[] to be specified as well, such that Union[Numeric, Locatable] works, for example.
 
     if not isinstance(obj, tuple(valid_types)):
@@ -195,7 +198,7 @@ def p_check(obj: _P, typeof: typing.Type[_P], arg_name: typing.Optional[str] = N
             name = valid_names[corresponding_values.index(typeof)]
             msg = f"Object must be a valid {name} parameter."
 
-        except IndexError:
+        except (IndexError, ValueError):
             msg = f"Object must correspond to the appropriate parameter type."
 
         raise TypeError(msg + (f" (Arg '{arg_name}')" if arg_name else ""))
@@ -275,8 +278,13 @@ def p_bool_check(obj: _P, typeof: typing.Type[_P]) -> bool:
     --------
     :func:`p_check`
     """
-    try:
-        p_check(obj, typeof, arg_name=None, convert=False)
-        return True  # did not error, so type iS OK
-    except TypeError:
-        return False  # errored! Type does not match
+    class _Check:  # kinda hacky solution, but...
+        _val: typeof
+
+    p_typeof = typing.get_type_hints(_Check, globalns=None, localns=None)['_val']
+
+    valid_types: typing.List[type] = flatten(
+        [getattr(type_, "__args__", type_) for type_ in getattr(p_typeof, "__args__", [p_typeof])]
+    )
+
+    return isinstance(obj, tuple(valid_types))

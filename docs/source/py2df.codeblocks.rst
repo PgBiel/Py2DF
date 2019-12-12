@@ -20,6 +20,14 @@ py2df.codeblocks.ifs module
    :undoc-members:
    :show-inheritance:
 
+py2df.codeblocks.caller module
+------------------------------
+
+.. automodule:: py2df.codeblocks.caller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 py2df.codeblocks.utilityblock module
 ------------------------------------
 

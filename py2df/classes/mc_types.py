@@ -75,7 +75,37 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         :class:`str`. Please ensure those tags do not conflict with the previous ones to avoid spooky errors in
         DiamondFire. Default: ``None``.
         (Please ensure this is a valid TAG_Compound in NBT, a.k.a. `:class:`dict` in pythonic language.)
-    
+
+
+    .. container:: comparisons
+
+        .. describe:: a == b, a != b
+
+            Checks if every attribute except :attr:`amount` is equal between the two items.
+
+        .. describe:: a > b, a < b, a >= b, a <= b
+
+            Compares the items' amounts, **if they are equal** (otherwise raises a TypeError).
+
+    .. container:: operations
+
+        .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b
+
+            Executes the given operation between the items' amounts. Note that **the resulting item
+            is a copy of the one that comes first**, with its 'amount' set to the result of the operation.
+
+            .. warning::
+                Raises a :exc:`ValueError` if there was an attempt to set to a stack outside of the bounds 1 <= n <= 64.
+
+        .. describe:: +a, abs(a), ceil(a), floor(a)
+
+            Returns `a` (self).
+
+        .. describe:: hash(a)
+
+            Returns an unique hash representing its material, name, damage, unbreakability and which flags are hidden.
+
+
     Attributes
     -------------\u200b
 
@@ -192,11 +222,20 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         if "SPAWN_EGG" in self.material.value.upper() or self.material in (
             Material.ARMOR_STAND, Material.TROPICAL_FISH_BUCKET
         ):
-            self.entity_tag: typing.Optional[typing.Union[dict, str]] = entity_tag
-        else:
-            self.entity_tag: typing.Optional[typing.Union[dict, str]] = None
+            if isinstance(entity_tag, (str, collections.UserString)):
+                entity_tag = nbt.parse_nbt(str(entity_tag))
 
-        self.extra_tags = extra_tags
+            self.entity_tag: typing.Optional[nbt.Compound] = nbt.Compound(entity_tag)
+        else:
+            self.entity_tag: typing.Optional[nbt.Compound] = None
+
+        if extra_tags:
+            if isinstance(extra_tags, (str, collections.UserString)):
+                extra_tags = nbt.parse_nbt(str(extra_tags))
+
+            self.extra_tags: typing.Optional[nbt.Compound] = nbt.Compound(extra_tags)
+        else:
+            self.extra_tags = extra_tags
 
     @property
     def amount(self) -> int:
@@ -272,7 +311,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         Returns
         -------
         :class:`str`
-            SBNT string.
+            SNBT string.
         """
         return serialize_tag(self.as_nbt())
 
@@ -502,32 +541,44 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         return not self.__eq__(other)
 
     def __gt__(self, other: "Item"):
+        if type(self) != type(other):
+            return NotImplemented
+
         if self != other:
             raise TypeError("Cannot compare different items (must be equal)")
 
         return self._amount > other._amount
 
     def __ge__(self, other: "Item"):
+        if type(self) != type(other):
+            return NotImplemented
+
         if self != other:
             raise TypeError("Cannot compare different items (must be equal)")
 
         return self._amount >= other._amount
 
     def __lt__(self, other: "Item"):
+        if type(self) != type(other):
+            return NotImplemented
+
         if self != other:
             raise TypeError("Cannot compare different items (must be equal)")
 
         return self._amount < other._amount
 
     def __le__(self, other: "Item"):
+        if type(self) != type(other):
+            return NotImplemented
+
         if self != other:
             raise TypeError("Cannot compare different items (must be equal)")
 
         return self._amount <= other._amount
 
-    def __mul__(self, other: typing.Union[int, "Item"]):  # can be an Item if it is == to current instance.
+    def __mul__(self, other: typing.Union[int, "Item"]):
         new = self.copy()
-        new.amount *= other._amount if self == other else other
+        new.amount *= other._amount if type(self) == type(other) else other
         return new
 
     def __rmul__(self, other: typing.Union[int, "Item"]):
@@ -535,7 +586,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
     def __add__(self, other: typing.Union[int, "Item"]):
         new = self.copy()
-        new.amount += other._amount if self == other else other
+        new.amount += other._amount if type(self) == type(other) else other
         return new
 
     def __radd__(self, other: typing.Union[int, "Item"]):
@@ -543,7 +594,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
     def __pow__(self, power: typing.Union[int, "Item"]):
         new = self.copy()
-        new.amount **= power._amount if self == power else power
+        new.amount **= power._amount if type(self) == type(power) else power
         return new
 
     def __truediv__(self, other: typing.Union[int, "Item"]):  # always rounded.
@@ -551,12 +602,12 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
     def __floordiv__(self, other: typing.Union[int, "Item"]):
         new = self.copy()
-        new.amount //= other._amount if self == other else other
+        new.amount //= other._amount if type(self) == type(other) else other
         return new
 
     def __sub__(self, other: typing.Union[int, "Item"]):
         new = self.copy()
-        new.amount -= other._amount if self == other else other
+        new.amount -= other._amount if type(self) == type(other) else other
         return new
 
     def __ceil__(self):
@@ -570,6 +621,9 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
     def __pos__(self):
         return self
+
+    def __hash__(self):
+        return hash((self.material, self.name, self.hide_flags, self.damage, self.unbreakable))
 
 
 class DFText(collections.UserString, DFType):
@@ -946,6 +1000,47 @@ class DFLocation(DFType):
     is_block : :class:`bool`
         Whether or not this location represents a solid (non-air) block. (:class:`bool`) Defaults to False.
 
+
+
+    .. container:: comparisons
+
+        .. describe:: a == b, a != b
+
+            Equal if `a` and `b` have the same x,y,z,pitch,yaw; not equal if at lesat one is different.
+
+        .. describe:: a > b, a < b
+
+            True if at least one of the coordinates x,y,z of `a` is bigger (>)/smaller (<) than the
+            respective coordinate's value in `b`; False otherwise.
+
+        .. describe:: a >= b, a <= b
+
+            Applies the given comparison between each coordinate x,y,z of `a` and `b`; if any is True, returns True.
+
+    .. container:: operations
+
+        .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b
+
+            Executes the given operation between the two locations' x, y, z; pitch (mod 90), yaw (mod 180).
+
+            .. warning::
+                They are all applied in-place with given values, not dynamically in DiamondFire! For a SetVar,
+                see :class:`~.DFVariable`.
+
+            .. note::
+                If `b` is an **iterable** (tuple, list etc.), then the operation is done between the x,y,z;pitch,yaw
+                of `a` and with the respective items 0-4 of the iterable.
+                If, however, `b` is an :class:`int`/:class:`float`, then that value is used for the op. to each of
+                x,y,z (pitch, yaw remain untouched).
+
+        .. describe:: -a, abs(a)
+
+            Applies the given operation to each of x,y,z,;pitch,yaw of `a`, returning a new DFLocation.
+
+        .. describe:: +a
+
+            Returns `a` (self).
+
     Attributes\u200b
     -------------
     
@@ -966,47 +1061,6 @@ class DFLocation(DFType):
     
         is_block : :class:`bool`
             Whether or not this location represents a solid (non-air) block. Defaults to False.
-    
-    **Supported comparisons:**
-    
-        ``a == b``: True if `a` and `b` have the same x,y,z,pitch,yaw, False if at least one is different.
-    
-        ``a != b``: Negation of ``a == b``.
-    
-        ``a > b``: True if at least one of the coordinates x,y,z of a is bigger than the respective coordinate in b;
-        False otherwise.
-    
-        ``a < b``: True if at least one of the coordinates x,y,z of a is smaller than the respective coordinate in b;
-        False otherwise.
-    
-        ``a >= b``: Applies ``>=`` between each coordinate x,y,z of `a` and `b`.
-    
-        ``a <= b``: Applies ``<=`` between each coordinate x,y,z of `a` and `b`.
-    
-    
-    **Supported operations:**
-    
-        (Note: They are all applied in-place with given values, not dynamically in DiamondFire!)
-    
-        ``a + b``: Adds two locations' x, y, z; pitch, yaw (mod 360 degrees). If `b` is an iterable (tuple, list etc.),
-        then the respective items 0-4 are added as x,y,z;pitch,yaw.
-        If `b` is an :class:`int`/:class:`float`, it is added to x,y,z.
-    
-        ``a - b``: Follows same rules as addition, except that it is a subtraction.
-    
-        ``a * b``: Again, same rules as addition, but multiplication.
-    
-        ``a / b``: Same rules as addition, but division.
-    
-        ``a // b``: Same rules as division, but floors.
-    
-        ``a ** b``: Same rules as addition, but as exponentiation.
-    
-        ``-a``: Applies -1 times x,y,z; pitch, yaw of `a`.
-    
-        ``abs(a)``: Applies :func:`abs` to x,y,z,pitch,yaw of `a`.
-    
-        ``+a``: Returns a.
     """
     __slots__ = ("x", "y", "z", "pitch", "yaw", "is_block")  # , "world_least", "world_most")
 
@@ -1101,8 +1155,8 @@ class DFLocation(DFType):
         :class:`DFLocation`
             self to allow chaining
 
-        Notes
-        -----
+        Note
+        ----
         All parameters are optional here, meaning that one can pass :const:`~py2df.constants.utility_consts.DEFAULT_VAL`
         to omit a parameter - or, more simply, only use kwargs to choose which values to set.
 
@@ -1512,6 +1566,13 @@ class DFSound(DFType):
     ------\u200b
     :exc:`ValueError`
         Raised if the given pitch is outside the range ``0.0 <= x <= 2.0`` .
+
+
+    .. container: comparisons
+
+        .. describe:: a == b, a != b
+
+            Compares every attribute of `a` and `b`.
     
     Attributes\u200b
     -------------
@@ -1836,12 +1897,11 @@ class DFCustomSpawnEgg(DFType, Itemable):
             The enum instance that specifies which spawn egg is this.
 
 
-    **Supported Comparisons**
+    .. container: comparisons
 
-        ``a == b``: Checks if two :class:`DFCustomSpawnEgg` instances have the same `egg_type` attribute.
+        .. describe: a == b, a != b
 
-        ``a != b``: Same as ``not a == b``
-
+            Checks if two instances have the same `egg_type` attribute.
     """
     __slots__ = ("egg_type",)
     egg_type: CustomSpawnEggType
@@ -1936,6 +1996,43 @@ class DFPotion(DFType):
         duration: Tuple[:class:`int`, :class:`int`]
             Tuple (:class:`int`, :class:`int`). Represents the duration of the effect in the form (min, seconds).
 
+
+
+    .. container: comparisons
+
+        .. describe:: a == b, a != b
+
+            Checks if two instances have the same `effect`, `amplifier` and `duration` attributes.
+
+        .. describe:: a > b, a >= b, a < b, a <= b
+
+            Applies the given comparison between the amplifiers of the two potions.
+
+
+    .. container: operations
+
+
+        .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
+
+            Applies the given operation between the amplifiers of the two potions. **The new potion returned
+            will be a copy of the one that comes first** (`a`), **with** :attr:`amplifier` **modified.**
+
+            .. note:
+                If `b` is an int/float, its value is used instead. Note that the result is always rounded down
+                into an int.
+
+        .. describe:: +a, abs(a), floor(a), ceil(a)
+
+            Returns `a` (self).
+
+        .. describe:: bool(a)
+
+            Returns whether or not the duration is bigger than 00:00 (``duration > (0,0)``).
+
+        .. describe:: hash(a)
+
+            Returns an unique hash representing this potion's effect, amplifier and duration.
+
     Attributes\u200b
     --------------
 
@@ -1947,33 +2044,6 @@ class DFPotion(DFType):
 
         duration: Tuple[:class:`int`, :class:`int`]
             Tuple (:class:`int`, :class:`int`). Represents the duration of the effect in the form (min, seconds).
-
-    **Supported Comparisons**
-
-        ``a == b``: Checks if two :class:`DFPotion` instances have the same `effect`, `amplifier` and `duration`
-        attributes.
-
-        ``a != b``: Same as `not a == b`
-
-        ``a > b``, ``a >= b``, ``a < b``, ``a <= b``: Applies the respective comparisons on the amplifiers of the
-        potions.
-
-    **Supported Operations**
-    
-        ``a + b``, ``a - b``, ``a * b``, ``a / b``, ``a // b``, ``a % b``, ``a ** b``: Applies the respective operations
-        between the amplifiers of the potions, generating a new :class:`DFPotion` (e.g. amplifier 5 pot - amplifier 2
-        pot = amplifier 3 pot; note that the leftmost potion determines the resulting effect).
-        Worth noting that those operations also work between one :class:`DFPotion` and one
-        :class:`int`/:class:`float`, however the result is always rounded down, since amplifiers can only
-        be ints. (e.g. DFPotion(amplifier=5) + 6 => DFPotion(amplifier=11))
-    
-        ``a += b``, ``a -= b``, ...: Applies each of the operations above, in a similar fashion.
-    
-        ``ceil(a)``, ``floor(a)``, ``abs(a)``, ``+a``: Returns the class itself.
-    
-        ``bool(a)``: Returns whether or not the duration is bigger than 00:00 (tuple > (0,0) ).
-
-        ``hash(a)``: Returns an unique hash for this DFPotion instance.
     """
     __slots__ = ("effect", "amplifier", "duration")
 
@@ -2284,6 +2354,14 @@ class DFGameValue(DFType):
     target : Optional[:class:`~py2df.enums.targets.Target`], optional
         The target of this Game Value, or None. Defaults to None.
 
+
+    .. container:: comparisons
+
+        .. describe:: a == b, a != b
+
+            Checks if two instances have the same `gval_type` and `target` attributes.
+
+
     Attributes
     ----------\u200b
         gval_type : :class:`~py2df.enums.dftypes.GameValueType`
@@ -2291,12 +2369,6 @@ class DFGameValue(DFType):
 
         target : Optional[:class:`~py2df.enums.targets.Target`], optional
             The target of this Game Value, or None. Defaults to None.
-
-    **Supported Comparisons**
-
-        ``a == b``: Checks if two :class:`DFGameValue` instances have the same `gval_type` and `target` attributes.
-
-        ``a != b``: Same as `not a == b`
     """
     __slots__ = ("gval_type", "target")
 

@@ -7,8 +7,8 @@ Exception Hierarchy
 .. exception_hierarchy::
 
     - :exc:`Exception`
-        - :exc:`Py2DFError`
-            - :exc:`Py2DFCollectionError`
+        - :exc:`Py2DfError`
+            - :exc:`Py2DfCollectionError`
                 - :exc:`LimitReachedError`
 """
 

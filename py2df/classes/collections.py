@@ -244,6 +244,31 @@ class ItemCollection(collections.UserList):  # [DFType]
         super().__delitem__(index_at)  # remove data
         super().insert(index_at, None)
 
+    def insert(self, i: int, other: OAcceptableItem) -> None:
+        """
+        Inserts an Item somewhere in the list.
+
+        Parameters
+        ----------
+        i : :class:`int`
+            Index to insert at.
+
+        other : :class:`~py2df.classes.abc.DFType`
+            Item to insert.
+
+        Returns
+        -------
+        None
+            None
+
+        Warnings
+        --------
+        Whatever is at the last slot is removed.
+        """
+        super().insert(i, other)
+        super().__delitem__(-1)
+
+
     def clear(self) -> None:
         """Replaces the entire item collection with empty slots."""
         old_len = len(self.data)
