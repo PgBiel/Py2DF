@@ -12,13 +12,12 @@ from nbtlib.tag import Base
 from .. import constants
 from ..enums.misc_mc_enums import _HideFlagsSum
 from ..enums import (
-    Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect, Color, Enchantments,
-    GameValueType, Target, PlayerTarget, EntityTarget
+    Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect, Color, Enchantments
 )
 from .subcollections import Lore
 from .dataclass import Enchantment
 from .abc import DFType, Itemable
-from ..utils import remove_u200b_from_doc, clamp, select_dict, nbt_to_python, all_attr_eq, serialize_tag
+from ..utils import remove_u200b_from_doc, clamp, select_dict, nbt_to_python, serialize_tag
 from ..schemas import ItemSchema, ItemTagSchema, ItemDisplaySchema, ItemEnchantmentSchema
 from ..constants import (
     DEFAULT_VAL, DEFAULT_SOUND_PITCH, DEFAULT_SOUND_VOL, MAX_PITCH_DEGREES, MAX_YAW_DEGREES,
@@ -26,7 +25,7 @@ from ..constants import (
 )
 
 if typing.TYPE_CHECKING:
-    from .variable import DFVariable
+    pass
 
 
 class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
@@ -2343,176 +2342,10 @@ duration={self.duration[0]}:{self.duration[1]}>"
         return self
 
 
-class DFGameValue(DFType):  # TODO: Add custom comparisons and operations for DFGameValue, like in DFVariable
-    """Used for game values, that change depending on the plot's state.
-
-    Parameters
-    ----------\u200b
-    gval_type : :class:`~py2df.enums.dftypes.GameValueType`
-        The type of Game Value this is.
-
-    target : Optional[:class:`~py2df.enums.targets.Target`], optional
-        The target of this Game Value, or None. Defaults to None.
-
-
-    .. container:: comparisons
-
-        .. describe:: a == b, a != b
-
-            Checks if two instances have the same `gval_type` and `target` attributes.
-
-
-    Attributes
-    ----------\u200b
-        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
-            The type of Game Value this is.
-
-        target : Optional[:class:`~py2df.enums.targets.Target`], optional
-            The target of this Game Value, or None. Defaults to None.
-    """
-    __slots__ = ("gval_type", "target")
-
-    gval_type: GameValueType
-    target: typing.Optional[Target]
-
-    def __init__(self, gval_type: GameValueType, target: typing.Optional[Target] = None):
-        """
-        Initializes the Game Value.
-
-        Parameters
-        ----------
-        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
-            The type of Game Value this is.
-
-        target : Optional[:class:`~py2df.enums.targets.Target`], optional
-            The target of this Game Value, or None. Defaults to None.
-        """
-
-        self.gval_type = GameValueType(gval_type)
-        self.target = target or None
-
-    def set(
-        self, gval_type: GameValueType = DEFAULT_VAL, target: typing.Optional[Target] = DEFAULT_VAL
-    ) -> "DFGameValue":
-        """Configures this Game Value.
-
-        Parameters
-        ----------
-        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
-            The type of Game Value this is.
-
-        target : Optional[:class:`~py2df.enums.targets.Target`], optional
-            The target of this Game Value, or None.
-
-        Returns
-        -------
-        :class:`DFGameValue`
-            self to allow chaining.
-        """
-
-        if gval_type != DEFAULT_VAL:
-            self.gval_type = GameValueType(gval_type)
-
-        if target != DEFAULT_VAL:
-            self.target = target or None
-
-        return self
-
-    def __repr__(self):
-        return f"<{self.__class__.__name__} gval_type='{self.gval_type.value}'>"
-
-    def __str__(self):
-        return self.gval_type.value
-
-    def as_json_data(self) -> dict:
-        """Obtains a JSON-serializable dict representation of this Game Value.
-
-        Returns
-        -------
-        :class:`dict`
-            A JSON-serializable dict.
-        """
-        return dict(
-            id=constants.ITEM_ID_GAME_VALUE,
-            data=dict(
-                type=self.gval_type.value,
-                target=self.target.value if self.target else None
-            )
-        )
-    
-    @classmethod
-    def from_json_data(cls, data: dict):
-        """Obtain a Game Value from pre-existing parsed JSON data.
-
-        Must be of the form (have at least those keys)::
-
-            { "data": { "type": str, "target": str } }
-
-        Where ``str`` would be the type of the value.
-
-        Parameters
-        ----------
-        data : :class:`dict`
-            The parsed JSON :class:`dict`.
-
-        Returns
-        -------
-        :class:`DFGameValue`
-            :class:`DFGameValue` instance.
-
-        Raises
-        ------
-        :exc:`TypeError`
-            If the data is malformed (does not follow the structure detailed above).
-        """
-        if (
-            not isinstance(data, dict)
-            # or "id" not in data  # not really required
-            or "data" not in data
-            or not isinstance(data["data"], dict)
-            or "type" not in data["data"]
-            or type(data["data"]["type"]) != str
-            or "target" not in data["data"]
-            or type(data["data"]["target"]) != str
-        ):
-            raise TypeError(
-                "Malformed DFGameValue parsed JSON data! Must be a dict with, at least, a 'data' dict containing"
-                "'type' and 'target' str values."
-            )
-        
-        in_data = data["data"]
-        target_str = in_data["target"]
-        target_instance = None
-        if target_str.lower() != "none":
-            try:
-                target_instance = PlayerTarget(target_str)
-            except ValueError:
-                try:
-                    target_instance = EntityTarget(target_str)
-                except ValueError as e:
-                    raise ValueError("Invalid target specified in Game Value JSON data.") from e
-        
-        return cls(GameValueType(in_data["type"]), target_instance)
-    
-    # def to_item(self) -> "Item":
-    #     pass  # TODO: Apple
-
-    def __eq__(self, other: "DFGameValue") -> bool:
-        return all_attr_eq(self, other)
-
-    def __ne__(self, other: "DFGameValue") -> bool:
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash((self.__class__.__name__, self.gval_type, str(self.target)))
-        
-
-# TODO: DFVariable/DynamicVar
-
-_classes = (Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion, DFGameValue)
+_classes = (Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion)
 
 DFTyping = typing.Union[
-    Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion, "DFVariable"
+    Item, DFText, DFNumber, DFLocation, DFSound, DFParticle, DFCustomSpawnEgg, DFPotion, "DFGameValue", "DFVariable"
 ]
 
 remove_u200b_from_doc(_classes)

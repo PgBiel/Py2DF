@@ -113,7 +113,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    List
+    :attr:`~.Listable`
         Contains one Item entry for each armor slot (air if empty, 4 in total)
     """
 
@@ -122,7 +122,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 (no armor) to 20.0 (full bar)
     """
 
@@ -131,7 +131,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 or above (full set of diamond armor = 8.0)
     """
 
@@ -140,7 +140,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 or higher (more damage)
     """
 
@@ -149,7 +149,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 or higher (faster)
     """
 
@@ -158,7 +158,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         Usage, from 0% to 100%
     """
 
@@ -167,7 +167,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Close Cause: "player", "code", "open_new",  "teleport", "unloaded",  "cant_use", "disconnect",  "death", "unknown"
     """
 
@@ -185,7 +185,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Damage Cause: ``"block_explosion"``, ``"contact"`` (cactus),  ``"cramming"``, ``"custom"`` (damage action),
         ``"dragon_breath"``, ``"drowning"``, ``"dryout"`` (fish on land), ``"entity_attack"``,  ``"entity_explosion"``,
         ``"entity_sweep_attack"``,  ``"fall"``, ``"falling_block"``, ``"fire"`` (in fire block),  ``"fire_tick"``,
@@ -198,7 +198,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Entity type, e.g. "tipped_arrow" or "cow"
     """
 
@@ -207,7 +207,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Block Face: "up", "down", "north", "east",  "south", "west", "none"
     """
 
@@ -216,7 +216,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFLocation`
+    :attr:`~.Locatable`
         Center of block
     """
 
@@ -225,7 +225,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0% to 100.0% (fully charged)
     """
 
@@ -234,7 +234,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         From 1 (first slot) up to the inventory's size
     """
 
@@ -261,7 +261,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Command, with the first "@" excluded
     """
 
@@ -270,7 +270,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    List
+    :attr:`~.Listable`
         Contains one Text entry for each word in the command (split by " ")
     """
 
@@ -279,7 +279,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 or above
     """
 
@@ -297,7 +297,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         1 (leftmost slot) to 9 (rightmost slot)
     """
 
@@ -306,7 +306,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0 (no levels) or above
     """
 
@@ -315,7 +315,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0% (no progress) to 100.0% (next level)
     """
 
@@ -324,7 +324,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFLocation`
+    :attr:`~.Locatable`
         Eye location and rotation
     """
 
@@ -333,7 +333,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Direction: "north", "east", "south",  "west"
     """
 
@@ -342,7 +342,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 (not falling) or higher (falling down)
     """
 
@@ -351,7 +351,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0 (not on fire) or above (burning)
     """
 
@@ -360,7 +360,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 (minimum) to 4.0 (reset point)
     """
 
@@ -369,7 +369,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0 (starving) to 20 (full bar)
     """
 
@@ -378,7 +378,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 (minimum), up to the player's food level
     """
 
@@ -387,7 +387,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         1 (leftmost slot) to 9 (rightmost slot)
     """
 
@@ -396,7 +396,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    List
+    :attr:`~.Listable`
         Contains one Item entry for each hotbar slot (air if empty, 9 in total)
     """
 
@@ -405,7 +405,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    List
+    :attr:`~.Listable`
         Contains one Item entry for each inventory slot (air if empty, 36 in total)
     """
 
@@ -414,7 +414,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    List
+    :attr:`~.Listable`
         Contains one Item entry for each menu slot (air if empty)
     """
 
@@ -423,7 +423,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFLocation`
+    :attr:`~.Locatable`
         Location and rotation, at feet height
     """
 
@@ -441,7 +441,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         Maximum health, 1.0 or above
     """
 
@@ -459,7 +459,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Inventory title, or "none" if no menu, or the player's inventory, is open
     """
 
@@ -468,7 +468,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         -90.0 to 90.0
     """
 
@@ -477,7 +477,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         Player count
     """
 
@@ -486,7 +486,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    List
+    :attr:`~.Listable`
         Contains one  Potion Effect entry for each active effect on the target
     """
 
@@ -495,7 +495,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0 (drowning) to 300 (maximum air)
     """
 
@@ -504,7 +504,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0.0 (dead) up to the target's maximum health (20.0 by default)
     """
 
@@ -522,7 +522,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         0 (no targets) or above
     """
 
@@ -531,7 +531,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    List
+    :attr:`~.Listable`
         Contains one Text entry (name) for each target
     """
 
@@ -540,7 +540,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    List
+    :attr:`~.Listable`
         Contains one Text entry (UUID) for each target
     """
 
@@ -549,7 +549,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         20.0 (no server lag) or below (decreases with more lag)
     """
 
@@ -558,7 +558,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         Server time
     """
 
@@ -567,7 +567,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFLocation`
+    :attr:`~.Locatable`
         Location this entity was created at
     """
 
@@ -576,7 +576,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Block Face: "up", "down", "north", "east",  "south", "west", "none"
     """
 
@@ -585,7 +585,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFLocation`
+    :attr:`~.Locatable`
         Center of block
     """
 
@@ -594,7 +594,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFLocation`
+    :attr:`~.Locatable`
         Center of block
     """
 
@@ -603,7 +603,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Teleport Cause: "chorus_fruit", "end_gateway",  "end_portal", "ender_pearl",  "nether_portal", "spectate", 
     """
 
@@ -612,7 +612,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFText`
+    :attr:`~.Textable`
         Target UUID
     """
 
@@ -621,7 +621,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         Coordinate
     """
 
@@ -630,7 +630,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         Coordinate
     """
 
@@ -639,7 +639,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         -180.0 to 180.0
     """
 
@@ -648,6 +648,83 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
 
     Returns
     -------
-    :class:`~py2df.classes.mc_types.DFNumber`
+    :attr:`~.Numeric`
         Coordinate
     """
+
+
+GVAL_NUMERIC = [
+    GameValueType.ARMOR_POINTS,
+    GameValueType.ARMOR_TOUGHNESS,
+    GameValueType.ATTACK_DAMAGE,
+    GameValueType.ATTACK_SPEED,
+    GameValueType.CPU_USAGE,
+    GameValueType.EVENT_BOW_POWER,
+    GameValueType.EVENT_CLICKED_SLOT_INDEX,
+    GameValueType.EVENT_DAMAGE,
+    GameValueType.EVENT_NEW_HELD_SLOT,
+    GameValueType.EXPERIENCE_LEVEL,
+    GameValueType.EXPERIENCE_PROGRESS,
+    GameValueType.FALL_DISTANCE,
+    GameValueType.FIRE_TICKS,
+    GameValueType.FOOD_EXHAUSTION,
+    GameValueType.FOOD_LEVEL,
+    GameValueType.FOOD_SATURATION,
+    GameValueType.HELD_SLOT,
+    GameValueType.MAXIMUM_HEALTH,
+    GameValueType.PITCH,
+    GameValueType.PLAYER_COUNT,
+    GameValueType.REMAINING_AIR,
+    GameValueType.REMAINING_HEALTH,
+    GameValueType.SELECTION_SIZE,
+    GameValueType.SERVER_TPS,
+    GameValueType.SERVER_TIME,
+    GameValueType.X_COORDINATE,
+    GameValueType.Y_COORDINATE,
+    GameValueType.YAW,
+    GameValueType.Z_COORDINATE
+]
+
+GVAL_TEXTABLE = [
+    GameValueType.CLOSE_INVENTORY_EVENT_CAUSE,
+    GameValueType.DAMAGE_EVENT_CAUSE,
+    GameValueType.ENTITY_TYPE,
+    GameValueType.EVENT_BLOCK_FACE,
+    GameValueType.EVENT_COMMAND,
+    GameValueType.FACING_DIRECTION,
+    GameValueType.OPEN_INVENTORY_TITLE,
+    GameValueType.TARGET_BLOCK_FACE,
+    GameValueType.TELEPORT_CAUSE,
+    GameValueType.UUID
+]
+
+GVAL_LOCATABLE = [
+    GameValueType.EVENT_BLOCK_LOCATION,
+    GameValueType.EYE_LOCATION,
+    GameValueType.LOCATION,
+    GameValueType.SPAWN_LOCATION,
+    GameValueType.TARGET_BLOCK_LOCATION,
+    GameValueType.TARGET_FLUID_LOCATION
+]
+
+GVAL_LISTABLE = [
+    GameValueType.ARMOR_ITEMS,
+    GameValueType.EVENT_COMMAND_ARGUMENTS,
+    GameValueType.HOTBAR_ITEMS,
+    GameValueType.INVENTORY_ITEMS,
+    GameValueType.INVENTORY_MENU_ITEMS,
+    GameValueType.POTION_EFFECTS,
+    GameValueType.SELECTION_TARGET_NAMES,
+    GameValueType.SELECTION_TARGET_UUIDS
+]
+
+GVAL_ITEM = [
+    GameValueType.CURSOR_ITEM,
+    GameValueType.EVENT_CLICKED_SLOT_ITEM,
+    GameValueType.EVENT_CLICKED_SLOT_NEW_ITEM,
+    GameValueType.EVENT_ITEM,
+    GameValueType.MAIN_HAND_ITEM,
+    GameValueType.OFF_HAND_ITEM,
+    GameValueType.SADDLE_ITEM
+]
+

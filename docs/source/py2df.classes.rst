@@ -1,15 +1,15 @@
-py2df.classes package
-=====================
+py2df.classes module
+====================
 
-Submodules
-----------
+Important classes for Py2DF. For codeblock-related classes,
+make sure to check out :mod:`py2df.codeblocks`. (NOTE: This documentation is W.I.P)
 
-py2df.classes.abc module
-------------------------
+ABC classes
+-----------
+ABCs (Abstract Base Classes) that shape how classes are built within the library.
 
 .. automodule:: py2df.classes.abc
    :members:
-   :undoc-members:
    :show-inheritance:
 
 py2df.classes.collections module
@@ -17,7 +17,6 @@ py2df.classes.collections module
 
 .. automodule:: py2df.classes.collections
    :members:
-   :undoc-members:
    :show-inheritance:
 
 py2df.classes.dataclass module
@@ -25,7 +24,6 @@ py2df.classes.dataclass module
 
 .. automodule:: py2df.classes.dataclass
    :members:
-   :undoc-members:
    :show-inheritance:
 
 py2df.classes.mc\_types module
@@ -33,7 +31,6 @@ py2df.classes.mc\_types module
 
 .. automodule:: py2df.classes.mc_types
    :members:
-   :undoc-members:
    :show-inheritance:
 
 py2df.classes.subcollections module
@@ -41,7 +38,6 @@ py2df.classes.subcollections module
 
 .. automodule:: py2df.classes.subcollections
    :members:
-   :undoc-members:
    :show-inheritance:
 
 py2df.classes.variable module
@@ -49,14 +45,4 @@ py2df.classes.variable module
 
 .. automodule:: py2df.classes.variable
    :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: py2df.classes
-   :members:
-   :undoc-members:
    :show-inheritance:

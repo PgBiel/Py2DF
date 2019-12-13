@@ -509,7 +509,7 @@ class BracketedBlock(Codeblock, metaclass=abc.ABCMeta):
         def get_length(block: Block):
             return getattr(block, "total_length", block.length)
 
-        return sum(map(get_length, self.codeblocks))
+        return self.length + sum(map(get_length, self.codeblocks))
 
     def __iter__(self):
         for codeblock in self.codeblocks:

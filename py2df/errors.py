@@ -10,6 +10,9 @@ Exception Hierarchy
         - :exc:`Py2DfError`
             - :exc:`Py2DfCollectionError`
                 - :exc:`LimitReachedError`
+
+            - :exc:`Py2DfCodeblockError`
+                - :exc:`DFSyntaxError`
 """
 
 
@@ -25,5 +28,15 @@ class Py2DfCollectionError(Py2DfError):
 
 class LimitReachedError(Py2DfCollectionError):
     """Indicates that the limit of elements in this collection (Lore, ItemCollection etc.) has been reached."""
+    pass
+
+
+class Py2DfCodeblockError(Py2DfError):
+    """Any error related to Py2DF codeblocks."""
+    pass
+
+
+class DFSyntaxError(Py2DfCodeblockError):
+    """Any error related to DiamondFire block syntax."""
     pass
 

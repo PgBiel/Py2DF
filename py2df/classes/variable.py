@@ -1,15 +1,19 @@
+import abc
 import collections
 import typing
 import json
 
 from collections import deque
+
+from .. import constants
 from ..constants import SMALL_CHEST_SIZE
 from .abc import DFType
 from .mc_types import DFText
 from .collections import Arguments
 from .dataclass import Tag
-from ..utils import remove_u200b_from_doc, flatten, TrueLiteral, FalseLiteral
-from ..enums import SetVarType, VariableScope, BlockType, IfVariableType
+from ..utils import remove_u200b_from_doc, flatten, TrueLiteral, FalseLiteral, all_attr_eq
+from ..enums import SetVarType, VariableScope, BlockType, IfVariableType, PlayerTarget, EntityTarget, GameValueType, \
+    Target
 from ..constants import ITEM_ID_DYNAMIC_VAR, DEFAULT_VAL
 from ..errors import LimitReachedError
 
@@ -31,6 +35,27 @@ op_to_expr = {
     SetVarType.SET_TO_POWER: "**",
     SetVarType.SET_TO_PRODUCT: "*"
 }
+
+
+def _heavy_imports() -> bool:
+    global _SetVar, _tp, _IfVariable
+    try:
+        _a = _SetVar
+        _b = _tp
+        _c = _IfVariable
+
+        return False
+
+    except NameError:
+        from ..codeblocks.utilityblock import SetVar  # lazy import to avoid cyclic imports
+        from .. import typings  # ^
+        from ..codeblocks.ifs import IfVariable  # ^
+
+        _SetVar = SetVar
+        _tp = typings
+        _IfVariable = IfVariable
+
+        return True
 
 
 class VarOp:
@@ -103,6 +128,7 @@ Iterable[:attr:`~.Numeric`, :attr:`~.Locatable`, :class:`VarOp`]]
         self, setv_type: SetVarType, *vars: typing.Union[_VarOpEl, typing.Iterable[_VarOpEl]],
         tags: typing.Iterable[Tag] = tuple()
     ):
+        _heavy_imports()
         self.setv_type = SetVarType(setv_type)
 
         self.tags = list(tags)
@@ -290,7 +316,585 @@ Iterable[:attr:`~.Numeric`, :attr:`~.Locatable`, :class:`VarOp`]]
         # [Tag("Divison Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
 
 
-class DFVariable(DFType):
+class VarOperable(metaclass=abc.ABCMeta):
+    """An ABC for classes that support variable-related operations (i.e., :class:`DFGameValue` and :class:`DFVariable`).
+
+    This class is used to hold operations and functions that are common to :class:`DFGameValue` and :class:`DFVariable`.
+    Note that each implement their own operations as well; see the documentation for each.
+
+    .. container:: comparisons
+
+        .. describe:: a == b, a != b
+
+            Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
+
+            1. **Is used to compare the variables with an If Var.** Example usage::
+
+                with var_a == var_b:
+                    # code that is only executed in DiamondFire if 'var_a' and 'var_b' are equal in value.
+
+                with var_c != var_d:
+                    # code that is only executed in DiamondFire if 'var_c' and 'var_d' are different in value.
+
+            2. **Is used to compare, IN PYTHON, the variables' attributes** (by calling :func:`bool` on the \
+            generated IfVariable block). Note that DFGameValue and DFVariable implement this differently; see their
+            respective documentations.
+
+        .. describe:: a > b, a >= b, a < b, a <= b
+
+            Returns the equivalent :class:`~.IfVariable` block for the given comparison. **Its only usage is as
+            a Codeblock** (in a `with`).
+            For example::
+
+                with var_a > var_b:
+                    # code that is only executed in DiamondFire if 'var_a' is bigger than 'var_b' in value.
+
+                with var_c < var_d:
+                    # code that is only executed in DiamondFire if 'var_c' is less than 'var_d' in value.
+
+            .. note::
+
+                Those comparisons are not usable in Python if's; if a :func:`bool` is attempted on the resulting
+                IfVariable block, it will always return True. This mechanism is only implemented for ``==`` and ``!=``.
+
+            .. warning::
+
+                Assuming that one of them is a DFVariable, the other has to be a valid :attr:`~.Numeric` parameter.
+                Otherwise, a TypeError may be raised (if the given type does not support operations with DFVariable,
+                which is likely).
+
+
+    .. container:: operations
+
+        .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
+
+            Creates a :class:`VarOp` instance representing this operation between different variables/variables
+            and values/etc.
+            It is meant to be given as the parameter for :meth:`DFVariable.set`, which will then place the appropriate
+            Set Variable type (setting the variable instance to this operation)
+
+            `a` is the :class:`VarOperable` instance, while `b`, in this case, is the :attr:`~.Numeric` to realize this
+            operation with.
+
+            .. note::
+
+                If the operation is addition or subtraction, `b` can also be a :attr:`~.Locatable` parameter (represent
+                a location), besides Numeric.
+
+            .. warning::
+
+                **You cannot mix operations.** For example, ``a + b - c * d ** e`` will raise. Stick to only one
+                at once, and have one :meth:`DFVariable.set` call for each kind.
+                (There is only one Set Var for each kind.)
+                (However, operations with multiple variables, up to 27, work: ``a + b + c + ... + z``)
+
+                If there is an attempt to mix operations, a :exc:`TypeError` is raised.
+
+                Similarly, if there is an attempt to have an operation with more than 26 variables (chest size is
+                up to 27 items, while 1 slot is the variable being set), then a :exc:`~.LimitReachedError` is raised
+                instead.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        _heavy_imports()
+        return object.__new__(cls)
+
+    # region:var_comparison
+
+    def __eq__(self, other: "Param") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Param):
+            return NotImplemented
+
+        gen_if = _IfVariable(  # allow "with var_a == var_b:"
+            action=IfVariableType.EQUALS,
+            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
+            append_to_reader=False
+        )
+        gen_if._called_by_var = True  # allow "if var_a == var_b"
+
+        return gen_if
+
+    def __ne__(self, other: "Param") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Param):
+            return NotImplemented
+
+        gen_if = _IfVariable(  # allow "with var_a != var_b:"
+            action=IfVariableType.NOT_EQUALS,
+            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
+            append_to_reader=False
+        )
+        gen_if._called_by_var = True  # allow "if var_a != var_b"
+
+        return gen_if
+
+    def __gt__(self, other: "Numeric") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Numeric, error_on_gameval=True):
+            return NotImplemented
+
+        return _IfVariable(
+            action=IfVariableType.GREATER_THAN,
+            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
+            append_to_reader=False
+        )
+
+    def __ge__(self, other: "Numeric") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Numeric, error_on_gameval=True):
+            return NotImplemented
+
+        return _IfVariable(
+            action=IfVariableType.GREATER_THAN_OR_EQUAL_TO,
+            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
+            append_to_reader=False
+        )
+
+    def __lt__(self, other: "Numeric") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Numeric, error_on_gameval=True):
+            return NotImplemented
+
+        return _IfVariable(
+            action=IfVariableType.LESS_THAN,
+            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
+            append_to_reader=False
+        )
+
+    def __le__(self, other: "Numeric") -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Numeric, error_on_gameval=True):
+            return NotImplemented
+
+        return _IfVariable(
+            action=IfVariableType.LESS_THAN_OR_EQUAL_TO,
+            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
+            append_to_reader=False
+        )
+
+    # endregion:var_comparison
+
+    # region:var_ops
+
+    def __add__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_ADDITION, self, other)
+
+    def __radd__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+        return self.__add__(other)
+
+    def __sub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_SUBTRACTION, self, other)
+
+    def __rsub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
+        ):
+            return NotImplemented
+
+        res = VarOp(SetVarType.SET_TO_SUBTRACTION, self)
+        res._add_var(
+            other, SetVarType.SET_TO_SUBTRACTION, append_left=True, is_rsub=True, allow_other_iters=False,
+            error_incompatible=True, modify_self=True
+        )
+
+    def __mul__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]):
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_PRODUCT, self, other)
+
+    def __rmul__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        return self.__mul__(other)
+
+    def __pow__(self, power: typing.Union["Numeric", VarOp, "DFVariable"], modulo=None) -> VarOp:
+        if isinstance(power, VarOp):
+            vars = power.vars
+            if len(vars) > 1:
+                raise LimitReachedError("Cannot realize operation '**' between more than two variables.")
+
+            if power.setv_type != SetVarType.SET_TO_POWER:
+                raise TypeError(
+                    "Cannot have different types of operations between variables at the same time; each kind "
+                    "should be evaluated in its own .set()."
+                )
+
+            power = vars[0]
+
+        if not isinstance(power, DFVariable) and not _tp.p_bool_check(
+            power, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_POWER, self, power)
+
+    def __rpow__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if isinstance(other, VarOp):
+            vars = other.vars
+            if len(vars) > 1:
+                raise LimitReachedError("Cannot realize operation '**' between more than two variables.")
+
+            if other.setv_type != SetVarType.SET_TO_POWER:
+                raise TypeError(
+                    "Cannot have different types of operations between variables at the same time; each kind "
+                    "should be evaluated in its own .set()."
+                )
+
+            other = vars[0]
+
+        if not isinstance(other, DFVariable) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_POWER, other, self)
+
+    def __mod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if isinstance(other, VarOp):
+            vars = other.vars
+            if len(vars) > 1:
+                raise LimitReachedError("Cannot realize operation '%' between more than two variables.")
+
+            if other.setv_type != SetVarType.SET_TO_MOD:
+                raise TypeError(
+                    "Cannot have different types of operations between variables at the same time; each kind "
+                    "should be evaluated in its own .set()."
+                )
+
+            other = vars[0]
+
+        if not isinstance(other, DFVariable) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_MOD, self, other)
+
+    def __rmod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if isinstance(other, VarOp):
+            vars = other.vars
+            if len(vars) > 1:
+                raise LimitReachedError("Cannot realize operation '%' between more than two variables.")
+
+            if other.setv_type != SetVarType.SET_TO_MOD:
+                raise TypeError(
+                    "Cannot have different types of operations between variables at the same time; each kind "
+                    "should be evaluated in its own .set()."
+                )
+
+            other = vars[0]
+
+        if not isinstance(other, DFVariable) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(SetVarType.SET_TO_MOD, other, self)  # notice the change in order.
+
+    def __truediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(
+            SetVarType.SET_TO_QUOTIENT, self, other,
+            tags=[
+                Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
+        )
+
+    def __rtruediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(
+            SetVarType.SET_TO_QUOTIENT, other, self,
+            tags=[
+                Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
+        )
+
+    def __floordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(
+            SetVarType.SET_TO_QUOTIENT, self, other,
+            tags=[Tag(
+                "Division Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT,
+                block=BlockType.SET_VAR
+            )]
+        )
+
+    def __rfloordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
+            return NotImplemented
+
+        return VarOp(
+            SetVarType.SET_TO_QUOTIENT, other, self,
+            tags=[Tag(
+                "Division Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT,
+                block=BlockType.SET_VAR
+            )]
+        )
+
+    # endregion:var_ops
+
+
+class DFGameValue(DFType, VarOperable):
+    """Used for game values, that change depending on the plot's state.
+
+    Parameters
+    ----------\u200b
+    gval_type : :class:`~py2df.enums.dftypes.GameValueType`
+        The type of Game Value this is.
+
+    target : Optional[:class:`~py2df.enums.targets.Target`], optional
+        The target of this Game Value, or None. Defaults to None.
+
+
+    .. container:: comparisons
+
+        .. describe:: a == b, a != b
+
+            Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
+
+            1. **Is used to compare the variables with an If Var.** Example usage::
+
+                with val_a == val_b:
+                    # code that is only executed in DiamondFire if 'val_a' and 'val_b' are equal in value.
+
+                with val_c != val_d:
+                    # code that is only executed in DiamondFire if 'val_c' and 'val_d' are different in value.
+
+            2. **Is used to compare, IN PYTHON, the values'** :attr:`gval_type` **and** :attr:`target` attrs \
+(by calling :func:`bool` on the generated IfVariable block). Example usage::
+
+                if val_a == val_b:
+                    # code that is only read, IN PYTHON, if 'val_a' and 'val_b' have the same 'gval_type' and 'target' \
+attrs.
+
+                if val_c != val_d:
+                    # code that is only read, IN PYTHON, if 'val_c' and 'val_b' have a different 'gval_type' or \
+'target' attr.
+
+        .. describe:: a > b, a >= b, a < b, a <= b
+
+            Returns the equivalent :class:`~.IfVariable` block for the given comparison. **Its only usage is as
+            a Codeblock** (in a `with`).
+            For example::
+
+                with var_a > var_b:
+                    # code that is only executed in DiamondFire if 'var_a' is bigger than 'var_b' in value.
+
+                with var_c < var_d:
+                    # code that is only executed in DiamondFire if 'var_c' is less than 'var_d' in value.
+
+            .. note::
+
+                Those comparisons are not usable in Python if's; if a :func:`bool` is attempted on the resulting
+                IfVariable block, it will always return True. This mechanism is only implemented for ``==`` and ``!=``.
+
+            .. warning::
+
+                Assuming that one of them is a DFVariable, the other has to be a valid :attr:`~.Numeric` parameter.
+                Otherwise, a TypeError may be raised (if the given type does not support operations with DFVariable,
+                which is likely).
+
+
+    .. container:: operations
+
+        .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
+
+            Creates a :class:`VarOp` instance representing this operation between different variables/variables
+            and values/etc.
+            It is meant to be given as the parameter for :meth:`DFVariable.set`, which will then place the appropriate
+            Set Variable type (setting the variable instance to this operation)
+
+            `a` is the :class:`VarOperable` instance, while `b`, in this case, is the :attr:`~.Numeric` to realize this
+            operation with.
+
+            .. note::
+
+                If the operation is addition or subtraction, `b` can also be a :attr:`~.Locatable` parameter (represent
+                a location), besides Numeric.
+
+            .. warning::
+
+                **You cannot mix operations.** For example, ``a + b - c * d ** e`` will raise. Stick to only one
+                at once, and have one :meth:`DFVariable.set` call for each kind.
+                (There is only one Set Var for each kind.)
+                (However, operations with multiple variables, up to 27, work: ``a + b + c + ... + z``)
+
+                If there is an attempt to mix operations, a :exc:`TypeError` is raised.
+
+                Similarly, if there is an attempt to have an operation with more than 26 variables (chest size is
+                up to 27 items, while 1 slot is the variable being set), then a :exc:`~.LimitReachedError` is raised
+                instead.
+
+        .. describe:: str(a)
+
+            Returns ``a.gval_type.value`` (the type of Game Value).
+
+        .. describe:: hash(a)
+
+            Returns an unique hash identifying this Game Value by its Game Value type and its target.
+
+
+    Attributes
+    ----------\u200b
+        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
+            The type of Game Value this is.
+
+        target : Optional[:class:`~py2df.enums.targets.Target`], optional
+            The target of this Game Value, or None. Defaults to None.
+    """
+    __slots__ = ("gval_type", "target")
+
+    gval_type: GameValueType
+    target: typing.Optional[Target]
+
+    def __init__(self, gval_type: GameValueType, target: typing.Optional[Target] = None):
+        """
+        Initializes the Game Value.
+
+        Parameters
+        ----------
+        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
+            The type of Game Value this is.
+
+        target : Optional[:class:`~py2df.enums.targets.Target`], optional
+            The target of this Game Value, or None. Defaults to None.
+        """
+
+        self.gval_type = GameValueType(gval_type)
+        self.target = target or None
+
+    def set(
+        self, gval_type: GameValueType = DEFAULT_VAL, target: typing.Optional[Target] = DEFAULT_VAL
+    ) -> "DFGameValue":
+        """Configures this Game Value. Note that this does not create a Set Var like with DFVariable; instead, it
+        changes, IN PYTHON, the attributes of this Game Value.
+
+        Parameters
+        ----------
+        gval_type : :class:`~py2df.enums.dftypes.GameValueType`
+            The type of Game Value this is.
+
+        target : Optional[:class:`~py2df.enums.targets.Target`], optional
+            The target of this Game Value, or None.
+
+        Returns
+        -------
+        :class:`DFGameValue`
+            self to allow chaining.
+        """
+
+        if gval_type != DEFAULT_VAL:
+            self.gval_type = GameValueType(gval_type)
+
+        if target != DEFAULT_VAL:
+            self.target = target or None
+
+        return self
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} gval_type={repr(self.gval_type.value)} \
+target={repr(str(self.target) if self.target else self.target)}>"
+
+    def __str__(self):
+        return self.gval_type.value
+
+    def as_json_data(self) -> dict:
+        """Obtains a JSON-serializable dict representation of this Game Value.
+
+        Returns
+        -------
+        :class:`dict`
+            A JSON-serializable dict.
+        """
+        return dict(
+            id=constants.ITEM_ID_GAME_VALUE,
+            data=dict(
+                type=self.gval_type.value,
+                target=self.target.value if self.target else None
+            )
+        )
+
+    @classmethod
+    def from_json_data(cls, data: dict):
+        """Obtain a Game Value from pre-existing parsed JSON data.
+
+        Must be of the form (have at least those keys)::
+
+            { "data": { "type": str, "target": str } }
+
+        Where ``str`` would be the type of the value.
+
+        Parameters
+        ----------
+        data : :class:`dict`
+            The parsed JSON :class:`dict`.
+
+        Returns
+        -------
+        :class:`DFGameValue`
+            :class:`DFGameValue` instance.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If the data is malformed (does not follow the structure detailed above).
+        """
+        if (
+                not isinstance(data, dict)
+                # or "id" not in data  # not really required
+                or "data" not in data
+                or not isinstance(data["data"], dict)
+                or "type" not in data["data"]
+                or type(data["data"]["type"]) != str
+                or "target" not in data["data"]
+                or type(data["data"]["target"]) != str
+        ):
+            raise TypeError(
+                "Malformed DFGameValue parsed JSON data! Must be a dict with, at least, a 'data' dict containing"
+                "'type' and 'target' str values."
+            )
+
+        in_data = data["data"]
+        target_str = in_data["target"]
+        target_instance = None
+        if target_str.lower() != "none":
+            try:
+                target_instance = PlayerTarget(target_str)
+            except ValueError:
+                try:
+                    target_instance = EntityTarget(target_str)
+                except ValueError as e:
+                    raise ValueError("Invalid target specified in Game Value JSON data.") from e
+
+        return cls(GameValueType(in_data["type"]), target_instance)
+
+    # def to_item(self) -> "Item":
+    #     pass  # TODO: Apple
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.gval_type, str(self.target)))
+
+
+class DFVariable(DFType, VarOperable):
     """Represents a DiamondFire variable. **Note that all variables with same 'name' attribute represent the same
     var.**
 
@@ -330,7 +934,7 @@ class DFVariable(DFType):
                     # code that is only executed in DiamondFire if 'var_c' and 'var_d' are different in value.
 
             2. **Is used to compare, IN PYTHON, the variables' names and scopes** (by calling :func:`bool` on the \
-    generated IfVariable block). Example usage::
+generated IfVariable block). Example usage::
 
                 if var_a == var_b:
                     # code that is only read, IN PYTHON, if 'var_a' and 'var_b' have the same 'name' and 'scope' attrs.
@@ -429,10 +1033,7 @@ class DFVariable(DFType):
         *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
         saved: bool = False, local: bool = False
     ):
-        global _SetVar, _tp, _IfVariable
-        from ..codeblocks.utilityblock import SetVar  # lazy import to avoid cyclic imports
-        from .. import typings                        # ^
-        from ..codeblocks.ifs import IfVariable       # ^
+        _heavy_imports()
 
         self.name: str = str(name)
 
@@ -444,10 +1045,6 @@ class DFVariable(DFType):
             self.scope: VariableScope = VariableScope.LOCAL
         elif unsaved:
             self.scope: VariableScope = VariableScope.UNSAVED
-
-        _SetVar = SetVar
-        _tp = typings
-        _IfVariable = IfVariable
 
         if init_value:
             self.set(init_value)
@@ -567,237 +1164,10 @@ class DFVariable(DFType):
     def __str__(self):
         return f"%var({self.name})"
 
-    # region:var_comparison
-
-    def __eq__(self, other: "Param") -> "IfVariable":
-        if not _tp.p_bool_check(other, _tp.Param):
-            return NotImplemented
-
-        gen_if = _IfVariable(  # allow "with var_a == var_b:"
-            action=IfVariableType.EQUALS,
-            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
-            append_to_reader=False
-        )
-        gen_if._called_by_var = True  # allow "if var_a == var_b"
-
-        return gen_if
-
-    def __ne__(self, other: "Param") -> "IfVariable":
-        if not _tp.p_bool_check(other, _tp.Param):
-            return NotImplemented
-
-        gen_if = _IfVariable(  # allow "with var_a != var_b:"
-            action=IfVariableType.NOT_EQUALS,
-            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
-            append_to_reader=False
-        )
-        gen_if._called_by_var = True  # allow "if var_a != var_b"
-
-        return gen_if
-
-    def __gt__(self, other: "Numeric") -> "IfVariable":
-        if not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return _IfVariable(
-            action=IfVariableType.GREATER_THAN,
-            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
-            append_to_reader=False
-        )
-
-    def __ge__(self, other: "Numeric") -> "IfVariable":
-        if not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return _IfVariable(
-            action=IfVariableType.GREATER_THAN_OR_EQUAL_TO,
-            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
-            append_to_reader=False
-        )
-
-    def __lt__(self, other: "Numeric") -> "IfVariable":
-        if not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return _IfVariable(
-            action=IfVariableType.LESS_THAN,
-            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
-            append_to_reader=False
-        )
-
-    def __le__(self, other: "Numeric") -> "IfVariable":
-        if not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return _IfVariable(
-            action=IfVariableType.LESS_THAN_OR_EQUAL_TO,
-            args=Arguments([self, _tp.p_check(other, _tp.Numeric, "other")]),
-            append_to_reader=False
-        )
-
-    # endregion:var_comparison
-
-    # region:var_ops
-
-    def __add__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
-
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
-            other, typing.Union[_tp.Numeric, _tp.Locatable]
-        ):
-            return NotImplemented
-
-        return VarOp(SetVarType.SET_TO_ADDITION, self, other)
-
-    def __radd__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
-        return self.__add__(other)
-
-    def __sub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
-            other, typing.Union[_tp.Numeric, _tp.Locatable]
-        ):
-            return NotImplemented
-
-        return VarOp(SetVarType.SET_TO_SUBTRACTION, self, other)
-
-    def __rsub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
-                other, typing.Union[_tp.Numeric, _tp.Locatable]
-        ):
-            return NotImplemented
-
-        res = VarOp(SetVarType.SET_TO_SUBTRACTION, self)
-        res._add_var(
-            other, SetVarType.SET_TO_SUBTRACTION, append_left=True, is_rsub=True, allow_other_iters=False,
-            error_incompatible=True, modify_self=True
-        )
-
-    def __mul__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]):
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(SetVarType.SET_TO_PRODUCT, self, other)
-
-    def __rmul__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
-        return self.__mul__(other)
-
-    def __pow__(self, power: typing.Union["Numeric", VarOp, "DFVariable"], modulo=None) -> VarOp:
-        if isinstance(power, VarOp):
-            vars = power.vars
-            if len(vars) > 1:
-                raise LimitReachedError("Cannot realize operation '**' between more than two variables.")
-
-            if power.setv_type != SetVarType.SET_TO_POWER:
-                raise TypeError(
-                    "Cannot have different types of operations between variables at the same time; each kind "
-                    "should be evaluated in its own .set()."
-                )
-
-            power = vars[0]
-
-        if not isinstance(power, DFVariable) and not _tp.p_bool_check(power, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(SetVarType.SET_TO_POWER, self, power)
-
-    def __rpow__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
-        if isinstance(other, VarOp):
-            vars = other.vars
-            if len(vars) > 1:
-                raise LimitReachedError("Cannot realize operation '**' between more than two variables.")
-
-            if other.setv_type != SetVarType.SET_TO_POWER:
-                raise TypeError(
-                    "Cannot have different types of operations between variables at the same time; each kind "
-                    "should be evaluated in its own .set()."
-                )
-
-            other = vars[0]
-
-        if not isinstance(other, DFVariable) and not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(SetVarType.SET_TO_POWER, other, self)
-
-    def __mod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
-        if isinstance(other, VarOp):
-            vars = other.vars
-            if len(vars) > 1:
-                raise LimitReachedError("Cannot realize operation '%' between more than two variables.")
-
-            if other.setv_type != SetVarType.SET_TO_MOD:
-                raise TypeError(
-                    "Cannot have different types of operations between variables at the same time; each kind "
-                    "should be evaluated in its own .set()."
-                )
-
-            other = vars[0]
-
-        if not isinstance(other, DFVariable) and not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(SetVarType.SET_TO_MOD, self, other)
-
-    def __rmod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
-        if isinstance(other, VarOp):
-            vars = other.vars
-            if len(vars) > 1:
-                raise LimitReachedError("Cannot realize operation '%' between more than two variables.")
-
-            if other.setv_type != SetVarType.SET_TO_MOD:
-                raise TypeError(
-                    "Cannot have different types of operations between variables at the same time; each kind "
-                    "should be evaluated in its own .set()."
-                )
-
-            other = vars[0]
-
-        if not isinstance(other, DFVariable) and not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(SetVarType.SET_TO_MOD, other, self)  # notice the change in order.
-
-    def __truediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(
-            SetVarType.SET_TO_QUOTIENT, self, other,
-            tags=[Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
-        )
-
-    def __rtruediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(
-            SetVarType.SET_TO_QUOTIENT, other, self,
-            tags=[Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
-        )
-
-    def __floordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(
-            SetVarType.SET_TO_QUOTIENT, self, other,
-            tags=[Tag(
-                "Division Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR
-            )]
-        )
-
-    def __rfloordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
-            return NotImplemented
-
-        return VarOp(
-            SetVarType.SET_TO_QUOTIENT, other, self,
-            tags=[Tag(
-                "Division Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR
-            )]
-        )
-
     def __iadd__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
             return NotImplemented
 
         _SetVar(
@@ -813,7 +1183,9 @@ class DFVariable(DFType):
         return self
 
     def __isub__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
-        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(other, _tp.Numeric):
+        if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
+            other, _tp.Numeric, error_on_gameval=True
+        ):
             return NotImplemented
 
         _SetVar(
@@ -847,17 +1219,18 @@ class DFVariable(DFType):
         self.set(self.__truediv__(other))
 
         return self
-        # [Tag("Divison Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
+        # [Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
 
     def __ifloordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
         self.set(self.__floordiv__(other))
 
         return self
-        # [Tag("Divison Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
+        # [Tag("Division Mode", option="Round to Integer", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
 
     def __hash__(self):
         return hash((self.name, self.scope))
-    # endregion:var_ops
 
 
-remove_u200b_from_doc(DFVariable, VarOp)
+remove_u200b_from_doc(DFVariable, VarOp, DFGameValue, VarOperable)
+
+

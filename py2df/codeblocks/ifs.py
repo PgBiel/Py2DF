@@ -2,12 +2,12 @@ import typing
 from collections import deque
 from abc import abstractmethod
 
-from .. import enums
+from ..errors import DFSyntaxError
 from ..enums import (
     PlayerTarget, EntityTarget, BlockType, IfPlayerType, IfEntityType, IfGameType, IfVariableType,
     SelectionTarget,
     BracketDirection, BracketType, IfType)
-from ..classes import JSONData, Arguments, BracketedBlock, Block, Bracket, DFVariable
+from ..classes import JSONData, Arguments, BracketedBlock, Block, Bracket, DFVariable, DFGameValue
 from ..utils import remove_u200b_from_doc
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
@@ -88,11 +88,11 @@ class IfBlock(BracketedBlock, JSONData):
 
     def __enter__(self) -> "IfBlock":
         """
-        Triggers the creation of an opening bracket and the addition of all codeblocks into this If Player.
+        Triggers the creation of an opening bracket and the addition of all codeblocks into this If block.
 
         Returns
         -------
-        :class:`IfPlayer`
+        :class:`IfBlock`
             self (The current instance)
         """
         self.codeblocks.appendleft(Bracket(BracketDirection.OPEN, BracketType.NORM))
@@ -593,6 +593,11 @@ class IfVariable(IfBlock):
         )
 
     def __bool__(self):
+        """Allows for bool() calls on IfVariableType.EQUALS and IfVariableType.NOT_EQUALS, making the use of `If`s
+        possible.
+
+        Otherwise, returns True.
+        """
         if self._called_by_var:
             if self.action in (IfVariableType.EQUALS, IfVariableType.NOT_EQUALS):
                 arg_1 = self.args.items[0]
@@ -601,6 +606,9 @@ class IfVariable(IfBlock):
                 if isinstance(arg_1, DFVariable) or isinstance(arg_2, DFVariable):
                     res = arg_1.name == arg_2.name and arg_1.scope == arg_2.scope if isinstance(arg_1, DFVariable) \
                         and isinstance(arg_2, DFVariable) else False
+                elif isinstance(arg_1, DFGameValue) or isinstance(arg_2, DFGameValue):
+                    res = arg_1.gval_type == arg_2.gval_type if isinstance(arg_1, DFGameValue) \
+                        and isinstance(arg_2, DFGameValue) else False
                 else:
                     res = arg_1 == arg_2
 
@@ -609,4 +617,102 @@ class IfVariable(IfBlock):
         return True
 
 
-remove_u200b_from_doc(IfBlock, IfPlayer, IfEntity, IfGame, IfVariable)
+class Else(BracketedBlock):
+    """An Else block. Executes code when a condition checked by an If block is not met. **Has to be preceded by
+    an If Block.
+
+    Parameters
+    ----------\u200b
+    append_to_reader : :class:`bool`, optional
+        Whether or not this newly-created :class:`IfVariable` should be already appended to the
+        :class:`~py2df.reading.reader.DFReader`. Defaults to ``True``.
+
+    codeblocks : Iterable[:class:`~py2df.classes.abc.Block`], optional
+        The blocks, including Brackets, inside this Else. Defaults to empty deque (None).
+
+    Attributes
+    ----------\u200b
+    block : :attr:`~py2df.enums.parameters.BlockType.IF_VAR`
+        The type of this codeblock (Else).
+
+    args : ``None``
+        (Else has no arguments.)
+
+    action : ``None``
+        (Else has no actions.)
+
+    codeblocks : Deque[:class:`~py2df.classes.abc.Block`]
+        The blocks, including Brackets, inside this Else.
+
+    sub_action : ``None``
+        (Else has no sub actions.)
+
+    length : :class:`int`
+        The length of each individual Else (excluding brackets). This is always equal to 1.
+
+    data : ``None``
+        (Else has no extra codeblock data.)
+
+    target : ``None``
+        (Else has no target.)
+        """
+    __slots__ = ("codeblocks",)
+
+    block: BlockType = BlockType.ELSE
+    args: None = None
+    action: None = None
+    codeblocks: typing.Deque[Block]
+    sub_action: None = None
+    length: int = 1
+    data: None = None
+    target: None = None
+
+    def __init__(
+        self, *, append_to_reader: bool = False,
+        codeblocks: typing.Optional[typing.Iterable[Block]] = None
+    ):
+        if append_to_reader:
+            self._append_codeblock()
+
+        self.codeblocks: typing.Deque[Block] = deque(codeblocks or [])
+
+    def __enter__(self) -> "Else":
+        """
+        Triggers the creation of an opening bracket and the addition of all codeblocks into this If Player.
+
+        Returns
+        -------
+        :class:`IfPlayer`
+            self (The current instance)
+        """
+        self.codeblocks.appendleft(Bracket(BracketDirection.OPEN, BracketType.NORM))
+        reader = DFReader()
+
+        if reader.curr_code_loc and self not in reader.curr_code_loc:
+            self._append_codeblock()
+
+        reader.curr_code_loc = self
+        return self
+
+    def __exit__(self, _exc_type, _exc_val, _exc_tb) -> None:
+        """
+        Closes the Bracket, and resets the location of codeblocks (i.e., they now go outside the brackets).
+
+        Returns
+        -------
+        ``None``
+            ``None``
+        """
+        self.codeblocks.append(Bracket(BracketDirection.CLOSE, BracketType.NORM))
+
+    def _append_codeblock(self):
+        """Checks if there is an If before this Else in order to allow its placement."""
+        reader = DFReader()
+        curr_loc = reader.curr_code_loc
+        if curr_loc and not isinstance(curr_loc[-1], IfBlock):
+            raise DFSyntaxError("'Else' block must come directly after an If block at the same bracket level.")
+
+        reader.append_codeblock(self)
+
+
+remove_u200b_from_doc(IfBlock, IfPlayer, IfEntity, IfGame, IfVariable, Else)

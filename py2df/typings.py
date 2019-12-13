@@ -2,9 +2,10 @@ import collections
 import typing
 from enum import Enum
 
+from .enums import GVAL_TEXTABLE, GVAL_NUMERIC, GVAL_LOCATABLE, GVAL_LISTABLE, GVAL_ITEM
 from .classes.abc import Itemable
-from .classes.mc_types import DFNumber, DFGameValue, DFText, DFLocation, DFPotion, Item, DFCustomSpawnEgg
-from .classes.variable import DFVariable
+from .classes.mc_types import DFNumber, DFText, DFLocation, DFPotion, Item, DFCustomSpawnEgg
+from .classes.variable import DFVariable, DFGameValue
 from .utils import flatten
 
 
@@ -26,15 +27,12 @@ parameter."""
     """Union[:class:`~.DFLocation`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of a Location \
 parameter."""
 
-    Potionable = typing.Union[DFPotion, DFGameValue, DFVariable]
-    """Union[:class:`~.DFPotion`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of a Potion \
-parameter."""
+    Potionable = typing.Union[DFPotion, DFVariable]  # there is no Game Value representing a potion effect.
+    """Union[:class:`~.DFPotion`, :class:`~.DFVariable`] : The possible types of a Potion Effect parameter."""
 
     ItemParam = typing.Union[Itemable, Item, DFCustomSpawnEgg, DFGameValue, DFVariable]
     """Union[:class:`~.Itemable`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of an Item \
 parameter."""
-
-    # TODO: VarParam
 
     Param = typing.Union[
         "ParamTypes.Numeric", "ParamTypes.Textable", "ParamTypes.Listable", "ParamTypes.Potionable",
@@ -56,6 +54,18 @@ Potionable = ParamTypes.Potionable
 ItemParam = ParamTypes.ItemParam
 
 Param = ParamTypes.Param
+
+GVAL_TYPES = {
+    Numeric: GVAL_NUMERIC,
+    Textable: GVAL_TEXTABLE,
+    Listable: GVAL_LISTABLE,
+    Locatable: GVAL_LOCATABLE,
+    ItemParam: GVAL_ITEM,
+    Item: GVAL_ITEM,
+
+    # a few Unions
+    typing.Union[Numeric, Locatable]: GVAL_NUMERIC + GVAL_LOCATABLE
+}
 
 
 def convert_numeric(param: Numeric) -> Numeric:
@@ -190,16 +200,30 @@ def p_check(obj: _P, typeof: typing.Type[_P], arg_name: typing.Optional[str] = N
         [getattr(type_, "__args__", type_) for type_ in getattr(p_typeof, "__args__", [p_typeof])]
     )  # ^this allows Union[] to be specified as well, such that Union[Numeric, Locatable] works, for example.
 
+    valid_names = ("Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam")
+    corresponding_values = (Param, Numeric, Textable, Locatable, Potionable, ItemParam)
     if not isinstance(obj, tuple(valid_types)):
-        valid_names = ("Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam")
-        corresponding_values = (Param, Numeric, Textable, Locatable, Potionable, ItemParam)
 
         try:
-            name = valid_names[corresponding_values.index(typeof)]
+            corresp_class_ind = corresponding_values.index(typeof)
+            name = valid_names[corresp_class_ind]
             msg = f"Object must be a valid {name} parameter."
 
         except (IndexError, ValueError):
             msg = f"Object must correspond to the appropriate parameter type."
+
+        raise TypeError(msg + (f" (Arg '{arg_name}')" if arg_name else ""))
+
+    if GVAL_TYPES.get(typeof) and isinstance(obj, DFGameValue) and obj not in GVAL_TYPES[typeof]:
+        try:
+            corresp_class_ind = corresponding_values.index(typeof)
+            name = valid_names[corresp_class_ind]
+            msg = f"The DFGameValue type specified does not evaluate to a valid {name} parameter. (Check documentation \
+to see valid 'GameValueType' attrs for this parameter type.)"
+
+        except (IndexError, ValueError):
+            msg = f"The DFGameValue type specified does not evaluate to a valid parameter of the required type. \
+(Check documentation to see valid 'GameValueType' attrs for this parameter type.)"
 
         raise TypeError(msg + (f" (Arg '{arg_name}')" if arg_name else ""))
 
@@ -209,55 +233,7 @@ def p_check(obj: _P, typeof: typing.Type[_P], arg_name: typing.Optional[str] = N
     return typing.cast(_P, obj)
 
 
-@typing.overload
-def p_bool_check(
-    obj: Numeric, typeof: typing.Type[Numeric]
-) -> Numeric: ...
-
-
-@typing.overload
-def p_bool_check(
-    obj: Textable, typeof: typing.Type[Textable]
-) -> Textable: ...
-
-
-@typing.overload
-def p_bool_check(
-    obj: Listable, typeof: typing.Type[Listable]
-) -> Listable: ...
-
-
-@typing.overload
-def p_bool_check(
-    obj: Locatable, typeof: typing.Type[Locatable]
-) -> Locatable: ...
-
-
-@typing.overload
-def p_bool_check(
-    obj: Potionable, typeof: typing.Type[Potionable]
-) -> Potionable: ...
-
-
-@typing.overload
-def p_bool_check(
-    obj: ItemParam, typeof: typing.Type[ItemParam]
-) -> ItemParam: ...
-
-
-@typing.overload
-def p_bool_check(
-    obj: DFVariable, typeof: typing.Type[DFVariable]
-) -> DFVariable: ...
-
-
-@typing.overload
-def p_bool_check(
-    obj: Param, typeof: typing.Type[Param]
-) -> Param: ...
-
-
-def p_bool_check(obj: _P, typeof: typing.Type[_P]) -> bool:
+def p_bool_check(obj: _P, typeof: typing.Type[_P], gameval_check: bool = True, error_on_gameval: bool = False) -> bool:
     """Checks an object for being a valid param type, returning True if the type matches and False otherwise. For
     checking and raising an error, see :func:`p_check`.
 
@@ -269,10 +245,23 @@ def p_bool_check(obj: _P, typeof: typing.Type[_P]) -> bool:
     typeof : Type[:attr:`ParamTypes.Param`]
         The parameter type to check.
 
+    gameval_check : :class:`bool`, optional
+        If any DFGameValue instances specified should be checked to ensure they have the same Return Type as the
+        specified parameter type. Defaults to ``True``.
+
+    error_on_gameval : :class:`bool`, optional
+        If DFGameValue instances found to not correspond to the given type should raise a TypeError instead of
+        causing the function to return ``False``. Defaults to ``False``.
+
     Returns
     -------
-    :attr:`ParamTypes.Param`
-        The object, given there are no type incompatibilities.
+    :class:`bool`
+        If the object matches the given type, then this is ``True``. Otherwise, ``False``.
+
+    Raises
+    ------
+    :exc:`TypeError`
+        If ``error_on_gameval`` is set to ``True`` and a DFGameValue instance of incompatible type is given.
 
     See Also
     --------
@@ -287,4 +276,26 @@ def p_bool_check(obj: _P, typeof: typing.Type[_P]) -> bool:
         [getattr(type_, "__args__", type_) for type_ in getattr(p_typeof, "__args__", [p_typeof])]
     )
 
-    return isinstance(obj, tuple(valid_types))
+    if not isinstance(obj, tuple(valid_types)):
+        return False
+
+    if gameval_check and GVAL_TYPES.get(typeof) and isinstance(obj, DFGameValue) and obj not in GVAL_TYPES[typeof]:
+        if error_on_gameval:
+            try:
+                valid_names = ("Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam")
+                corresponding_values = (Param, Numeric, Textable, Locatable, Potionable, ItemParam)
+                corresp_class_ind = corresponding_values.index(typeof)
+                name = valid_names[corresp_class_ind]
+                msg = f"The DFGameValue type specified does not evaluate to a valid {name} parameter. (Check \
+documentation to see valid 'GameValueType' attrs for this parameter type.)"
+
+            except (IndexError, ValueError):
+                msg = f"The DFGameValue type specified does not evaluate to a valid parameter of the required type. \
+(Check documentation to see valid 'GameValueType' attrs for this parameter type.)"
+
+            raise TypeError(msg)
+
+        else:
+            return False
+
+    return True
