@@ -1,4 +1,4 @@
-from .enum_util import AutoSnakeToPascalCaseNameEnum, IfType
+from .enum_util import AutoSnakeToPascalCaseNameEnum, IfType, TagType
 from enum import auto, unique
 
 
@@ -97,3 +97,11 @@ class IfGameType(IfType, AutoSnakeToPascalCaseNameEnum):
     EVENT_CANCELLED = auto()  #: Checks if the current event is cancelled.
     EVENT_ITEM_EQUALS = auto()  #: Checks if the item in an item- related event is a certain item.
     SIGN_HAS_TXT = auto()  #: Checks if the text on a sign at a certain location contains the text in the chest.
+
+
+@unique
+class IfVItemEqComparisonMode(TagType):
+    EXACTLY_EQUALS = "Exactly equals"
+    IGNORE_STACK_SIZE = "Ignore stack size"
+    IGNORE_DURABILITY_AND_STACK_SIZE = "Ignore durability and stack size"
+    MATERIAL_ONLY = "Material only"

@@ -13,7 +13,7 @@ from .collections import Arguments
 from .dataclass import Tag
 from ..utils import remove_u200b_from_doc, flatten, TrueLiteral, FalseLiteral, all_attr_eq
 from ..enums import SetVarType, VariableScope, BlockType, IfVariableType, PlayerTarget, EntityTarget, GameValueType, \
-    Target
+    Target, IfVItemEqComparisonMode
 from ..constants import ITEM_ID_DYNAMIC_VAR, DEFAULT_VAL
 from ..errors import LimitReachedError
 
@@ -21,7 +21,7 @@ if typing.TYPE_CHECKING:
     from .. import typings as _tp
     from ..codeblocks.ifs import IfVariable, IfVariable as _IfVariable
     from ..codeblocks.utilityblock import SetVar  # lazy import in Var init
-    from ..typings import Param, Numeric, Locatable
+    from ..typings import Param, Numeric, Locatable, Textable, Listable, ItemParam
 
 
 _VarOpEl = typing.Union["Numeric", "DFVariable", "Locatable", "VarOp"]
@@ -321,6 +321,8 @@ class VarOperable(metaclass=abc.ABCMeta):
 
     This class is used to hold operations and functions that are common to :class:`DFGameValue` and :class:`DFVariable`.
     Note that each implement their own operations as well; see the documentation for each.
+
+    Implements all the If Variable humanized methods.
 
     .. container:: comparisons
 
@@ -651,6 +653,276 @@ class VarOperable(metaclass=abc.ABCMeta):
         )
 
     # endregion:var_ops
+
+    def text_contains(self) -> "IfVariable":
+        """Checks if a text variable contains another text item.
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+        """
+
+        args = Arguments([_tp.p_check(self)])
+
+        return _IfVariable(
+            action=IfVariableType.CONTAINS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @typing.overload
+    def in_range(
+        self, min_val: "Numeric", max_val: "Numeric"
+    ) -> "IfVariable": ...
+
+    @typing.overload
+    def in_range(
+        self, min_val: "Locatable", max_val: "Locatable"
+    ) -> "IfVariable": ...
+
+    def in_range(
+        self, min_val: typing.Union["Numeric", "Locatable"], max_val: typing.Union["Numeric", "Locatable"]
+    ) -> "IfVariable":
+        """Checks if this number var is within 2 other numbers, or if this location var is within the region of 2 other
+        locations. Note that this method is also implemented within :class:`~.DFNumber` and :class:`~.DFLocation`.
+
+        Parameters
+        ----------
+        min_val : Union["Numeric", "Locatable"]
+            The minimum value for this number, or the first location (one of the two corners of the region to check),
+            if this is a Locatable.
+
+        max_val : Union["Numeric", "Locatable"]
+            The maximum value for this number, or the second location (the other corner, determining that `self` has
+            to be a location staying inbetween `min_val` and `max_val`), if this is a Locatable.
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+        """
+
+        args = Arguments(
+            [
+                _tp.p_check(self, typing.Union[_tp.Numeric, _tp.Locatable], "self"),
+                _tp.p_check(min_val, typing.Union[_tp.Numeric, _tp.Locatable], "min_val"),
+                _tp.p_check(max_val, typing.Union[_tp.Numeric, _tp.Locatable], "max_val")
+            ]
+        )
+
+        return _IfVariable(
+            action=IfVariableType.IN_RANGE,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def is_near(
+        self, center_val: typing.Union["Numeric", "Locatable"], valid_range: "Numeric"
+    ) -> "IfVariable":
+        """Checks if this :attr:`~.Numeric` is within a certain range of another number or if
+        this :attr:`~.Locatable` is near another location. Note that this method is also implemented
+        within :class:`~.DFNumber` and :class:`~.DFLocation`.
+
+        Parameters
+        ----------
+        center_val : Union[:attr:`~.Numeric`, :attr:`~.Locatable`]
+            The value to be compared with `self`.
+
+        valid_range : :attr:`~.Numeric`
+            The accepted distance between `self` and `center_val`.
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+        """
+
+        args = Arguments(
+            [
+                _tp.p_check(self, typing.Union[_tp.Numeric, _tp.Locatable], "self"),
+                _tp.p_check(center_val, typing.Union[_tp.Numeric, _tp.Locatable], "center_val"),
+                _tp.p_check(valid_range, _tp.Numeric, "valid_range"),
+            ]
+        )
+
+        return _IfVariable(
+            action=IfVariableType.IS_NEAR,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def item_equals(
+        self, item: "ItemParam",
+        *, mode: IfVItemEqComparisonMode = IfVItemEqComparisonMode.EXACTLY_EQUAL
+    ) -> "IfVariable":
+        """Works the same as Variable = but has a few extra options for item comparison.
+
+        Parameters
+        ----------
+        item : :attr:`~.ItemParam`
+            The item to compare self (which must be a valid :attr:`~.ItemParam` as well) to.
+
+        mode : :class:`~.IfVItemEqComparisonMode`, optional
+            The mode of comparison that will determine the equality between self and
+            the given item. Defaults to :attr:`~.EXACTLY_EQUAL`.
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+
+        Todo
+        ----
+        Verify the default tag value.
+        """
+
+        args = Arguments(
+            [_tp.p_check(self, _tp.ItemParam, "self"), _tp.p_check(item, _tp.ItemParam, "item")],
+            tags=[
+                Tag(
+                    "Comparison Mode", option=IfVItemEqComparisonMode(mode),
+                    action=IfVariableType.ITEM_EQUALS, block=BlockType.IF_VAR
+                )
+            ]
+        )
+
+        return _IfVariable(
+            action=IfVariableType.ITEM_EQUALS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def item_has_tag(self, *tags: "Textable") -> "IfVariable":
+        """Checks if this instance (has to be a valid :attr:`~.ItemParam`) has the given custom item tag(s).
+
+        Parameters
+        ----------
+        tags : :attr:`~.Textable`
+            The tags to have their presence within the item (self) checked.
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+        """
+
+        args = Arguments(
+            [_tp.p_check(self, _tp.ItemParam, "self")] + [_tp.p_check(o, _tp.Textable, "tags") for o in tags]
+        )
+
+        return _IfVariable(
+            action=IfVariableType.ITEM_HAS_TAG,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def list_contains(self, obj: "Param") -> "IfVariable":
+        """Checks if any of a list's contents match the given value. Note that this instance (self)
+        must be a valid :attr:`~.Listable` (i.e., the type of the Game Value, or the type of the Variable, if using
+        typed var classes).
+
+        Parameters
+        ----------
+        obj : :attr:`~.Param`
+            The object that will be checked for being inside the list (i.e., if the list contains it).
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+        """
+
+        args = Arguments([
+            _tp.p_check(self, _tp.Listable, arg_name="self"),
+            _tp.p_check(obj, _tp)
+        ])
+
+        return _IfVariable(
+            action=IfVariableType.LIST_CONTAINS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def list_value_eq(self, index: "Numeric", value: "Param") -> "IfVariable":
+        """Checks if a list's value at an index is equal to a given value. Note that `self` has to be a
+        valid :attr:`~.Listable`.
+
+        Note
+        ----
+        Using this method
+        shouldn't be necessary; by using :class:`ListVar`, using ``var[i] == val`` (which is much more readable)
+        should produce the same result; if using a :class:`DFGameValue`, then this should be available by default.
+
+        Parameters
+        ----------
+        index : :attr:`~.Numeric`
+            The index of the list element to compare.
+
+        value : :attr:`~.Param`
+            The value to be compared to the element at the given list index.
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+        """
+
+        args = Arguments([
+            _tp.p_check(self, _tp.Listable, "self"),
+            _tp.p_check(index, _tp.Numeric, "index"),
+            _tp.p_check(value, _tp.Param, "value")
+        ])
+
+        return _IfVariable(
+            action=IfVariableType.LIST_VALUE_EQ,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def text_matches(self) -> "IfVariable":  # TODO
+        """Checks if this text matches another text.
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+        """
+
+        args = Arguments([_tp.p_check(self)])
+
+        return _IfVariable(
+            action=IfVariableType.TEXT_MATCHES,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def var_is_type(self) -> "IfVariable":  # TODO ...
+        """Checks if a variable is a certain type of variable.
+
+        Returns
+        -------
+        :class:`IfVariable`
+            The generated IfVariable codeblock for this condition.
+        """
+
+        args = Arguments([self])
+
+        return _IfVariable(
+            action=IfVariableType.VAR_IS_TYPE,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
 
 
 class DFGameValue(DFType, VarOperable):
