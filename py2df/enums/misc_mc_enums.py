@@ -1,48 +1,61 @@
 import typing
 from .enum_util import AutoLowerNameEnum
-from enum import auto, unique, Enum, EnumMeta
+from enum import auto, unique, IntFlag
 from ..constants import SECTION_SIGN
+from ..utils import remove_u200b_from_doc
 
 
-class _StandaloneHideFlagMeta(type):
-    def __instancecheck__(cls, obj):
-        return type(obj) in (HideFlags, _HideFlagsSum)
+class HideFlags(IntFlag):
+    """Represents flags to hide from an :class:`~.Item` (i.e., to not display). Note that they can be OR'ed to
+    hide multiple flags (i.e., ``a | b`` to hide both `a` and `b`). Use HIDE_ALL_FLAGS for all flags combined.
 
-    def __subclasscheck__(cls, subclass: type):
-        if cls is HideFlags and subclass is _HideFlagsSum:
-            return True
-
-        return super().__subclasscheck__(subclass)
+    Note that this subclasses :class:`enum.IntFlag` which, in turn, subclasses :class:`int`, meaning all integer
+    operations are supported.
 
 
-class _HideFlagMeta(EnumMeta, _StandaloneHideFlagMeta):
-    def __instancecheck__(cls, obj):
-        return _StandaloneHideFlagMeta.__instancecheck__(cls, obj)
+    .. container:: comparisons
 
-    def __subclasscheck__(cls, subclass):
-        return _StandaloneHideFlagMeta.__subclasscheck__(cls, subclass)
+        .. describe:: a == b, a != b
+
+            Checks if two HideFlags instances represent the same flags.
+
+        .. describe:: a > b, a < b, a >= b, a <= b
+
+            Compares the HideFlags instances' values.
+
+    .. container:: operations
+
+        Note that all integer operations not listed here are supported, but return an :class:`int` instead of a
+        :class:`HideFlags` (when applicable).
+
+        .. describe:: a | b
+
+            Combines both flags. (E.g.: ``HideFlags.ENCHANTMENTS | HideFlags.ATTRIBUTE_MODIFIERS`` means that
+            both enchantments and attribute modifiers should be hidden from the item.)
+
+        .. describe:: ~a
+
+            Obtains a :class:`HideFlags` instance representing all except `a`'s flag(s).
+
+        .. describe:: b in a
+
+            Returns ``True`` if `a` contains all of `b`'s flags, otherwise ``False``.
+
+        .. describe:: a & b, a ^ b
+
+            Runs the specified logic operations (AND and XOR, respectively) between the values,
+            returning the corresponding :class:`HideFlags` instance.
+
+        .. describe:: a + b, a - b, a / b, ...
+
+            Executes the given operation in the same way as integers.
 
 
-@unique
-class HideFlags(Enum, metaclass=_HideFlagMeta):
-    """List of flags to hide. Note that they can be summed to combine multiple flags. ALL has all flags combined.
-
-    **Supported comparisons:**
-    ``a == b``: Checks if two HideFlags instances have the same value.
-
-    ``a != b``: Same as ``not a == b``
-
-    **Supported operations:**
-
-    ``a + b``: Combines both flags. (E.g.: ``HideFlags.ENCHANTMENTS + HideFlags.ATTRIBUTE_MODIFIERS``)
-
-    ``a | b``: Same as ``a + b``; combines flags.
-
-    ``a - b``: Removes a flag from a combination of flags. (E.g.: ``HideFlags.ALL - HideFlags.ENCHANTMENTS``)
-
-    **Note:** Any of the operations listed above return a ``_HideFlagsSum`` instance, which represents an arbitrary
-    HideFlags value. However, in ``isinstance`` checks, it will return True as an instance of ``HideFlags`` (this
-    class).
+    Attributes
+    ----------\u200b
+    value : :class:`int`
+        The unique integer representing the hidden flags of this instance. This is the value used
+        when executing integer operations (such as ``a + b`` or ``a - b``).
     """
     ENCHANTMENTS = 1
     ATTRIBUTE_MODIFIERS = 2
@@ -50,71 +63,33 @@ class HideFlags(Enum, metaclass=_HideFlagMeta):
     BLOCKS_CAN_DESTROY = 8
     BLOCKS_CAN_PLACE_ON = 16
     MISC_FLAGS = 32  # such as potion effects, "StoredEnchantments", written book "generation" and "author",
-    ALL = 63         # "Explosion", "Fireworks", and map tooltips
+    # "Explosion", "Fireworks", and map tooltips
 
-    def __eq__(self, other: "HideFlags") -> bool:
-        if not super().__eq__(other):
-            return isinstance(other, type(self)) and self.value == other.value
-
-    def __ne__(self, other: "HideFlags") -> bool:
-        return not self.__eq__(other)
-
-    def __add__(self, other: "HideFlags"):
-        if not isinstance(other, type(self)):
-            raise TypeError(f"Incompatible operation types {type(self)} and {type(other)}")
-
-        return _HideFlagsSum(self.value | other.value)
-
-    def __or__(self, other: "HideFlags"):
-        return self.__add__(other)
-
-    def __sub__(self, other: "HideFlags"):
-        if not isinstance(other, type(self)):
-            raise TypeError(f"Incompatible operation types {type(self)} and {type(other)}")
-
-        if self.value | other.value == self.value:
-            return _HideFlagsSum(abs(self.value - other.value))
-        else:
-            return HideFlags(self.value)
+    def __repr__(self):  # from `re.RegexFlag`
+        if self._name_ is not None:
+            return f'HideFlags.{self._name_}'
+        value = self._value_
+        members = []
+        negative = value < 0
+        if negative:
+            value = ~value
+        for m in self.__class__:
+            if value & m._value_:
+                value &= ~m._value_
+                members.append(f'HideFlags.{m._name_}')
+        if value:
+            members.append(hex(value))
+        res = '|'.join(members)
+        if negative:
+            if len(members) > 1:
+                res = f'~({res})'
+            else:
+                res = f'~{res}'
+        return res
 
 
-class _HideFlagsSum(metaclass=_StandaloneHideFlagMeta):  # subclass to allow `isinstance` checks
-    __slots__ = ("value",)
-
-    def __init__(self, value: int):
-        self.value: int = value
-
-    def __repr__(self) -> str:
-        if self.value == HideFlags.ALL.value:
-            return f"<HideFlags.ALL: {self.value}>"
-
-        str_generated = "<"
-        already_has = False
-        for hideflags in set(HideFlags._member_names_) - {"ALL"}:
-            if self.value & getattr(HideFlags, hideflags).value:
-                if already_has:
-                    str_generated += " + "
-                else:
-                    already_has = True
-                str_generated += f"HideFlags.{hideflags}"
-
-        str_generated += f": {self.value}>"
-        return str_generated
-
-    def __add__(self, other: "HideFlags"):
-        if not isinstance(other, HideFlags):
-            raise TypeError(f"Incompatible operation types HideFlags and {type(other)}.")
-
-        return _HideFlagsSum(self.value | other.value)
-
-    def __or__(self, other: "HideFlags"):
-        return self.__add__(other)
-
-    def __sub__(self, other: "HideFlags"):
-        if not isinstance(other, HideFlags):
-            raise TypeError(f"Incompatible operation types HideFlags and {type(other)}.")
-
-        return _HideFlagsSum(abs(self.value - other.value))
+ALL_HIDE_FLAGS = HideFlags(sum(list(HideFlags)))
+"""The :class:`HideFlags` instance containing all flags, meaning all kinds of flags should be hidden."""
 
 
 @unique
@@ -186,3 +161,6 @@ class Color:
 
 
 Colour = Color  # alias
+
+
+remove_u200b_from_doc(HideFlags)

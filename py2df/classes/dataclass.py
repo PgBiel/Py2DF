@@ -23,6 +23,37 @@ class Enchantment(Settable):
 
     level : :class:`int`, optional
         The level of this enchantments (default is 1).
+
+
+    .. container:: comparisons
+
+       .. describe:: a == b, a != b
+
+            Checks if every attribute is the same.
+
+       .. describe::  a > b, a >= b, a < b, a <= b
+
+            Compares both of the enchantments' levels.
+
+
+    .. container:: operations
+
+        Note that, in all operations, ``a`` must be an instance of :class:`Enchantment` , while ``b`` can either be
+        another instance of the class or be an :class:`int` (or :class:`float` - the results are rounded down).
+
+        .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b
+
+            Executes said operation on both's levels.
+
+        .. describe:: str(a)
+
+            Returns a string in the form "{ench_type} x {level}".
+
+        .. describe:: hash(a)
+
+            Returns an unique hash representing the Enchantment class, the instance's enchantment type and its
+            level.
+
     
     Attributes\u200b
     -----------
@@ -30,24 +61,7 @@ class Enchantment(Settable):
             Type of enchantment.
         
         level : :class:`int`
-            The level of this enchantment. (Cannot surpass **{0}**)
-
-    **Supported comparisons**
-
-    ``a == b``: Checks if every attribute is the same.
-
-    ``a != b``: Same as ``not a == b``
-
-    ``a > b``, ``a >= b``, ``a < b``, ``a <= b``: Compares both of the enchantments' levels.
-
-    **Supported operations**
-
-    ``a + b``, ``a - b``, ``a * b``, ``a ** b``, ``a / b``, ``a // b``: Executes said operation on both's levels.
-
-    ``a += b``, ``a -= b``...: Executes said operation on both's levels and sets to the new :class:`Enchantment` .
-
-    Note that, in all operations, ``a`` must be an instance of :class:`Enchantment` , while ``b`` can either be
-    another instance of the class or be an :class:`int` (or :class:`float` - the results are rounded down).
+            The level of this enchantment. (Cannot surpass **2 147 483 647**)
     """
     __slots__ = ("ench_type", "level")
     ench_type: Enchantments
@@ -145,7 +159,7 @@ class Enchantment(Settable):
             return self.level >= other
 
     def __hash__(self):
-        return hash((self.__class__.__name__, self.ench_type.value, self.level))
+        return hash((self.__class__, self.ench_type, self.level))
 
     def __add__(self, other: typing.Union["Enchantment", AnyNumber]):
         new = self.copy()
@@ -201,9 +215,6 @@ class Enchantment(Settable):
 
     def __pos__(self):
         return self.copy()
-
-
-Enchantment.__doc__ = str(Enchantment.__doc__).format(constants.MAX_ENCHANTMENT_LEVEL)
 
 
 class Tag(JSONData):

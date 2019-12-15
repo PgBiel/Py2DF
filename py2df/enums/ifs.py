@@ -28,7 +28,7 @@ class IfPlayerType(IfType, AutoSnakeToPascalCaseNameEnum):
     IS_HOLDING_MAIN = auto()  #: 
     IS_HOLDING_OFF = auto()  #: 
     IS_LOOKING_AT = auto()  #: Checks if a player is looking at a block of a certain type or at a certain location.
-    IS_NEAR = auto()  #: Checks if a player is within a certain range of a location. (default: 5 blocks)
+    IS_NEAR = auto()  #: Checks if a player is within a certain range of a location. (default is 5 blocks)
     IS_SNEAKING = auto()  #: Checks if a player is sneaking.
     IS_SPRINTING = auto()  #: Checks if a player is sprinting or using the sprint key to swim.
     IS_SWIMMING = auto()  #: Checks if a player is in water or lava.
@@ -76,7 +76,7 @@ class IfEntityType(IfType, AutoSnakeToPascalCaseNameEnum):
     EXISTS = auto()  #: Checks if an entity still exists in the world.
     IS_ITEM = auto()  #: Checks if an entity is an item.
     IS_MOB = auto()  #: Checks if an entity is a mob.
-    IS_NEAR = auto()  #: Checks if an entity is within a certain range of a location. (default: 5 blocks)
+    IS_NEAR = auto()  #: Checks if an entity is within a certain range of a location. (default is 5 blocks)
     IS_PROJ = auto()  #: Checks if an entity is a projectile.
     IS_TYPE = auto()  #: Checks if an entity is a certain type.
     IS_VEHICLE = auto()  #: Checks if an entity is a vehicle.
@@ -105,3 +105,15 @@ class IfVItemEqComparisonMode(TagType):
     IGNORE_STACK_SIZE = "Ignore stack size"
     IGNORE_DURABILITY_AND_STACK_SIZE = "Ignore durability and stack size"
     MATERIAL_ONLY = "Material only"
+
+
+@unique
+class IfVVarType(TagType):
+    NUMBER   = auto()
+    TEXT     = auto()
+    LOCATION = auto()
+    ITEM     = auto()
+    LIST     = auto()
+    POTION   = auto()
+    SOUND    = auto()
+    PARTICLE = auto()

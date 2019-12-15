@@ -10,12 +10,11 @@ import json
 import nbtlib as nbt
 from nbtlib.tag import Base
 from .. import constants
-from ..enums.misc_mc_enums import _HideFlagsSum
 from ..enums import (
-    Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect, Color, Enchantments
-)
+    Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect, Color, Enchantments,
+    IfVariableType, BlockType, IfVItemEqComparisonMode)
 from .subcollections import Lore
-from .dataclass import Enchantment
+from .dataclass import Enchantment, Tag
 from .abc import DFType, Itemable
 from ..utils import remove_u200b_from_doc, clamp, select_dict, nbt_to_python, serialize_tag
 from ..schemas import ItemSchema, ItemTagSchema, ItemDisplaySchema, ItemEnchantmentSchema
@@ -25,7 +24,8 @@ from ..constants import (
 )
 
 if typing.TYPE_CHECKING:
-    pass
+    from ..codeblocks import IfVariable
+    from ..typings import Numeric, Locatable, ItemParam
 
 
 class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for example, or Chest/EnderChest
@@ -55,7 +55,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
     unbreakable : :class:`bool`
         Whether or not this item is unbreakable. Defaults to False.
 
-    hide_flags : Optional[:class:`~py2df.enums.misc_mc_enums.HideFlags`]
+    hide_flags : Optional[Union[:class:`~py2df.enums.misc_mc_enums.HideFlags`, :class:`int`]]
         Flags to be hidden, such as unbreakability. See the enum documentation for more info.
 
     Other Parameters
@@ -90,10 +90,15 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
         .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b
 
-            Executes the given operation between the items' amounts. Note that **the resulting item
-            is a copy of the one that comes first**, with its 'amount' set to the result of the operation.
+            Executes the given operation between the items' amounts.
+
+            .. note::
+
+                The resulting item is a copy of the one that comes first**, with its 'amount' set to the result
+                of the operation.
 
             .. warning::
+
                 Raises a :exc:`ValueError` if there was an attempt to set to a stack outside of the bounds 1 <= n <= 64.
 
         .. describe:: +a, abs(a), ceil(a), floor(a)
@@ -130,7 +135,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         unbreakable : :class:`bool`
             If True, this item cannot lose durability, and remains at damage = 0.
     
-        hide_flags : :class:`~py2df.enums.misc_mc_enums.HideFlags`
+        hide_flags : Union[:class:`~py2df.enums.misc_mc_enums.HideFlags`, :class:`int`]
             Flags to be hidden. Use the :class:`~py2df.enums.misc_mc_enums.HideFlags` enum for this.
             One flag is of the form ``HideFlags.FLAG_NAME``, while, to use more than one, add them up
             (``HideFlags.FLAG_NAME + HideFlags.OTHER_FLAG_NAME + ...``). There is also
@@ -160,7 +165,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         *, name: typing.Optional[typing.Union[str, "DFText"]] = None,
         lore: typing.Union[Lore, typing.Optional[typing.Iterable[str]]] = Lore(),
         enchantments: typing.Optional[typing.Iterable[Enchantment]] = None,
-        damage: int = 0, unbreakable: bool = False, hide_flags: typing.Optional[HideFlags] = None,
+        damage: int = 0, unbreakable: bool = False, hide_flags: typing.Optional[typing.Union[HideFlags, int]] = None,
         leather_armor_color: typing.Optional[int] = None,
         entity_tag: typing.Optional[typing.Union[dict, str]] = None,
         extra_tags: typing.Optional[typing.Union[dict, str]] = None
@@ -208,7 +213,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
         self.unbreakable: bool = bool(unbreakable)
 
-        self.hide_flags: HideFlags = hide_flags
+        self.hide_flags: HideFlags = HideFlags(hide_flags)
 
         if self.material in (
             Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS
@@ -364,10 +369,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
             if hide_flags:
                 i_hide_flags = int(nbt_to_python(hide_flags))
-                try:
-                    new.hide_flags = HideFlags(i_hide_flags)
-                except ValueError:
-                    new.hide_flags = _HideFlagsSum(i_hide_flags)
+                new.hide_flags = HideFlags(i_hide_flags)
 
             if enchants:  # convert the Enchantment schemas
                 new.enchantments = [Enchantment(Enchantments(obj["id"]), obj["lvl"]) for obj in nbt_to_python(enchants)]
@@ -514,11 +516,53 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
             extra_tags=self.extra_tags
         )
 
+    def has_item_tag(self, *tags: "Textable") -> "IfVariable":
+        """Checks if this Item has the given custom item tag(s).
+
+        Parameters
+        ----------
+        tags : :attr:`~.Textable`
+            The tags to have their presence within the item (self) checked.
+
+        Returns
+        -------
+        :class:`~.IfVariable`
+            The generated IfVariable codeblock for this condition.
+
+        See Also
+        --------
+        :meth:`~.VarOperable.has_item_tag`
+
+        Examples
+        --------
+        ::
+
+            with my_item.has_item_tag(var_a, var_b):
+                # ... code to run in DF if the tags of 'my_item' include the values of var_a and var_b ...
+        """
+        from ..typings import p_check, Textable  # lazy import to avoid cyclic imports
+        from ..codeblocks import IfVariable
+        from .collections import Arguments
+
+        args = Arguments(
+            [self] + [p_check(o, Textable, f"tags[{i}]") for i, o in enumerate(tags)]
+        )
+
+        return IfVariable(
+            action=IfVariableType.ITEM_HAS_TAG,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
     def __repr__(self):
         base_str = f"<{self.__class__.__name__} minecraft:{self.material.value} x {self.amount}"
         extras = []
-        if self.name: extras.append(f"name={self.name}")
-        if self.unbreakable: extras.append(f"unbreakable=True")
+        if self.name:
+            extras.append(f"name={self.name}")
+
+        if self.unbreakable:
+            extras.append(f"unbreakable=True")
         
         if extras:
             base_str += f" | {' '.join(extras)}"
@@ -743,11 +787,141 @@ class DFText(collections.UserString, DFType):
 
         return cls(data["data"]["name"])
 
+    def text_contains(self, *texts, ignore_case: bool = False) -> "IfVariable":
+        """Checks if this DFText's text contains another Textable.
+
+        Parameters
+        ----------
+        texts : :attr:`~.Textable`
+            The text(s) to check if they are contained within `self` or not.
+
+        ignore_case : :class:`bool`, optional
+            Whether or not the containing check should ignore whether letters are uppercase or not. Defaults to
+            ``False``.
+
+        Returns
+        -------
+        :class:`~.IfVariable`
+            The generated IfVariable codeblock for this condition.
+
+        See Also
+        --------
+        :meth:`~.VarOperable.text_contains`
+
+        Examples
+        --------
+        ::
+
+            with DFText("Bruh moment").text_contains(var, ignore_case=True):
+                # ... code to execute in DF if var's text is within "Bruh moment", case insensitively ...
+
+            with DFText("Bruh 2").text_contains(var_a, var_b, var_c, ignore_case=False):
+                # ... code to execute in DF if "Bruh 2" contains one of var_a, var_b or var_c's text, case sensitive ...
+
+        """
+        from ..typings import p_check, Textable  # lazy import to avoid cyclic imports
+        from ..codeblocks import IfVariable
+        from .collections import Arguments
+
+        args = Arguments([
+            self,
+            *[p_check(text, Textable, f"texts[{i}]") for i, text in enumerate(texts)]
+        ], tags=[
+            Tag(
+                "Ignore Case", option=str(bool(ignore_case)),
+                action=IfVariableType.TEXT_MATCHES, block=BlockType.IF_VAR
+            )
+        ])
+
+        return IfVariable(
+            action=IfVariableType.CONTAINS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    contains = text_contains
+
+    def text_matches(
+        self, *texts: typing.Union["Textable", typing.Pattern],
+        ignore_case: bool = DEFAULT_VAL, regexp: bool = False
+    ) -> "IfVariable":
+        """Checks if this :attr:`~.Textable` matches another text. Note that this method is also implemented within
+        :class:`~.DFText`.
+
+        Parameters
+        ----------
+        texts : Union[:attr:`~.Textable`, :class:`re.Pattern`]
+            The text(s) to compare `self` to, or a Regular Expression pattern.
+
+        ignore_case : :class:`bool`, optional
+            Whether or not the comparison should ignore if letters are uppercase or not. Defaults to ``False``.
+
+        regexp : :class:`bool`, optional
+            Whether or not `text` represents a Regex (Regular Expression) pattern. Defaults to ``False``.
+
+            .. note::
+                If a :class:`re.Pattern` object is given, then this is automatically set to True.
+
+        Returns
+        -------
+        :class:`~.IfVariable`
+            The generated IfVariable codeblock for this condition.
+
+        See Also
+        --------
+        :meth:`~.VarOperable.text_matches`
+
+        Examples
+        --------
+        Example usage::
+
+            with DFText("Bruh").text_matches(var_a, ignore_case=True):
+                # ... code to execute in DF if "Bruh" matches var_a's text, case insensitively ...
+
+            with DFText("Test").text_matches(var_b, var_c, var_d, ignore_case=False):
+                # ... code to execute in DF if "Test" matches one of var_b's, var_c's or var_d's values, case \
+sensitively ...
+        """
+        from ..typings import p_check, Textable  # lazy import to avoid cyclic imports
+        from ..codeblocks import IfVariable
+        from .collections import Arguments
+
+        text_list: typing.List[typing.Union[str, typing.Pattern]] = list(texts)
+        for i, text in enumerate(text_list):
+            if isinstance(text, re.Pattern):
+                regexp = True
+                ignore_case = re.IGNORECASE in text.flags if ignore_case == DEFAULT_VAL else ignore_case
+                text = text.pattern
+
+            text_list[i] = p_check(text, Textable, f"texts[{i}]")
+
+        args = Arguments([
+            self,
+            *text_list
+        ], tags=[
+            Tag(
+                "Ignore Case", option=bool(ignore_case),
+                action=IfVariableType.TEXT_MATCHES, block=BlockType.IF_VAR
+            ),
+            Tag(
+                "Regular Expressions", option="Enable" if regexp else "Disable",
+                action=IfVariableType.TEXT_MATCHES, block=BlockType.IF_VAR
+            )
+        ])
+
+        return IfVariable(
+            action=IfVariableType.TEXT_MATCHES,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
     # def to_item(self) -> Item:
     #     pass  # TODO: implement this as book and stuff
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} data='{self.data}'>"
+        return f"<{self.__class__.__name__} data={repr(self.data)}>"
 
 
 AnyNumber = typing.Union[int, float]
@@ -887,6 +1061,100 @@ class DFNumber(DFType):
     # def to_item(self) -> Item:
     #     pass  # TODO: implement this as slimeball and stuff
 
+    def is_near(
+        self, center_val: "Numeric", valid_range: "Numeric"
+    ) -> "IfVariable":
+        """Checks if this number is within a certain range of another number.
+        Note that this method is also implemented within :class:`~.VarOperable` (i.e., :class:`~.DFGameValue`
+        and :class:`~.DFVariable`) and :class:`~.DFLocation`.
+
+        Parameters
+        ----------
+        center_val : :attr:`~.Numeric`
+            The value to be compared with `self`.
+
+        valid_range : :attr:`~.Numeric`
+            The accepted difference between `self` and `center_val`.
+
+        Returns
+        -------
+        :class:`~.IfVariable`
+            The generated IfVariable codeblock for this condition.
+
+        Examples
+        --------
+        ::
+
+            with DFNumber(2).is_near(var, 10):
+                # ... code to execute in DF if 2 has at most a difference of 10 units from var ...
+        """
+        from ..typings import p_check, Numeric  # lazy import to avoid cyclic imports
+        from ..codeblocks import IfVariable
+        from .collections import Arguments
+
+        args = Arguments(
+            [
+                self,
+                p_check(center_val, Numeric, "center_val"),
+                p_check(valid_range, Numeric, "valid_range")
+            ]
+        )
+
+        return IfVariable(
+            action=IfVariableType.IS_NEAR,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def in_range(
+        self, min_val: "Numeric", max_val: "Numeric"
+    ) -> "IfVariable":
+        """Checks if this number is within 2 other number vars.
+
+        Parameters
+        ----------
+        min_val : :attr:`~.Numeric`
+            The minimum value for this number.
+
+        max_val : :attr:`~.Numeric`
+            The maximum value for this number.
+
+        Returns
+        -------
+        :class:`~.IfVariable`
+            The generated IfVariable codeblock for this condition.
+
+        See Also
+        --------
+        :meth:`~.VarOperable.in_range`
+
+        Examples
+        --------
+        ::
+
+            with DFNumber(5).in_range(var_a, var_b):
+                # ... code that is only executed in DF if 5 is between var_a and var_b ...
+        """
+        from ..typings import p_check, Numeric  # lazy import to avoid cyclic imports
+        from ..codeblocks import IfVariable
+        from .collections import Arguments
+
+        args = Arguments(
+            [
+                self,
+                p_check(min_val, Numeric, "min_val"),
+                p_check(max_val, Numeric, "max_val")
+            ]
+        )
+
+        return IfVariable(
+            action=IfVariableType.IN_RANGE,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
     @staticmethod
     def _extract_val(possible_num: typing.Union[int, float, "DFNumber"]):
         if isinstance(possible_num, DFNumber):
@@ -928,7 +1196,7 @@ class DFNumber(DFType):
         return DFNumber(self.value - DFNumber._extract_val(other))
 
     def __rsub__(self, other):
-        return DFNumber((+other) - self.value)
+        return DFNumber(DFNumber._extract_val(other) - self.value)
 
     def __mul__(self, other):
         return DFNumber(self.value * DFNumber._extract_val(other))
@@ -945,17 +1213,26 @@ class DFNumber(DFType):
     def __truediv__(self, other):
         return DFNumber(self.value / DFNumber._extract_val(other))
 
+    def __rtruediv__(self, other):
+        return DFNumber(DFNumber._extract_val(other) / self.value)
+
     def __floordiv__(self, other):
         return DFNumber(self.value // DFNumber._extract_val(other))
 
-    def __pow__(self, power):
-        return DFNumber(self.value ** DFNumber._extract_val(power))
+    def __rfloordiv__(self, other):
+        return DFNumber(DFNumber._extract_val(other) / self.value)
+
+    def __pow__(self, power, modulo=None):
+        return DFNumber(pow(self.value, DFNumber._extract_val(power), modulo))
+
+    def __rpow__(self, other):
+        return DFNumber(other ** self)
 
     def __neg__(self):
         return DFNumber(-self.value)
 
     def __pos__(self):
-        return self
+        return self.copy()
 
     def __abs__(self):
         return DFNumber(abs(self.value))
@@ -974,6 +1251,27 @@ class DFNumber(DFType):
 
     def __float__(self):
         return float(self.value)
+
+    def __and__(self, other):
+        return DFNumber(self.value & DFNumber._extract_val(other))
+
+    def __rand__(self, other):
+        return DFNumber(DFNumber._extract_val(other) & self.value)
+
+    def __or__(self, other):
+        return DFNumber(self.value | DFNumber._extract_val(other))
+
+    def __ror__(self, other):
+        return DFNumber(DFNumber._extract_val(other) | self.value)
+
+    def __xor__(self, other):
+        return DFNumber(self.value ^ DFNumber._extract_val(other))
+
+    def __rxor__(self, other):
+        return DFNumber(DFNumber._extract_val(other) ^ self.value)
+
+    def __invert__(self):
+        return DFNumber(~self.value)
 
 
 class DFLocation(DFType):
@@ -1039,6 +1337,11 @@ class DFLocation(DFType):
         .. describe:: +a
 
             Returns `a` (self).
+
+        .. describe:: hash(a)
+
+            A unique hash representing this location's x, y, z, pitch and yaw.
+
 
     Attributes\u200b
     -------------
@@ -1357,6 +1660,101 @@ class DFLocation(DFType):
     # def to_item(self) -> "Item":
     #     pass  # TODO: paper thing
 
+    def is_near(
+            self, center_val: "Locatable", valid_range: "Numeric"
+    ) -> "IfVariable":
+        """Checks if this DFLocation is within a certain distance of another location var.
+        Note that this method is also implemented within :class:`~.VarOperable` (i.e., :class:`~.DFGameValue`
+        and :class:`~.DFVariable`) and :class:`DFNumber`.
+
+        Parameters
+        ----------
+        center_val : :attr:`~.Locatable`
+            The location to be compared with `self`.
+
+        valid_range : :attr:`~.Numeric`
+            The accepted distance between `self` and `center_val`.
+
+        Returns
+        -------
+        :class:`~.IfVariable`
+            The generated IfVariable codeblock for this condition.
+
+        Examples
+        --------
+        ::
+
+            with DFLocation(1, 2, 3).is_near(var, 10):
+                # ... code to execute in DF if 2 is at most at a distance of 10 blocks from var ...
+        """
+        from ..typings import p_check, Locatable, Numeric  # lazy import to avoid cyclic imports
+        from ..codeblocks import IfVariable
+        from .collections import Arguments
+
+        args = Arguments(
+            [
+                self,
+                p_check(center_val, Locatable, "center_val"),
+                p_check(valid_range, Numeric, "valid_range")
+            ]
+        )
+
+        return IfVariable(
+            action=IfVariableType.IS_NEAR,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    def in_range(
+        self, min_loc: "Locatable", max_loc: "Locatable"
+    ) -> "IfVariable":
+        """Checks if this location is within the region formed by 2 other locations (the corners).
+
+        Parameters
+        ----------
+        min_loc : :attr:`~.Locatable`
+            The first corner of the region to check.
+
+        max_loc : :attr:`~.Locatable`
+            The second corner, forming a region with min_loc; the code will execute if `self` (location) is within
+            that region.
+
+        Returns
+        -------
+        :class:`~.IfVariable`
+            The generated IfVariable codeblock for this condition.
+
+        See Also
+        --------
+        :meth:`~.VarOperable.in_range`
+
+        Examples
+        --------
+        ::
+
+            with DFLocation(1, 2, 3).in_range(var_a, var_b):
+                # ... code that is only executed in DF if the location of x,y,z = 1,2,3 is within var_a and var_b ...
+        """
+        from ..typings import p_check, Locatable  # lazy import to avoid cyclic imports
+        from ..codeblocks import IfVariable
+        from .collections import Arguments
+
+        args = Arguments(
+            [
+                self,
+                p_check(min_loc, Locatable, "min_val"),
+                p_check(max_loc, Locatable, "max_val")
+            ]
+        )
+
+        return IfVariable(
+            action=IfVariableType.IN_RANGE,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
     def __eq__(self, other: "DFLocation") -> bool:
         attrs_to_check = set(self.__class__.__slots__)  # - {"world_least", "world_most"}
         return type(self) == type(other) and all(getattr(self, attr) == getattr(other, attr) for attr in attrs_to_check)
@@ -1572,6 +1970,7 @@ class DFSound(DFType):
         .. describe:: a == b, a != b
 
             Compares every attribute of `a` and `b`.
+
     
     Attributes\u200b
     -------------
@@ -1769,18 +2168,20 @@ class DFParticle(DFType):
     ----------\u200b
     particle_type : :class:`~py2df.enums.dftypes.ParticleType`
         The enum instance that specifies which particle is this.
-    
+
+
+    .. container:: comparisons
+
+        .. describe:: a == b, a != b
+
+            Checks if two particles have the same :class:`ParticleType` enum value.
+
+
     Attributes\u200b
     -------------
     
         particle_type : :class:`~py2df.enums.dftypes.ParticleType`
             The enum instance that specifies which particle is this.
-    
-    **Supported Comparisons**
-
-        ``a == b``: Checks if two particles have the same :class:`ParticleType` enum value.
-
-        ``a != b``: Same as ``not a == b``.
 
     """
     __slots__ = ("particle_type",)
