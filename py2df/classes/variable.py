@@ -1636,9 +1636,11 @@ generated IfVariable block). Example usage::
         _SetVar(
             action=SetVarType.ADD,
             args=Arguments(
-                [_tp.p_check(o, _tp.Numeric) for o in other.vars] if isinstance(other, VarOp) else [
-                    _tp.p_check(other, _tp.Numeric)
-                ]
+                [_tp.p_check(self, _tp.Numeric)] + (
+                    [_tp.p_check(o, _tp.Numeric) for o in other.vars] if isinstance(other, VarOp) else [
+                        _tp.p_check(other, _tp.Numeric)
+                    ]
+                )
             ),
             append_to_reader=True
         )
@@ -1654,9 +1656,11 @@ generated IfVariable block). Example usage::
         _SetVar(
             action=SetVarType.SUBTRACT,
             args=Arguments(
-                [_tp.p_check(o, _tp.Numeric) for o in other.vars] if isinstance(other, VarOp) else [
-                    _tp.p_check(other, _tp.Numeric)
-                ]
+                [_tp.p_check(self, _tp.Numeric)] + (
+                    [_tp.p_check(o, _tp.Numeric) for o in other.vars] if isinstance(other, VarOp) else [
+                        _tp.p_check(other, _tp.Numeric)
+                    ]
+                )
             ),
             append_to_reader=True
         )

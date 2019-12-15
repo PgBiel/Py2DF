@@ -144,7 +144,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         self.codeblocks.appendleft(Bracket(BracketDirection.OPEN, BracketType.REPEAT))
         reader = DFReader()
 
-        if reader.curr_code_loc and self not in reader.curr_code_loc:
+        if reader.curr_code_loc is not None and self not in reader.curr_code_loc:
             reader.append_codeblock(self)
 
         reader.curr_code_loc = self

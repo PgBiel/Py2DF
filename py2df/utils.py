@@ -143,9 +143,9 @@ def flatten(
             else:  # don't flatten
                 x.append(item)
 
-    if keep_iterables and curr_depth == 0 and False:
-        print(f"bruh moment {curr_depth=} {len(list(filter(lambda t: type(t) == _DoNotFlatten, x)))}")
-        return [el.val if type(el) == _DoNotFlatten else el for el in x]
+    # if keep_iterables and curr_depth == 0 and False:
+    #     # print(f"bruh moment {curr_depth=} {len(list(filter(lambda t: type(t) == _DoNotFlatten, x)))}")
+    #     return [el.val if type(el) == _DoNotFlatten else el for el in x]
 
     return x
 

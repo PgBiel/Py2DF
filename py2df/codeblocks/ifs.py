@@ -98,7 +98,7 @@ class IfBlock(BracketedBlock, JSONData):
         self.codeblocks.appendleft(Bracket(BracketDirection.OPEN, BracketType.NORM))
         reader = DFReader()
 
-        if reader.curr_code_loc and self not in reader.curr_code_loc:
+        if reader.curr_code_loc is not None and self not in reader.curr_code_loc:
             reader.append_codeblock(self)
 
         reader.curr_code_loc = self
@@ -133,7 +133,7 @@ class IfBlock(BracketedBlock, JSONData):
             **(dict(inverted="NOT") if self.invert else dict())
         )
 
-    @abstractmethod
+    @abstractmethod  # abstract because of custom inits. This has to call init.
     def __neg__(self):
         raise NotImplementedError
 
