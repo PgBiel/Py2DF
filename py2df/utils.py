@@ -1,3 +1,4 @@
+import json
 import typing
 import collections
 import nbtlib as nbt
@@ -452,3 +453,26 @@ def identity(obj: _TT) -> _TT:
         The given object.
     """
     return obj
+
+
+def dumps_json(obj, *args, **kwargs) -> str:
+    """Dumps an object into JSON format, using predefined parameters.
+
+    Parameters
+    ----------
+    obj : Any
+        Object to turn into JSON.
+
+    args : Any
+        Arguments to pass to :meth:`json.dumps`.
+
+    kwargs : Any
+        Keyword args to pass to :meth:`json.dumps`.
+
+    Returns
+    -------
+    :class:`str`
+        Dumped json.
+    """
+    ensure_ascii = kwargs.pop("ensure_ascii", False)
+    return json.dumps(obj, *args, ensure_ascii=ensure_ascii, **kwargs)

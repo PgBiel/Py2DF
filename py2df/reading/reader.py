@@ -10,10 +10,10 @@ import nbtlib as nbt
 from collections import deque
 from .. import constants
 from ..schemas import ItemSchema, ItemTagSchema
-from ..utils import remove_u200b_from_doc, flatten, serialize_tag
+from ..utils import remove_u200b_from_doc, flatten, serialize_tag, dumps_json
 from ..enums import PlotSizes, IfEntityType, Color
 from ..constants import DEFAULT_VAL, DEFAULT_AUTHOR, SNBT_EXPORT_VERSION
-from ..classes import Codeblock, FunctionHolder, JSONData, Arguments, Material, BracketedBlock
+from ..classes import Codeblock, FunctionHolder, JSONData, Arguments, Material, BracketedBlock, Block
 
 
 class DFReader:
@@ -435,7 +435,7 @@ class DFReader:
         --------
         :meth:`DFReader.output_json_data`
         """
-        return [json.dumps(obj, ensure_ascii=False) for obj in self.output_json_data(read)]
+        return [dumps_json(obj) for obj in self.output_json_data(read)]
 
     def output_encoded(self, read: bool = True) -> typing.List[bytes]:
         """
@@ -516,15 +516,17 @@ class DFReader:
         --------
         :meth:`DFReader.output_encoded_str`
         """
+        encoded_strs = self.output_encoded_str(read)
         lines = self.lines
 
-        @functools.lru_cache(maxsize=128)
-        def get_line_name(i: int) -> str:
-            first_codeblock = lines[i][0]
+        def get_line_name(line: typing.Deque[Block]) -> str:
+            first_codeblock = line[0]
             if isinstance(first_codeblock, Codeblock):
                 return "No name"  # TODO: Name
             else:
                 return Color.GOLD + Color.BOLD + "Code line"
+
+        line_names = list(map(get_line_name, lines))
 
         return [
             serialize_tag(
@@ -533,19 +535,19 @@ class DFReader:
                     Count=1,
                     tag=ItemTagSchema(
                         PublicBukkitValues=nbt.Compound({
-                            "hypercube:codetemplatedata": nbt.String(json.dumps(dict(
+                            "hypercube:codetemplatedata": nbt.String(dumps_json(dict(
                                 author=str(self.author or DEFAULT_AUTHOR),
-                                name=get_line_name(i),
+                                name=line_names[i],
                                 version=SNBT_EXPORT_VERSION,
                                 code=encoded
                             )))
                         }),
                         display=dict(
-                            Name=json.dumps(get_line_name(i))
+                            Name=dumps_json(line_names[i])
                         )
                     )
                 )
-            ) for i, encoded in enumerate(self.output_encoded_str(read))
+            ) for i, encoded in enumerate(encoded_strs)
         ]
 
 

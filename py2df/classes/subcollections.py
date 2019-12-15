@@ -5,7 +5,7 @@ import typing
 import collections
 from .. import errors
 from ..constants import MAX_LORE_LINES  # 100
-from ..utils import remove_u200b_from_doc
+from ..utils import remove_u200b_from_doc, dumps_json
 
 
 class Lore(collections.UserList):  # [typing.Optional[str]]
@@ -117,7 +117,7 @@ class Lore(collections.UserList):  # [typing.Optional[str]]
         List[str]
             List of lines as strings (any None become "")
         """
-        return list(map(lambda t: str(t) if t else "", self.data))
+        return list(map(lambda t: dumps_json(str(t) if t else ""), self.data))
 
     def __setitem__(self, key: typing.Union[int, slice], value: typing.Optional[str]):
         if type(key) == int:

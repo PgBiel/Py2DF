@@ -268,7 +268,6 @@ class ItemCollection(collections.UserList):  # [DFType]
         super().insert(i, other)
         super().__delitem__(-1)
 
-
     def clear(self) -> None:
         """Replaces the entire item collection with empty slots."""
         old_len = len(self.data)

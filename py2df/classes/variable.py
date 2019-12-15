@@ -1281,7 +1281,7 @@ target={repr(str(self.target) if self.target else self.target)}>"
             id=constants.ITEM_ID_GAME_VALUE,
             data=dict(
                 type=self.gval_type.value,
-                target=self.target.value if self.target else None
+                target=self.target.value if self.target else "none"
             )
         )
 
