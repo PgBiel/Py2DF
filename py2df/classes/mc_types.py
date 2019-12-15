@@ -213,7 +213,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
         self.unbreakable: bool = bool(unbreakable)
 
-        self.hide_flags: HideFlags = HideFlags(hide_flags)
+        self.hide_flags: HideFlags = HideFlags(hide_flags) if hide_flags else None
 
         if self.material in (
             Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS
@@ -223,7 +223,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         else:
             self.leather_armor_color: typing.Optional[int] = None
 
-        if "SPAWN_EGG" in self.material.value.upper() or self.material in (
+        if entity_tag and "SPAWN_EGG" in self.material.value.upper() or self.material in (
             Material.ARMOR_STAND, Material.TROPICAL_FISH_BUCKET
         ):
             if isinstance(entity_tag, (str, collections.UserString)):
@@ -239,7 +239,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
             self.extra_tags: typing.Optional[nbt.Compound] = nbt.Compound(extra_tags)
         else:
-            self.extra_tags = extra_tags
+            self.extra_tags = None
 
     @property
     def amount(self) -> int:
@@ -281,7 +281,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         if any([self.leather_armor_color is not None, self.name, self.lore]):
             display = ItemDisplaySchema()
             if self.name:
-                display["Name"] = json.dumps(dict(text=str(self.name)))
+                display["Name"] = json.dumps(dict(text=str(self.name)), ensure_ascii=False)
 
             if self.lore:
                 display["Lore"] = self.lore.as_json_data()
@@ -2360,8 +2360,8 @@ class DFCustomSpawnEgg(DFType, Itemable):
 
     def to_item(self) -> Item:
         return Item(
-            self.egg_type[0],
-            name=Color.YELLOW + self.egg_type[1]
+            self.egg_type.value[0],
+            name=Color.YELLOW + self.egg_type.value[1]
         )
 
     def __repr__(self) -> str:
