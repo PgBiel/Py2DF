@@ -224,7 +224,7 @@ class DFReader:
         """
         loc = self.curr_code_loc
 
-        if loc:
+        if loc is not None:
             if isinstance(loc, BracketedBlock):
                 loc.codeblocks.remove(codeblock)
             else:
@@ -259,7 +259,7 @@ class DFReader:
             a deque being the main line.
         """
         curr = self._curr_loc
-        if curr:
+        if curr is not None:
             return curr
         else:
             return self.curr_line
@@ -331,14 +331,15 @@ class DFReader:
         self._curr_line = -1  # first index will, then, be 0
         for fn_holder in self._functions:
             self._curr_line += 1
-            if len(self.lines) <= self._curr_line:  # if there is no corresponding deque
-                self.lines.append(deque())
+            line = deque()
+            if len(self.lines) <= self._curr_line:  # if there is no corresponding deque for this function holder
+                self.lines.append(line)
             else:
-                self.lines[self._curr_line] = deque()  # clear
+                self.lines[self._curr_line] = line  # clear
 
             fn_holder.function()
             if isinstance(fn_holder, Codeblock):  # event/function/process
-                self.lines[self._curr_line].appendleft(fn_holder)
+                line.appendleft(fn_holder)
 
     def output_json_data(self, read: bool = True) -> typing.List[dict]:
         """

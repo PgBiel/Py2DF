@@ -412,5 +412,9 @@ class Bracket(Block, JSONData):
             type=self.bracket_type.value
         )
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__} direction={repr(self.direction.value)} \
+bracket_type={repr(self.bracket_type.value)}"
+
 
 remove_u200b_from_doc(Enchantment, Tag, Bracket)

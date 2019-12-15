@@ -160,6 +160,7 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
             ``None``
         """
         self.codeblocks.append(Bracket(BracketDirection.CLOSE, BracketType.REPEAT))
+        DFReader().close_code_loc()
 
     def as_json_data(self) -> dict:
         """

@@ -114,6 +114,7 @@ class IfBlock(BracketedBlock, JSONData):
             ``None``
         """
         self.codeblocks.append(Bracket(BracketDirection.CLOSE, BracketType.NORM))
+        DFReader().close_code_loc()
 
     def as_json_data(self) -> dict:
         """

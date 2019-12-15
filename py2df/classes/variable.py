@@ -332,13 +332,18 @@ class VarOperable(metaclass=abc.ABCMeta):
 
             Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
 
-            1. **Is used to compare the variables with an If Var.** Example usage::
+            1. **Is used to compare the variables with an If Var.** Note that equaling to an iterable means checking \
+if the variable is equal to at least one of its elements. Example usage::
 
                 with var_a == var_b:
                     # code that is only executed in DiamondFire if 'var_a' and 'var_b' are equal in value.
 
                 with var_c != var_d:
                     # code that is only executed in DiamondFire if 'var_c' and 'var_d' are different in value.
+
+                with var_e == (var_f, var_g, var_i):
+                    # code that is only executed in DiamondFire if 'var_e' is equal to one of 'var_f', 'var_g' or \
+'var_i'.
 
             2. **Is used to compare, IN PYTHON, the variables' attributes** (by calling :func:`bool` on the \
             generated IfVariable block). Note that :class:`DFGameValue` and :class:`DFVariable` implement this \
@@ -832,26 +837,38 @@ Stone ...
 
     # region:var_comparison
 
-    def __eq__(self, other: "Param") -> "IfVariable":
-        if not _tp.p_bool_check(other, _tp.Param):
+    def __eq__(self, other: typing.Union["Param", typing.Iterable["Param"]]) -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Param) and not isinstance(other, typing.Iterable):
             return NotImplemented
+
+        args: Arguments
+        if _tp.p_bool_check(other, _tp.Param):
+            args = Arguments([self, _tp.p_check(other, _tp.Param, "other")])
+        else:
+            args = Arguments([self, *[_tp.p_check(obj, _tp.Param, f"other[{i}]") for i, obj in enumerate(other)]])
 
         gen_if = _IfVariable(  # allow "with var_a == var_b:"
             action=IfVariableType.EQUALS,
-            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
+            args=args,
             append_to_reader=False
         )
         gen_if._called_by_var = True  # allow "if var_a == var_b"
 
         return gen_if
 
-    def __ne__(self, other: "Param") -> "IfVariable":
-        if not _tp.p_bool_check(other, _tp.Param):
+    def __ne__(self, other: typing.Union["Param", typing.Iterable["Param"]]) -> "IfVariable":
+        if not _tp.p_bool_check(other, _tp.Param) and not isinstance(other, typing.Iterable):
             return NotImplemented
+
+        args: Arguments
+        if _tp.p_bool_check(other, _tp.Param):
+            args = Arguments([self, _tp.p_check(other, _tp.Param, "other")])
+        else:
+            args = Arguments([self, *[_tp.p_check(obj, _tp.Param, f"other[{i}]") for i, obj in enumerate(other)]])
 
         gen_if = _IfVariable(  # allow "with var_a != var_b:"
             action=IfVariableType.NOT_EQUALS,
-            args=Arguments([self, _tp.p_check(other, _tp.Param, "other")]),
+            args=args,
             append_to_reader=False
         )
         gen_if._called_by_var = True  # allow "if var_a != var_b"
@@ -1102,13 +1119,18 @@ class DFGameValue(DFType, VarOperable):
 
             Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
 
-            1. **Is used to compare the variables with an If Var.** Example usage::
+            1. **Is used to compare the variables with an If Var.** Note that equaling to an iterable means checking \
+if the value is equal to at least one of its elements. Example usage::
 
                 with val_a == val_b:
                     # code that is only executed in DiamondFire if 'val_a' and 'val_b' are equal in value.
 
                 with val_c != val_d:
                     # code that is only executed in DiamondFire if 'val_c' and 'val_d' are different in value.
+
+                with val_e == (val_f, val_g, val_i):
+                    # code that is only executed in DiamondFire if 'val_e' is equal to one of 'val_f', 'val_g' or \
+'val_i'.
 
             2. **Is used to compare, IN PYTHON, the values'** :attr:`gval_type` **and** :attr:`target` attrs \
 (by calling :func:`bool` on the generated IfVariable block). Example usage::
@@ -1356,13 +1378,18 @@ class DFVariable(DFType, VarOperable):
 
             Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
 
-            1. **Is used to compare the variables with an If Var.** Example usage::
+            1. **Is used to compare the variables with an If Var.** Note that equaling to an iterable means checking \
+if the variable is equal to at least one of its elements. Example usage::
 
                 with var_a == var_b:
                     # code that is only executed in DiamondFire if 'var_a' and 'var_b' are equal in value.
 
                 with var_c != var_d:
                     # code that is only executed in DiamondFire if 'var_c' and 'var_d' are different in value.
+
+                with var_e == (var_f, var_g, var_i):
+                    # code that is only executed in DiamondFire if 'var_e' is equal to one of 'var_f', 'var_g' or \
+'var_i'.
 
             2. **Is used to compare, IN PYTHON, the variables' names and scopes** (by calling :func:`bool` on the \
 generated IfVariable block). Example usage::
@@ -1595,7 +1622,7 @@ generated IfVariable block). Example usage::
         return cls(data["data"]["name"], scope=VariableScope(data["data"]["scope"]))
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} name={json.dumps(self.name)} scope=\"{self.scope.value}\">"
+        return f"<{self.__class__.__name__} name={repr(self.name)} scope={repr(self.scope.value)}>"
 
     def __str__(self):
         return f"%var({self.name})"

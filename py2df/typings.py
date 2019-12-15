@@ -63,7 +63,7 @@ GVAL_TYPES = {
     ItemParam: GVAL_ITEM,
     Item: GVAL_ITEM,
 
-    # a few Unions
+    # a few common Unions
     typing.Union[Numeric, Locatable]: GVAL_NUMERIC + GVAL_LOCATABLE
 }
 
@@ -200,26 +200,30 @@ def p_check(obj: _P, typeof: typing.Type[_P], arg_name: typing.Optional[str] = N
         [getattr(type_, "__args__", type_) for type_ in getattr(p_typeof, "__args__", [p_typeof])]
     )  # ^this allows Union[] to be specified as well, such that Union[Numeric, Locatable] works, for example.
 
-    valid_names = ("Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam")
-    corresponding_values = (Param, Numeric, Textable, Locatable, Potionable, ItemParam)
+    valid_names = (
+        "Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam", "Union[Numeric, Locatable]"
+    )
+    corresponding_values = (
+        Param, Numeric, Textable, Locatable, Potionable, ItemParam, typing.Union[Numeric, Locatable]
+    )
     if not isinstance(obj, tuple(valid_types)):
 
         try:
             corresp_class_ind = corresponding_values.index(typeof)
             name = valid_names[corresp_class_ind]
-            msg = f"Object must be a valid {name} parameter."
+            msg = f"Object must be a valid {repr(name)} parameter."
 
         except (IndexError, ValueError):
             msg = f"Object must correspond to the appropriate parameter type."
 
-        raise TypeError(msg + (f" (Arg '{arg_name}')" if arg_name else ""))
+        raise TypeError(msg + (f" (Arg {repr(arg_name)})" if arg_name else ""))
 
     if GVAL_TYPES.get(typeof) and isinstance(obj, DFGameValue) and obj not in GVAL_TYPES[typeof]:
         try:
             corresp_class_ind = corresponding_values.index(typeof)
             name = valid_names[corresp_class_ind]
-            msg = f"The DFGameValue type specified does not evaluate to a valid {name} parameter. (Check documentation \
-to see valid 'GameValueType' attrs for this parameter type.)"
+            msg = f"The DFGameValue type specified does not evaluate to a valid {repr(name)} parameter. (Check \
+documentation to see valid 'GameValueType' attrs for this parameter type.)"
 
         except (IndexError, ValueError):
             msg = f"The DFGameValue type specified does not evaluate to a valid parameter of the required type. \
@@ -282,11 +286,15 @@ def p_bool_check(obj: _P, typeof: typing.Type[_P], gameval_check: bool = True, e
     if gameval_check and GVAL_TYPES.get(typeof) and isinstance(obj, DFGameValue) and obj not in GVAL_TYPES[typeof]:
         if error_on_gameval:
             try:
-                valid_names = ("Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam")
-                corresponding_values = (Param, Numeric, Textable, Locatable, Potionable, ItemParam)
+                valid_names = (
+                    "Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam", "Union[Numeric, Locatable]"
+                )
+                corresponding_values = (
+                    Param, Numeric, Textable, Locatable, Potionable, ItemParam, typing.Union[Numeric, Locatable]
+                )
                 corresp_class_ind = corresponding_values.index(typeof)
                 name = valid_names[corresp_class_ind]
-                msg = f"The DFGameValue type specified does not evaluate to a valid {name} parameter. (Check \
+                msg = f"The DFGameValue type specified does not evaluate to a valid {repr(name)} parameter. (Check \
 documentation to see valid 'GameValueType' attrs for this parameter type.)"
 
             except (IndexError, ValueError):
