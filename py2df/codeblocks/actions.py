@@ -5,9 +5,9 @@ from ..enums import (
     PlayerTarget, EntityTarget, BlockType, PlayerActionType, EntityActionType, GameActionType, ControlType,
     SelectionTarget,
     Material)
-from ..classes import JSONData, Arguments, ActionBlock, Tag, DFNumber, DFVariable, DFText
-from ..utils import remove_u200b_from_doc
-from ..typings import p_check, Numeric, Locatable, Textable, ParticleParam
+from ..classes import JSONData, Arguments, ActionBlock, Tag, DFNumber, DFVariable, DFText, Item, ItemCollection
+from ..utils import remove_u200b_from_doc, flatten
+from ..typings import p_check, Numeric, Locatable, Textable, ParticleParam, ItemParam
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
 
@@ -343,7 +343,7 @@ class GameAction(ActionBlock, JSONData):
         )
 
     @classmethod  # TODO: Tag default values
-    def bone_meal(cls, *locs: Locatable, amount: Numeric, show_particles: bool = False) -> "GameAction":
+    def bone_meal(cls, *locs: Locatable, amount: Numeric, show_particles: bool = True) -> "GameAction":
         """Applies bone meal to a block.
 
         Parameters
@@ -355,7 +355,7 @@ class GameAction(ActionBlock, JSONData):
             The amount of bone meals to apply at once to the blocks.
 
         show_particles : :class:`bool`, optional
-            Whether or not Bone Meal particles should be shown when applied. Defaults to ``False``
+            Whether or not Bone Meal particles should be shown when applied. Defaults to ``True``
 
         Returns
         -------
@@ -587,6 +587,9 @@ second cooldown."
             GameAction.create_animated_particle_circle(particle, center, 5, 40)  # diameter: 5 blocks; duration: 2 s \
 (40 ticks)
         """
+        if duration is not None and diameter is None:
+            diameter = 2  # default: 2 blocks
+
         return GameAction(
             action=GameActionType.CREATE_ANIMATED_PARTICLE_CIRCLE,
             args=Arguments([
@@ -687,6 +690,13 @@ second cooldown."
             GameAction.create_animated_particle_circle(particle, base, 15, 3, 40)
             # length: 15 blocks; diameter: 3 blocks; duration: 2 s (40 ticks)
         """
+        if diameter is not None and length is None:
+            length = 10  # default: 10 blocks
+
+        if duration is not None:
+            length = length if length is not None else 10       # default: 10 blocks
+            diameter = diameter if diameter is not None else 2  # default: 2 blocks
+
         return GameAction(
             action=GameActionType.CREATE_ANIMATED_PARTICLE_SPIRAL,
             args=Arguments([
@@ -725,7 +735,10 @@ second cooldown."
         """
         return GameAction(
             action=GameActionType.CREATE_HOLOGRAM,
-            args=Arguments(),
+            args=Arguments([
+                p_check(loc, Locatable, "loc"),
+                p_check(text, Textable, "text"),
+            ]),
             append_to_reader=True
         )
 
@@ -790,17 +803,41 @@ second cooldown."
         )
 
     @classmethod
-    def create_particle_line(cls) -> "GameAction":
+    def create_particle_line(cls, particle: ParticleParam, loc_1: Locatable, loc_2: Locatable) -> "GameAction":
         """Creates a line of particles between two locations.
+
+        Parameters
+        ----------
+        particle : :attr:`~.ParticleParam`
+            The particle to spawn.
+
+        loc_1 : :attr:`~.Locatable`
+            The first location (first point of the particle line).
+
+        loc_2 : :attr:`~.Locatable`
+            The second location (second point of the particle line).
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            particle = DFParticle(ParticleType.CLOUD)
+            loc_1 = DFLocation(1, 2, 3)
+            loc_2 = DFLocation(4, 2, 3)  # 4-block-long line
+            GameAction.create_animated_particle_line(particle, loc_1, loc_2)
         """
         return GameAction(
             action=GameActionType.CREATE_PARTICLE_LINE,
-            args=Arguments(),
+            args=Arguments([
+                p_check(particle, ParticleParam, "particle"),
+                p_check(loc_1, Locatable, "loc_1"),
+                p_check(loc_2, Locatable, "loc_2")
+            ]),
             append_to_reader=True
         )
 
@@ -866,7 +903,10 @@ second cooldown."
 
     @classmethod
     def drop_block(
-        cls, loc: Locatable, block_type: typing.Optional[Material] = None,
+        cls, loc: Locatable,
+        block_type: typing.Optional[typing.Union[
+            Material, ItemParam, Textable
+        ]] = None,
         metadata: typing.Optional[typing.Union[
             typing.Dict[str, typing.Optional[typing.Union[str, int, bool, DFVariable]]],
             typing.Iterable[Textable]
@@ -880,8 +920,13 @@ second cooldown."
         loc : :attr:`~.Locatable`
             The location where to drop a block.
 
-        block_type : Optional[:class:`~.Material`]
-            The type of block to drop. Defaults to ``None``.
+        block_type : Optional[Union[:class:`~.Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]]
+            The type of block to drop, or ``None`` (see the Note below). Defaults to ``None``.
+
+            The type can be specified either as:
+            - an instance of :class:`~.Material` (the material of the block to drop);
+            - an item (:attr:`~.ItemParam` - the item representing the block to drop);
+            - text (:attr:`~.Textable` - the material of the block to drop as text).
 
             .. note::
 
@@ -916,6 +961,10 @@ whose values DF expects to be formatted in one of the following ways:
                 - ``"tag:value"``
                 - ``"tag,value"``
 
+            .. warning::
+
+                For this to be specified, `block_type` also has to be, otherwise a ValueError is raised.
+
         reform_on_impact : :class:`bool`, optional
             Whether or not the block should be placed when it hits the ground. Defaults to ``True``.
 
@@ -931,6 +980,9 @@ whose values DF expects to be formatted in one of the following ways:
         ------
         :exc:`TypeError`
             If `metadata` is not a dict, an Iterable or None.
+
+        :exc:`ValueError`
+            If `metadata` was specified, but `block_type` wasn't.
 
         Warnings
         --------
@@ -950,13 +1002,20 @@ whose values DF expects to be formatted in one of the following ways:
             # Drops a falling Birch Stairs block, facing east, while not hurting any hit entities, and placing when it \
 lands.
         """
-        block_type = Material(block_type).value if block_type is not None else None
+        if isinstance(block_type, (Material, str, DFText)):  # check for material validity
+            block_type = Material(str(block_type) if isinstance(block_type, DFText) else block_type).value
+
+        if metadata is not None and block_type is None:
+            raise ValueError("'block_type' has to be specified in order to specify 'metadata'.")
+
         true_metadata: typing.List[Textable] = []
         if isinstance(metadata, dict):
             for k, v in metadata.items():
                 val_str: str
                 if isinstance(v, bool):
                     val_str = "true" if v else "false"
+                elif v is None:
+                    val_str = "none"
                 else:
                     val_str = str(v)
 
@@ -977,8 +1036,10 @@ lands.
             args=Arguments(
                 [
                     p_check(loc, Locatable, "loc"),
-                    p_check(block_type, Textable, "block_type"),
-                    *([p_check(text, Textable, f"metadata[{i}]") for i, text in true_metadata])
+                    p_check(
+                        block_type, typing.Union[Textable, ItemParam], "block_type"
+                    ) if block_type is not None else None,
+                    *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
                 ], tags=[
                     Tag(
                         "Reform on Impact", option=bool(reform_on_impact),
@@ -994,55 +1055,129 @@ lands.
         )
 
     spawn_falling_block = drop_block  # alias
+    """Alias of :meth:`drop_block`"""
 
     @classmethod
-    def empty_container(cls) -> "GameAction":
+    def empty_container(cls, loc: Locatable) -> "GameAction":
         """Empties a container.
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            The location of the container to turn empty.
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # loc of the container
+            GameAction.empty_container(loc)  # empties it
         """
         return GameAction(
             action=GameActionType.EMPTY_CONTAINER,
-            args=Arguments(),
+            args=Arguments([p_check(loc, Locatable, "loc")]),
             append_to_reader=True
         )
 
     @classmethod
-    def explosion(cls) -> "GameAction":
+    def explosion(cls, loc: Locatable, power: typing.Optional[Numeric] = None) -> "GameAction":
         """Creates an explosion at a certain location.
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            The location of the explosion.
+
+        power : Optional[:attr:`~.Numeric`], optional
+            The power of the explosion (0-4), or ``None`` for the default value (4).
+
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Raises
+        ------
+        :exc:`ValueError`
+            If the power was given as a literal and is not between 0 and 4.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # where to spawn the explosion
+            GameAction.explosion(loc, 4)  # power 4
+            GameAction.explosion(loc, DFVariable("%default some power"))  # variable power
         """
+        if isinstance(power, (int, float, DFNumber)) and not 0 <= float(power) <= 4:
+            raise ValueError("'power' argument must be between 0 and 4.")
+
         return GameAction(
             action=GameActionType.EXPLOSION,
-            args=Arguments(),
+            args=Arguments([
+                p_check(loc, Locatable, "loc"),
+                p_check(power, Numeric, "power")
+            ]),
             append_to_reader=True
         )
 
     @classmethod
-    def fill_container(cls) -> "GameAction":
+    def fill_container(
+        cls, loc: Locatable, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+    ) -> "GameAction":
         """Fills a container with items.
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Location of the container to be filled.
+
+        items: Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]]
+            The items can be specified either as:
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # loc of the container
+            item_1 = Item(Material.STONE, name="some item")
+            item_2 = Item(Material.STONE, name="some other item")
+            some_items = ItemCollection([Item(Material.GRASS_BLOCK), Item(Material.GRANITE_SLAB)])  # more items
+            GameAction.fill_container(loc, item_1, item_2, some_items)  # fill the container at 'loc' with those 4 items
         """
+        item_list = flatten(*items, except_iterables=[str], max_depth=1)
         return GameAction(
             action=GameActionType.FILL_CONTAINER,
-            args=Arguments(),
+            args=Arguments([loc, *item_list]),
             append_to_reader=True
         )
 
     @classmethod
-    def firework(cls) -> "GameAction":
+    def firework(cls, firework: ItemParam, loc: Locatable, name: typing.Optional[Textable] = None) -> "GameAction":
         """Launches a firework at a certain location.
+
+        Parameters
+        ----------
+        firework : :attr:`~.ItemParam`
+            The :class:`~.Item` (or a variable/game value of item) representing the firework to be launched.
+
+        loc : :attr:`~.Locatable`
+            The location where to spawn the firework.
+
+        name : Optional[:attr:`~.Textable`], optional
+            The name of the firework, or ``None`` for none. Defaults to ``None``
 
         Returns
         -------
@@ -1051,18 +1186,40 @@ lands.
         """
         return GameAction(
             action=GameActionType.FIREWORK,
-            args=Arguments(),
+            args=Arguments([
+                p_check(firework, ItemParam, "firework"),
+                p_check(loc, Locatable, "loc"),
+                p_check(name, Textable, "name") if name is not None else None
+            ]),
             append_to_reader=True
         )
 
     @classmethod
-    def firework_effect(cls) -> "GameAction":
+    def firework_effect(cls, firework: ItemParam, loc: Locatable) -> "GameAction":
         """Creates a firework explosion at a certain location.
+
+        Parameters
+        ----------
+        firework : :attr:`~.ItemParam`
+            The :class:`~.Item` (or a variable/game value of item) representing the firework (effect) to be launched.
+
+        loc : :attr:`~.Locatable`
+            The location where to spawn the firework.
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            firework = Item(Material.FIREWORK_ROCKET, extra_tags=...)  # ... would be the firework NBT tags
+            # OR
+            firework = DFVariable("my_firework")  # variable representing the firework item
+            loc = DFLocation(1, 2, 3)
+            GameAction.firework_effect(firework, loc)
         """
         return GameAction(
             action=GameActionType.FIREWORK_EFFECT,
@@ -1070,14 +1227,23 @@ lands.
             append_to_reader=True
         )
 
+    firework_explosion = firework_effect  # alias
+    """Alias of :meth:`firework_effect`"""
+
     @classmethod
-    def hide_sidebar(cls) -> "GameAction":
+    def hide_scoreboard(cls) -> "GameAction":
         """Disables the scoreboard sidebar on the plot.
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            GameAction.hide_scoreboard()
         """
         return GameAction(
             action=GameActionType.HIDE_SIDEBAR,
@@ -1086,8 +1252,22 @@ lands.
         )
 
     @classmethod
-    def launch_proj(cls) -> "GameAction":
+    def launch_projectile(
+        cls, projectile: typing.Union[Material, ItemParam, Textable], loc: Locatable,
+        *, name: typing.Optional[Textable] = None, speed: typing.Optional[Numeric] = None,
+        inaccuracy: typing.Optional[Numeric] = None,
+    ) -> "GameAction":
         """Launches a projectile.
+
+        Parameters
+        ----------
+        projectile : Union[:class:`~.Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]
+            The type of projectile to launch.
+
+            The type can be specified either as:
+            - an instance of :class:`~.Material` (the material of the projectile to launch);
+            - an item (:attr:`~.ItemParam` - the item representing the projectile to launch);
+            - text (:attr:`~.Textable` - the material of the projectile to launch as text).
 
         Returns
         -------
