@@ -459,7 +459,7 @@ class BracketedBlock(Codeblock, metaclass=abc.ABCMeta):
     sub_action: typing.Optional[IfType]
     length: int = 1
     data: None = None
-    codeblocks: typing.Deque[Block]  # TODO: Document all of this
+    codeblocks: typing.Deque[Block]
     target: typing.Optional[Target]
     __slots__ = ()
 

@@ -52,10 +52,11 @@ class HideFlags(IntFlag):
 
 
     Attributes
-    ----------\u200b
+    ------------\u200b
     value : :class:`int`
         The unique integer representing the hidden flags of this instance. This is the value used
         when executing integer operations (such as ``a + b`` or ``a - b``).
+
     """
     ENCHANTMENTS = 1
     ATTRIBUTE_MODIFIERS = 2
@@ -95,43 +96,44 @@ ALL_HIDE_FLAGS = HideFlags(sum(list(HideFlags)))
 @unique
 class Enchantments(AutoLowerNameEnum):
     """Enchantment types in Minecraft 1.14.4."""
-    AQUA_AFFINITY         = auto()
-    BANE_OF_ARTHROPODS    = auto()
-    BINDING_CURSE         = auto()
-    BLAST_PROTECTION      = auto()
-    CHANNELING            = auto()
-    DEPTH_STRIDER         = auto()
-    EFFICIENCY            = auto()
-    FEATHER_FALLING       = auto()
-    FIRE_ASPECT           = auto()
-    FIRE_PROTECTION       = auto()
-    FLAME                 = auto()
-    FORTUNE               = auto()
-    FROST_WALKER          = auto()
-    IMPALING              = auto()
-    INFINITY              = auto()
-    KNOCKBACK             = auto()
-    LOOTING               = auto()
-    LOYALTY               = auto()
-    LUCK_OF_THE_SEA       = auto()
-    LURE                  = auto()
-    MENDING               = auto()
-    MULTISHOT             = auto()
-    PIERCING              = auto()
-    POWER                 = auto()
-    PROJECTILE_PROTECTION = auto()
-    PROTECTION            = auto()
-    PUNCH                 = auto()
-    QUICK_CHARGE          = auto()
-    RESPIRATION           = auto()
-    RIPTIDE               = auto()
-    SHARPNESS             = auto()
-    SILK_TOUCH            = auto()
-    SMITE                 = auto()
-    SWEEPING              = auto()
-    THORNS                = auto()
-    UNBREAKING            = auto()
-    VANISHING_CURSE       = auto()
+    AQUA_AFFINITY         = auto()  #: Speeds up how fast you can mine blocks underwater.
+    BANE_OF_ARTHROPODS    = auto()  #: Increases attack damage against arthropods.
+    BINDING_CURSE         = auto()  #: Cursed item can not be removed from player.
+    BLAST_PROTECTION      = auto()  #: Reduces blast and explosion damage.
+    CHANNELING            = auto(
+    )  #: Summons a lightning bolt at a targeted mob when enchanted item is thrown (target mob must stand in rain).
+    DEPTH_STRIDER         = auto()  #: Speeds up how fast you can move underwater.
+    EFFICIENCY            = auto()  #: Increases how fast you can mine.
+    FEATHER_FALLING       = auto()  #: Reduces fall and teleportation damage.
+    FIRE_ASPECT           = auto()  #: Sets target on fire.
+    FIRE_PROTECTION       = auto()  #: Reduces damage caused by fire and lava.
+    FLAME                 = auto()  #: Turns arrows into flaming arrows.
+    FORTUNE               = auto()  #: Increases block drops from mining.
+    FROST_WALKER          = auto()  #: Freezes water into ice so that you can walk on it.
+    IMPALING              = auto()  #: Increases attack damage against sea creatures.
+    INFINITY              = auto()  #: Shoots an infinite amount of arrows.
+    KNOCKBACK             = auto()  #: Increases knockback dealt (enemies repel backwards).
+    LOOTING               = auto()  #: Increases amount of loot dropped when mob is killed.
+    LOYALTY               = auto()  #: Returns your weapon when it is thrown like a spear.
+    LUCK_OF_THE_SEA       = auto()  #: Increases chances of catching valuable items.
+    LURE                  = auto()  #: Increases the rate of fish biting your hook.
+    MENDING               = auto()  #: Uses xp to mend your tools, weapons and armor.
+    MULTISHOT             = auto()  #: Shoots 3 arrows at once but only costs 1 arrow (from your inventory).
+    PIERCING              = auto()  #: Arrow can pierce through multiple entities.
+    POWER                 = auto()  #: Increases damage dealt by bow.
+    PROJECTILE_PROTECTION = auto()  #: Reduces projectile damage (arrows, fireballs, fire charges).
+    PROTECTION            = auto()  #: General protection against attacks, fire, lava, and falling.
+    PUNCH                 = auto()  #: Increases knockback dealt (enemies repel backwards).
+    QUICK_CHARGE          = auto()  #: Reduces the amount of time to reload a crossbow.
+    RESPIRATION           = auto()  #: Extends underwater breathing (see better underwater).
+    RIPTIDE               = auto()  #: Propels the player forward when enchanted item is thrown while in water or rain.
+    SHARPNESS             = auto()  #: Increases attack damage dealt to mobs.
+    SILK_TOUCH            = auto()  #: Mines blocks themselves (fragile items).
+    SMITE                 = auto()  #: Increases attack damage against undead mobs.
+    SWEEPING              = auto()  #: Increases damage of sweep attack.
+    THORNS                = auto()  #: Causes damage to attackers.
+    UNBREAKING            = auto()  #: Increases durability of item.
+    VANISHING_CURSE       = auto()  #: Cursed item will disappear after player dies.
 
 
 class Color:

@@ -213,10 +213,10 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
             The center block around which to obtain the adjacent locations from.
 
         change_rotation : :class:`bool`, optional
-            Defaults to ``False``
+            Whether or not the locations' respective pitches and yaws should be modified. Defaults to ``False``
 
         include_origin : :class:`bool`, optional
-            Whether or not to include the origin/center block in the iteration. Defaults to False
+            Whether or not to include the origin/center block in the iteration. Defaults to ``False``
 
         pattern : :class:`~.RAdjacentPattern`
             The pattern to follow (Cardinal, Square, Adjacent or Cube). Defaults to
@@ -226,6 +226,16 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         -------
         :class:`Repeat`
             The generated Repeat instance.
+
+        Examples
+        --------
+        ::
+
+            curr_loc = DFVariable("%default curr_loc", local=True)
+            center = DFLocation(1, 2, 3)  # center that will determine the adjacent locations.
+            with Repeat.adjacent(curr_loc, center, include_origin=False, pattern=RAdjacentPattern.CUBE):
+                # code that will repeat for every location adjacent to 'center' in a cube format (curr_loc will be set\
+to the current location on every iteration).
         """
 
         return cls(
@@ -271,6 +281,16 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         -------
         :class:`Repeat`
             The generated Repeat instance.
+
+        Examples
+        --------
+        ::
+
+            curr_el = DFVariable("%default curr_el", local=True)  # the current armor piece in the iteration
+            armor_items = DFVariable("%default armor_items", DFGameValue(GameValueType.ARMOR_ITEMS))  # list of armor
+            with Repeat.for_each(curr_el, armor_items, allow_list_changes=False):
+                # code that iterates over all 4 of the Default Player's armor items. On every iteration, 'curr_el' is \
+set to the current armor item being analyzed.
         """
 
         return cls(
@@ -293,6 +313,14 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         -------
         :class:`Repeat`
             The generated Repeat instance.
+
+        Examples
+        --------
+        ::
+
+            with Repeat.forever():
+                # Repeat code forever
+                Control.wait(20)  # wait 1 second every iteration (20 ticks)
         """
 
         return cls(
@@ -320,6 +348,15 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         -------
         :class:`Repeat`
             The generated Repeat instance.
+
+        Examples
+        --------
+        ::
+
+            current_loc = DFVariable("current_loc", local=True)
+            with Repeat.grid(current_loc, DFLocation(1, 2, 3), DFLocation(4, 5, 6)):
+                # code to repeat for every block between x,y,z = {1, 2, 3} and {4, 5, 6} ('current_loc' gets set to \
+the location of the current block).
         """
 
         return cls(
@@ -341,6 +378,16 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         -------
         :class:`Repeat`
             The generated Repeat instance.
+
+        Examples
+        --------
+        ::
+
+            with Repeat.n_times(5):
+                # code to repeat 5 times in DiamondFire
+
+            with Repeat.n_times(var):
+                # code to repeat a variable amount of times in DiamondFire
         """
 
         return cls(
@@ -377,6 +424,16 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
         -------
         :class:`Repeat`
             The generated Repeat instance.
+
+        Examples
+        --------
+        ::
+
+            curr_loc = DFVariable("%default curr_loc", local=True)
+            center = DFLocation(1, 2, 3)  # could be a variable as well, game value etc.
+            with Repeat.sphere(curr_loc, center, 5, 200, point_locs_inwards=True):
+                # code that will repeat for every point of 200 points forming a sphere of radius 5 blocks. ('curr_loc' \
+is set to the current iterated location.)
         """
 
         return cls(
@@ -415,9 +472,12 @@ class Repeat(BracketedBlock, UtilityBlock, JSONData):
             If the condition given was not an If Block (:class:`~.IfPlayer`, :class:`~.IfEntity`, :class:`~.IfGame` or
             :class:`~.IfVariable`).
 
-        Todo
-        ----
-        Add example.
+        Examples
+        --------
+        ::
+
+            with Repeat.while_cond(var_a == var_b):
+                # code that will execute in DF while 'var_a' is equal to 'var_b'
         """
         if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
             raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")

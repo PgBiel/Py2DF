@@ -35,15 +35,13 @@ class PlayerTarget(Target, AutoSnakeToPascalCaseNameEnum):
     SHOOTER = auto()  #: The shooter in a projectile-related event.
     KILLER = auto()  #: The killer in a kill-related event.
     VICTIM = auto()  #: The victim in a kill-related or damage-related event.
-    RANDOM_PLAYER = auto()  #: A random player.
-    # TODO: check if RANDOM_PLAYER or just RANDOM
 
 
 @unique
 class EntityTarget(Target, AutoSnakeToPascalCaseNameEnum):
     """Contains the different targets an Entity Action can have."""
     DEFAULT = auto(
-    ),   #: The main entity involved in the current Player/Entity Event, or the last spawned entity if none.
+    )   #: The main entity involved in the current Player/Entity Event, or the last spawned entity if none.
     SELECTION = auto()  #: The current selection (selected entity/entities or mob/s).
     ALL_ENTITIES = auto()  #: All entities on the plot.
     ALL_MOBS = auto()  #: All mobs on the plot.
@@ -55,8 +53,6 @@ class EntityTarget(Target, AutoSnakeToPascalCaseNameEnum):
     PROJECTILE = auto()  #: The projectile in a projectile-related event.
     KILLER = auto()  #: Selects the killer in a kill-related event.
     VICTIM = auto()  #: Selects the victim in a kill-related or damage-related event.
-    RANDOM_ENTITY = auto()  #: A random entity.
-    RANDOM_MOB = auto()  #: A random mob.
 
 
 remove_u200b_from_doc(SelectionTarget)

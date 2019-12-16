@@ -4,7 +4,7 @@ from enum import Enum
 
 from .enums import GVAL_TEXTABLE, GVAL_NUMERIC, GVAL_LOCATABLE, GVAL_LISTABLE, GVAL_ITEM
 from .classes.abc import Itemable
-from .classes.mc_types import DFNumber, DFText, DFLocation, DFPotion, Item, DFCustomSpawnEgg
+from .classes.mc_types import DFNumber, DFText, DFLocation, DFPotion, Item, DFCustomSpawnEgg, DFParticle
 from .classes.variable import DFVariable, DFGameValue
 from .utils import flatten
 
@@ -30,16 +30,20 @@ parameter."""
     Potionable = typing.Union[DFPotion, DFVariable]  # there is no Game Value representing a potion effect.
     """Union[:class:`~.DFPotion`, :class:`~.DFVariable`] : The possible types of a Potion Effect parameter."""
 
+    ParticleParam = typing.Union[DFParticle, DFVariable]  # no particle game value
+    """Union[:class:`~.DFParticle`, :class:`~.DFVariable`] : The possible types of a Particle parameter."""
+
     ItemParam = typing.Union[Itemable, Item, DFCustomSpawnEgg, DFGameValue, DFVariable]
     """Union[:class:`~.Itemable`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of an Item \
 parameter."""
 
     Param = typing.Union[
         "ParamTypes.Numeric", "ParamTypes.Textable", "ParamTypes.Listable", "ParamTypes.Potionable",
-        "ParamTypes.ItemParam"
+        "ParamTypes.ParticleParam", "ParamTypes.ItemParam"
     ]
     """Union[:attr:`Numeric`, :attr:`Textable`, :attr:`Listable`, :attr:`Potionable`, :attr:`ItemParam`] : All the \
 possible parameter types."""
+
 
 Numeric = ParamTypes.Numeric
 
@@ -50,6 +54,8 @@ Listable = ParamTypes.Listable
 Locatable = ParamTypes.Locatable
 
 Potionable = ParamTypes.Potionable
+
+ParticleParam = ParamTypes.ParticleParam
 
 ItemParam = ParamTypes.ItemParam
 
