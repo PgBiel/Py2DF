@@ -39,3 +39,8 @@
 /* .container.comparisons > dl.describe > dt {
   background-color: #f8f8f8;
 } */
+
+div.rank {
+    background-color: #b3bcfb;
+    border: 1px solid #6e77b9;
+}

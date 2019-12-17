@@ -554,6 +554,8 @@ second cooldown."
     ) -> "GameAction":
         """Creates an animated circle of particles at a certain location.
 
+        .. rank:: Mythic
+
         Parameters
         ----------
         particle : :attr:`~.ParticleParam`
@@ -608,6 +610,8 @@ second cooldown."
     ) -> "GameAction":
         """Creates a line of particles between two locations.
 
+        .. rank:: Mythic
+
         Parameters
         ----------
         particle : :attr:`~.ParticleParam`
@@ -654,6 +658,8 @@ second cooldown."
         duration: typing.Optional[Numeric] = None
     ) -> "GameAction":
         """Creates an animated spiral of particles at a certain location.
+
+        .. rank:: mythic
 
         Parameters
         ----------
@@ -749,6 +755,8 @@ second cooldown."
     ) -> "GameAction":
         """Creates a circle of particles at a certain location.
 
+        .. rank:: Noble
+
         Parameters
         ----------
         particle : :attr:`~.ParticleParam`
@@ -788,23 +796,52 @@ second cooldown."
         )
 
     @classmethod
-    def create_particle_cluster(cls) -> "GameAction":  # TODO: other particle stuff
+    def create_particle_cluster(
+        cls, particle: ParticleParam, center: Locatable,
+        size: typing.Optional[Numeric] = None, density: typing.Optional[Numeric] = None
+    ) -> "GameAction":
         """Randomly spawns particles around a certain location.
+
+        .. rank:: Noble
+
+        Parameters
+        ----------
+        particle : :attr:`~.ParticleParam`
+            The type of particle to spawn.
+
+        center : :attr:`~.Locatable`
+            The location around which the particles should be spawned.
+
+        size : Optional[:attr:`~.Numeric`], optional
+            The cluster size, or ``None`` to pick the default (2 blocks). Defaults to ``None``.
+
+        density : Optional[:attr:`~.Numeric`], optional
+            The cluster density (i.e., particles per block), or ``None`` to pick the default (10). Defaults to ``None``.
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
         """
+        if density is not None and size is None:
+            size = 2  # default: 2 blocks (size)
+
         return GameAction(
             action=GameActionType.CREATE_PARTICLE_CLUSTER,
-            args=Arguments(),
+            args=Arguments([
+                p_check(particle, ParticleParam, "particle"),
+                p_check(center, Locatable, "center"),
+                p_check(size, Numeric, "size") if size is not None else None,
+                p_check(density, Numeric, "density") if density is not None else None,
+            ]),
             append_to_reader=True
         )
 
     @classmethod
     def create_particle_line(cls, particle: ParticleParam, loc_1: Locatable, loc_2: Locatable) -> "GameAction":
         """Creates a line of particles between two locations.
+
+        .. rank:: Noble
 
         Parameters
         ----------
@@ -845,6 +882,8 @@ second cooldown."
     def create_particle_path(cls) -> "GameAction":
         """Creates a path of particles that goes through each location in the chest from first to last.
 
+        .. rank:: Noble
+
         Returns
         -------
         :class:`GameAction`
@@ -859,6 +898,8 @@ second cooldown."
     @classmethod
     def create_particle_ray(cls) -> "GameAction":
         """Creates a ray of particles starting at a certain location.
+
+        .. rank:: Noble
 
         Returns
         -------
@@ -875,6 +916,8 @@ second cooldown."
     def create_particle_sphere(cls) -> "GameAction":
         """Creates a sphere of particles at a certain location.
 
+        .. rank:: Noble
+
         Returns
         -------
         :class:`GameAction`
@@ -889,6 +932,8 @@ second cooldown."
     @classmethod
     def create_particle_spiral(cls) -> "GameAction":
         """Creates a spiral of particles at a certain location.
+
+        .. rank:: Noble
 
         Returns
         -------
@@ -1251,11 +1296,46 @@ lands.
             append_to_reader=True
         )
 
+    @typing.overload
+    def launch_projectile(
+        cls, projectile: typing.Union[Material, ItemParam, Textable], loc: Locatable,
+        *, name: Textable, speed: Numeric,
+        inaccuracy: typing.Optional[Numeric] = None, particle: ParticleParam
+    ) -> "GameAction": ...
+
+    @typing.overload
+    def launch_projectile(
+        cls, projectile: typing.Union[Material, ItemParam, Textable], loc: Locatable,
+        *, name: Textable, speed: Numeric,
+        inaccuracy: Numeric, particle: None = None
+    ) -> "GameAction": ...
+
+    @typing.overload
+    def launch_projectile(
+        cls, projectile: typing.Union[Material, ItemParam, Textable], loc: Locatable,
+        *, name: Textable, speed: Numeric,
+        inaccuracy: None = None, particle: None = None
+    ) -> "GameAction": ...
+
+    @typing.overload
+    def launch_projectile(
+        cls, projectile: typing.Union[Material, ItemParam, Textable], loc: Locatable,
+        *, name: Textable, speed: None = None,
+        inaccuracy: None = None, particle: None = None
+    ) -> "GameAction": ...
+
+    @typing.overload
+    def launch_projectile(
+        cls, projectile: typing.Union[Material, ItemParam, Textable], loc: Locatable,
+        *, name: None = None, speed: None = None,
+        inaccuracy: None = None, particle: None = None
+    ) -> "GameAction": ...
+
     @classmethod
     def launch_projectile(
         cls, projectile: typing.Union[Material, ItemParam, Textable], loc: Locatable,
         *, name: typing.Optional[Textable] = None, speed: typing.Optional[Numeric] = None,
-        inaccuracy: typing.Optional[Numeric] = None,
+        inaccuracy: typing.Optional[Numeric] = None, particle: typing.Optional[ParticleParam] = None
     ) -> "GameAction":
         """Launches a projectile.
 
@@ -1269,29 +1349,121 @@ lands.
             - an item (:attr:`~.ItemParam` - the item representing the projectile to launch);
             - text (:attr:`~.Textable` - the material of the projectile to launch as text).
 
+            (Do note that any of those can be a variable/game value containing it.)
+
+        loc : :attr:`~.Locatable`
+            The location from which the projectile should be launched.
+
+        name : Optional[:attr:`~.Textable`], optional
+            The name of the projectile, or ``None`` to keep it empty. Defaults to ``None``.
+
+            .. warning::
+
+                This has to be specified if either speed, inaccuracy or particle are specified, otherwise a ValueError
+                is raised.
+
+        speed : Optional[:attr:`~.Numeric`], optional
+            The speed of the projectile, or ``None`` to let DF decide the default value. Defaults to ``None``.
+
+            .. warning::
+
+                This has to be specified if inaccuracy or particle are specified, otherwise a ValueError is raised.
+
+        inaccuracy : Optional[:attr:`~.Numeric`], optional
+            The inaccuracy of the launch, i.e., how much random momentum is applied to the projectile, or ``None``
+            for the default (1). Defaults to ``None``.
+
+        particle : Optional[:attr:`~.ParticleParam`], optional
+            An optional particle to form a particle trail behind the projectile. Defaults to ``None``.
+
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Raises
+        ------
+        :exc:`ValueError`
+            If `name` or `speed` are not specified when required (i.e., `inaccuracy` or `particle` are specified).
+
+        Examples
+        --------
+        ::
+
+            proj = Material.ARROW
+            # OR
+            proj = Item(Material.ARROW)
+            # OR
+            proj = "arrow"
+            # OR
+            proj = DFVariable("my var")  # can contain the Item or material name
+            loc = DFLocation(1, 2, 3)  # where to launch, can be var too (Locatable)
+            partic = DFParticle(ParticleType.ANGRY_VILLAGER)  # this will be the arrow trail
+            GameAction.launch_projectile(proj, loc, name="my projectile", speed=5, inaccuracy=2, particle=partic)
         """
+        if isinstance(projectile, (Material, str, collections.UserString, DFText)):  # check for material validity
+            projectile = Material(
+                str(projectile) if isinstance(projectile, collections.UserString) else projectile
+            ).value
+
+        if name is None and any(x is not None for x in (speed, inaccuracy, particle)):
+            raise ValueError("'name' must be specified in order to specify 'speed'/'inaccuracy'/'particle'.")
+
+        if speed is None and any(x is not None for x in (inaccuracy, particle)):
+            raise ValueError("'speed' must be specified in order to specify 'inaccuracy'/'particle'.")
+
+        if inaccuracy is None and particle is not None:
+            inaccuracy = 1  # default value: 1
+
         return GameAction(
             action=GameActionType.LAUNCH_PROJ,
-            args=Arguments(),
+            args=Arguments([
+                p_check(projectile, typing.Union[Textable, ItemParam], "projectile"),
+                p_check(loc, Locatable, "loc"),
+                p_check(name, Textable, "name") if name is not None else None,
+                p_check(speed, Numeric, "speed") if speed is not None else None,
+                p_check(inaccuracy, Numeric, "inaccuracy") if inaccuracy is not None else None,
+                p_check(particle, ParticleParam, "particle") if particle is not None else None
+            ]),
             append_to_reader=True
         )
 
     @classmethod
-    def lock_container(cls) -> "GameAction":
+    def lock_container(cls, loc: Locatable, key: typing.Optional[Textable] = None) -> "GameAction":
         """Sets a container's lock key.
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            The location of the container.
+
+        key : Optional[:attr:`~.Textable`], optional
+            The new lock key of the container, or ``None`` to unlock it. Defaults to ``None``.
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Notes
+        -----
+        A lock key determines the item name the container must be opened with.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # or some var
+            GameAction.lock_container(loc, "Key Item")  # will only be able to open with items named "Key Item"
+            # OR
+            GameAction.lock_container(loc)  # unlocks it; i.e., any item/bare hands can open it (the default behavior)
         """
         return GameAction(
             action=GameActionType.LOCK_CONTAINER,
-            args=Arguments(),
+            args=Arguments([
+                p_check(loc, Locatable, "loc"),
+                p_check(key, Textable, "key") if key is not None else None
+            ]),
             append_to_reader=True
         )
 
