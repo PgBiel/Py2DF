@@ -1,6 +1,8 @@
 """
 Enum for all items.
 """
+import collections
+
 from .enum_util import AutoLowerNameEnum
 from enum import auto, unique
 
@@ -883,3 +885,9 @@ class Material(AutoLowerNameEnum):
     ZOMBIE_PIGMAN_SPAWN_EGG = auto()
     ZOMBIE_SPAWN_EGG = auto()
     ZOMBIE_VILLAGER_SPAWN_EGG = auto()
+
+    def __new__(cls, value):
+        if isinstance(value, (str, collections.UserString)) and str(value).startswith("minecraft:"):
+            value = str(value).replace("minecraft:", "")
+
+        return super().__new__(cls, value)

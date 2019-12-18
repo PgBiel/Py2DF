@@ -2,9 +2,10 @@ import collections
 import typing
 from enum import Enum
 
-from .enums import GVAL_TEXTABLE, GVAL_NUMERIC, GVAL_LOCATABLE, GVAL_LISTABLE, GVAL_ITEM
+from .enums import GVAL_TEXTABLE, GVAL_NUMERIC, GVAL_LOCATABLE, GVAL_LISTABLE, GVAL_ITEM, ParticleType, SoundType, \
+    Material
 from .classes.abc import Itemable
-from .classes.mc_types import DFNumber, DFText, DFLocation, DFPotion, Item, DFCustomSpawnEgg, DFParticle
+from .classes.mc_types import DFNumber, DFText, DFLocation, DFPotion, Item, DFCustomSpawnEgg, DFParticle, DFSound
 from .classes.variable import DFVariable, DFGameValue
 from .utils import flatten
 
@@ -30,19 +31,26 @@ parameter."""
     Potionable = typing.Union[DFPotion, DFVariable]  # there is no Game Value representing a potion effect.
     """Union[:class:`~.DFPotion`, :class:`~.DFVariable`] : The possible types of a Potion Effect parameter."""
 
-    ParticleParam = typing.Union[DFParticle, DFVariable]  # no particle game value
-    """Union[:class:`~.DFParticle`, :class:`~.DFVariable`] : The possible types of a Particle parameter."""
-
-    ItemParam = typing.Union[Itemable, Item, DFCustomSpawnEgg, DFGameValue, DFVariable]
-    """Union[:class:`~.Itemable`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of an Item \
+    ParticleParam = typing.Union[DFParticle, ParticleType, DFVariable]  # no particle game value
+    """Union[:class:`~.DFParticle`, :class:`~.ParticleType`, :class:`~.DFVariable`] : The possible types of a Particle \
 parameter."""
+
+    SoundParam = typing.Union[DFSound, SoundType, DFVariable]  # no sound game value
+    """Union[:class:`~.DFSound`, :class:`~.SoundType`, :class:`~.DFVariable`] : The possible types of a Sound param."""
+
+    ItemParam = typing.Union[Item, DFGameValue, DFVariable]
+    """Union[:class:`~.Item`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of an Item \
+parameter."""
+
+    SpawnEggable = typing.Union[DFCustomSpawnEgg, Material, ItemParam]
+    """Union[:class:`~.DFCustomSpawnEgg`, :attr:`ItemParam`] : The possible types of a Spawn Egg parameter."""
 
     Param = typing.Union[
         "ParamTypes.Numeric", "ParamTypes.Textable", "ParamTypes.Listable", "ParamTypes.Potionable",
-        "ParamTypes.ParticleParam", "ParamTypes.ItemParam"
+        "ParamTypes.ParticleParam", "ParamTypes.SoundParam", "ParamTypes.ItemParam", "ParamTypes.SpawnEggable"
     ]
-    """Union[:attr:`Numeric`, :attr:`Textable`, :attr:`Listable`, :attr:`Potionable`, :attr:`ItemParam`] : All the \
-possible parameter types."""
+    """Union[:attr:`Numeric`, :attr:`Textable`, :attr:`Listable`, :attr:`Potionable`, :attr:`ItemParam`, \
+:attr:`SpawnEggable`] : All the possible parameter types."""
 
 
 Numeric = ParamTypes.Numeric
@@ -57,7 +65,11 @@ Potionable = ParamTypes.Potionable
 
 ParticleParam = ParamTypes.ParticleParam
 
+SoundParam = ParamTypes.SoundParam
+
 ItemParam = ParamTypes.ItemParam
+
+SpawnEggable = ParamTypes.SpawnEggable
 
 Param = ParamTypes.Param
 
@@ -114,7 +126,85 @@ def convert_text(param: Textable) -> Textable:
     return param
 
 
+def convert_particle(param: ParticleParam) -> ParticleParam:
+    """Converts :class:`~.ParticleType` from a ParticleParam parameter to the appropriate DFParticle, while leaving
+    Game Values and Variables untouched.
+
+    Parameters
+    ----------
+    param : :attr:`~.ParticleParam`
+        The particle parameter to convert.
+
+    Returns
+    -------
+    :attr:`~.ParticleParam`
+        Resulting conversion, or the parameter itself if nothing required change.
+    """
+    if isinstance(param, ParticleType):
+        return DFParticle(param)
+
+    return param
+
+
+def convert_sound(param: SoundParam) -> SoundParam:
+    """Converts :class:`~.SoundType` from a SoundParam parameter to the appropriate DFSound, while leaving
+    Game Values and Variables untouched.
+
+    Parameters
+    ----------
+    param : :attr:`~.SoundParam`
+        The sound parameter to convert.
+
+    Returns
+    -------
+    :attr:`~.SoundParam`
+        Resulting conversion, or the parameter itself if nothing required change.
+    """
+    if isinstance(param, SoundType):
+        return DFSound(param)
+
+    return param
+
+
+def convert_material(param: typing.Union[Param, Material]) -> Param:
+    """Converts :class:`~.Material` into :class:`~.Item`.
+
+    Parameters
+    ----------
+    param : Union[:attr:`~.Param`, :class:`~.Material`]
+        The parameter/material to convert.
+
+    Returns
+    -------
+    :attr:`~.Param`
+        The generated item, or the param specified.
+    """
+    if isinstance(param, Material):
+        return Item(param)
+
+    return param
+
+
+def convert_all(param: Param) -> Param:
+    """Converts anything from a Param parameter to the appropriate DF(something) class, while leaving
+    Game Values and Variables untouched.
+
+    Parameters
+    ----------
+    param : :attr:`~.Param`
+        The parameter to convert.
+
+    Returns
+    -------
+    :attr:`~.Param`
+        Resulting conversion, or the parameter itself if nothing required change.
+    """
+    return convert_particle(convert_sound(convert_numeric(convert_text(convert_material(param)))))
+
+
 _P = typing.TypeVar("_P", Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable)
+_A = typing.TypeVar("_A", Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable)
+_B = typing.TypeVar("_B", Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable)
 
 
 @typing.overload
@@ -155,6 +245,19 @@ def p_check(
 
 @typing.overload
 def p_check(
+    obj: ParticleParam, typeof: typing.Type[ParticleParam], arg_name: typing.Optional[str] = None,
+    *, convert: bool = True
+) -> ParticleParam: ...
+
+
+@typing.overload
+def p_check(
+    obj: SoundParam, typeof: typing.Type[SoundParam], arg_name: typing.Optional[str] = None, *, convert: bool = True
+) -> SoundParam: ...
+
+
+@typing.overload
+def p_check(
     obj: DFVariable, typeof: typing.Type[DFVariable], arg_name: typing.Optional[str] = None, *, convert: bool = True
 ) -> DFVariable: ...
 
@@ -165,7 +268,9 @@ def p_check(
 ) -> Param: ...
 
 
-def p_check(obj: _P, typeof: typing.Type[_P], arg_name: typing.Optional[str] = None, *, convert: bool = True) -> _P:
+def p_check(
+    obj: _P, typeof: typing.Type[_P], arg_name: typing.Optional[str] = None, *, convert: bool = True
+) -> _P:
     """Checks an object for being a valid param type, and raises a TypeError if that does not occur. For checking
     and returning a bool, see :func:`p_bool_check`.
 
@@ -207,12 +312,13 @@ def p_check(obj: _P, typeof: typing.Type[_P], arg_name: typing.Optional[str] = N
     )  # ^this allows Union[] to be specified as well, such that Union[Numeric, Locatable] works, for example.
 
     valid_names = (
-        "Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam",
-        "Union[Numeric, Locatable]", "Union[Textable, ItemParam]"
+        "Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam", "ParticleParam", "SoundParam",
+        "SpawnEggable",
+        "Union[Numeric, Locatable]", "Union[Textable, ItemParam]", "Union[Locatable, Textable]"
     )
     corresponding_values = (
-        Param, Numeric, Textable, Locatable, Potionable, ItemParam,
-        typing.Union[Numeric, Locatable], typing.Union[Textable, ItemParam]
+        Param, Numeric, Textable, Locatable, Potionable, ItemParam, ParticleParam, SoundParam, SpawnEggable,
+        typing.Union[Numeric, Locatable], typing.Union[Textable, ItemParam], typing.Union[Locatable, Textable]
     )
     if not isinstance(obj, tuple(valid_types)):
 
@@ -246,7 +352,7 @@ documentation to see valid 'GameValueType' attrs for this parameter type.)"
         ))
 
     if convert:
-        return convert_numeric(convert_text(typing.cast(_P, obj)))
+        return convert_all(typing.cast(_P, obj))
 
     return typing.cast(_P, obj)
 
@@ -301,11 +407,13 @@ def p_bool_check(obj: _P, typeof: typing.Type[_P], gameval_check: bool = True, e
         if error_on_gameval:
             try:
                 valid_names = (
-                    "Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam",
+                    "Param", "Numeric", "Textable", "Locatable", "Potionable", "ItemParam", "ParticleParam",
+                    "SoundParam", "SpawnEggable",
                     "Union[Numeric, Locatable]", "Union[Textable, ItemParam]"
                 )
                 corresponding_values = (
-                    Param, Numeric, Textable, Locatable, Potionable, ItemParam,
+                    Param, Numeric, Textable, Locatable, Potionable, ItemParam, ParticleParam, SoundParam,
+                    SpawnEggable,
                     typing.Union[Numeric, Locatable], typing.Union[Textable, ItemParam]
                 )
                 corresp_class_ind = corresponding_values.index(typeof)

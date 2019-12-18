@@ -12,6 +12,44 @@ from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
 
 
+BlockParam = typing.Union[
+    Material, ItemParam, Textable
+]
+
+
+BlockMetadata = typing.Union[
+    typing.Dict[str, typing.Optional[typing.Union[str, int, bool, DFVariable]]],
+    typing.Iterable[Textable]
+]
+
+
+def load_metadata(metadata: BlockMetadata, allow_none: bool = True):
+    true_metadata: typing.List[Textable] = []
+    if isinstance(metadata, dict):
+        for k, v in metadata.items():
+            val_str: str
+            if isinstance(v, bool):
+                val_str = "true" if v else "false"
+            elif v is None:
+                val_str = "none"
+            else:
+                val_str = str(v)
+
+            separator: str = "="
+            if "=" in val_str:
+                separator = "," if ":" in val_str else ":"
+
+            true_metadata.append(DFText(f"{k}{separator}{val_str}"))
+
+    elif isinstance(metadata, collections.Iterable):
+        true_metadata.extend(list(metadata))
+
+    elif (metadata is not None) if allow_none else True:
+        raise TypeError("Metadata must either be a dictionary or an iterable of Textables.")
+
+    return true_metadata
+
+
 class PlayerAction(ActionBlock, JSONData):
     """A Player Action.
 
@@ -346,6 +384,8 @@ class GameAction(ActionBlock, JSONData):
     def bone_meal(cls, *locs: Locatable, amount: Numeric, show_particles: bool = True) -> "GameAction":
         """Applies bone meal to a block.
 
+        .. rank:: Noble
+
         Parameters
         ----------
         locs : :attr:`~.Locatable`
@@ -372,7 +412,7 @@ class GameAction(ActionBlock, JSONData):
         """
         args = Arguments(
             [
-                *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)],
+        *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)],
                 p_check(amount, Numeric, "amount")
             ],
             tags=[Tag(
@@ -466,7 +506,7 @@ class GameAction(ActionBlock, JSONData):
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
                 p_check(line, Numeric, "line"),
-                *([p_check(new_text, Textable, "new_text")] if new_text is not None else [])  # empty line if None
+        *([p_check(new_text, Textable, "new_text")] if new_text is not None else [])  # empty line if None
             ]),
             append_to_reader=True
         )
@@ -495,6 +535,8 @@ class GameAction(ActionBlock, JSONData):
     @classmethod
     def copy_blocks(cls, loc_1: Locatable, loc_2: Locatable, copy_pos: Locatable, paste_pos: Locatable) -> "GameAction":
         """Copies a region of blocks to another region, including air blocks.
+
+        .. rank:: Overlord
 
         Parameters
         ----------
@@ -659,7 +701,7 @@ second cooldown."
     ) -> "GameAction":
         """Creates an animated spiral of particles at a certain location.
 
-        .. rank:: mythic
+        .. rank:: Mythic
 
         Parameters
         ----------
@@ -718,6 +760,9 @@ second cooldown."
     @classmethod
     def create_hologram(cls, loc: Locatable, text: Textable) -> "GameAction":
         """Creates a hologram (floating text) at a certain location.
+
+        .. rank:: Mythic
+
 
         Parameters
         ----------
@@ -949,13 +994,8 @@ second cooldown."
     @classmethod
     def drop_block(
         cls, loc: Locatable,
-        block_type: typing.Optional[typing.Union[
-            Material, ItemParam, Textable
-        ]] = None,
-        metadata: typing.Optional[typing.Union[
-            typing.Dict[str, typing.Optional[typing.Union[str, int, bool, DFVariable]]],
-            typing.Iterable[Textable]
-        ]] = None,
+        block_type: typing.Optional[BlockParam] = None,
+        metadata: typing.Optional[BlockMetadata] = None,
         *, reform_on_impact: bool = True, hurt_hit_entities: bool = False
     ) -> "GameAction":
         """Spawns a falling block at the specified location.
@@ -1047,34 +1087,13 @@ whose values DF expects to be formatted in one of the following ways:
             # Drops a falling Birch Stairs block, facing east, while not hurting any hit entities, and placing when it \
 lands.
         """
-        if isinstance(block_type, (Material, str, DFText)):  # check for material validity
+        if isinstance(block_type, (Material, str, DFText, collections.UserString)):  # check for material validity
             block_type = Material(str(block_type) if isinstance(block_type, DFText) else block_type).value
 
         if metadata is not None and block_type is None:
             raise ValueError("'block_type' has to be specified in order to specify 'metadata'.")
 
-        true_metadata: typing.List[Textable] = []
-        if isinstance(metadata, dict):
-            for k, v in metadata.items():
-                val_str: str
-                if isinstance(v, bool):
-                    val_str = "true" if v else "false"
-                elif v is None:
-                    val_str = "none"
-                else:
-                    val_str = str(v)
-
-                separator: str = "="
-                if "=" in val_str:
-                    separator = "," if ":" in val_str else ":"
-
-                true_metadata.append(DFText(f"{k}{separator}{val_str}"))
-
-        elif isinstance(metadata, collections.Iterable):
-            true_metadata = list(metadata)
-
-        elif metadata is not None:
-            raise TypeError("Metadata must either be a dictionary or an iterable of Textables.")
+        true_metadata: typing.List[Textable] = load_metadata(typing.cast(metadata, BlockMetadata), allow_none=True)
 
         return GameAction(
             action=GameActionType.DROP_BLOCK,
@@ -1084,7 +1103,7 @@ lands.
                     p_check(
                         block_type, typing.Union[Textable, ItemParam], "block_type"
                     ) if block_type is not None else None,
-                    *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+        *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
                 ], tags=[
                     Tag(
                         "Reform on Impact", option=bool(reform_on_impact),
@@ -1468,8 +1487,16 @@ lands.
         )
 
     @classmethod
-    def play_particle_effect(cls) -> "GameAction":
+    def play_particle_effect(cls, particle: ParticleParam, loc: Locatable) -> "GameAction":
         """Plays a particle effect at a certain location.
+
+        Parameters
+        ----------
+        particle : :attr:`~.ParticleParam`
+            The particle to spawn.
+
+        loc : :attr:`~.Locatable`
+            The location where to spawn the particle.
 
         Returns
         -------
@@ -1478,18 +1505,36 @@ lands.
         """
         return GameAction(
             action=GameActionType.PLAY_PARTICLE_EFFECT,
-            args=Arguments(),
+            args=Arguments([
+                p_check(particle, ParticleParam, "particle"),
+                p_check(loc, Locatable, "loc")
+            ]),
             append_to_reader=True
         )
 
     @classmethod
-    def remove_hologram(cls) -> "GameAction":
+    def remove_hologram(cls, loc_or_text: typing.Union[Locatable, Textable]) -> "GameAction":
         """Removes a hologram.
+
+        .. rank:: Mythic
+
+        Parameters
+        ----------
+        loc_or_text : Union[:attr:`~.Locatable`, :attr:`~.Textable`]
+            The location or the text of the hologram to remove.
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            GameAction.remove_hologram(DFLocation(1, 2, 3))  # removes hologram with location x=1, y=2, z=3
+            # OR
+            GameAction.remove_hologram("hello there")  # removes hologram with text "hello there"
         """
         return GameAction(
             action=GameActionType.REMOVE_HOLOGRAM,
@@ -1498,13 +1543,24 @@ lands.
         )
 
     @classmethod
-    def remove_score(cls) -> "GameAction":
+    def remove_score(cls, score: Textable) -> "GameAction":
         """Removes a score from the scoreboard.
+
+        Parameters
+        ----------
+        score : :attr:`~.Textable`
+            The text of the score to be removed.
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            GameAction.remove_score("User")  # or some var or something
         """
         return GameAction(
             action=GameActionType.REMOVE_SCORE,
@@ -1513,103 +1569,383 @@ lands.
         )
 
     @classmethod
-    def set_block(cls) -> "GameAction":
+    def set_block(
+        cls, block_type: BlockParam, loc_1: Locatable,
+        loc_2: typing.Optional[Locatable] = None, metadata: typing.Optional[BlockMetadata] = None
+    ) -> "GameAction":
         """Sets the block at a certain location or region.
+        
+        Parameters
+        ----------
+        block_type : Union[:class:`~.Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]]
+            The type of block to set.
+
+            The type can be specified either as:
+            - an instance of :class:`~.Material` (the material of the block to set);
+            - an item (:attr:`~.ItemParam` - the item representing the block to set);
+            - text (:attr:`~.Textable` - the material of the block to set as text).
+
+        loc_1 : :attr:`~.Locatable`
+            The location of the block to set, if just one, or the first corner of a region, if multiple.
+
+        loc_2 : Optional[:attr:`~.Locatable`], optional
+            If setting more than one block, then this is the second corner of a region in which the blocks will be set
+            to the specified block type. Otherwise, ``None`` (defaults to loc_1, i.e., region of just one block).
+            Default: ``None``.
+
+        metadata : Optional[Union[:class:`dict`, List[:attr:`~.Textable`]]]
+            Optionally, the metadata of the block to be set (``None`` for none). If not ``None``, can be in two forms:
+
+            1. **As a dictionary:** If this is specified, then:
+                - The keys must be strings;
+                - The values can be one of:
+                    - :class:`str` (the written out option);
+                    - :class:`int` (is converted into a string accordingly);
+                    - :class:`bool` (is turned into "true"/"false" accordingly);
+                    - ``None`` (is turned into "none");
+                    - :class:`~.DFVariable` (is turned into "%var(name)" accordingly).
+                    - Any other types not mentioned will simply be ``str()``\\ ed.
+                - Example::
+
+                    {
+                        "facing": "east",
+                        "drag": True,
+                        "west": None,
+                        "rotation": 8,
+                        "powered": DFVariable("my_var")
+                    }
+
+            2. **As a list/iterable:** If this is specified, then it must be a list of valid Textable parameters, \
+whose values DF expects to be formatted in one of the following ways:
+                - ``"tag=value"``
+                - ``"tag:value"``
+                - ``"tag,value"``
 
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            If `metadata` is not a dict, an Iterable or None; also if an invalid `block_type` was passed (e.g.
+            text was given but no such material exists).
+
+        :exc:`ValueError`
+            If `metadata` was specified, but `block_type` wasn't.
+
+        Warnings
+        --------
+        This can set up to 100,000 blocks per action.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 10, 3)   # where to set the block
+            block_type = Material.BIRCH_STAIRS  # set as Birch Stairs, for example
+            meta = { "facing": "east" }  # facing east; block metadata
+            # OR
+            meta = ["facing=east"]  # also possible, as long as you follow the format
+
+            GameAction.set_block(block_type, loc, metadata=meta)  # set 1 block
+            # OR
+            loc_2 = DFLocation(1, 20, 3)  # other corner of the region, to set multiple blocks
+            GameAction.set_block(block_type, loc, loc_2, meta)  # set multiple blocks
+            # Sets the block(s) to Birch Stairs, facing east.
         """
+        if isinstance(block_type, (Material, str, DFText, collections.UserString)):  # check for material validity
+            block_type = Material(str(block_type) if isinstance(block_type, DFText) else block_type).value
+
+        if metadata is not None and loc_2 is None:
+            loc_2 = loc_1  # just that block
+
+        true_metadata = load_metadata(metadata, allow_none=True)
+
         return GameAction(
             action=GameActionType.SET_BLOCK,
-            args=Arguments(),
+            args=Arguments([
+                p_check(
+                    block_type, typing.Union[Textable, ItemParam], "block_type"
+                ) if block_type is not None else None,
+                p_check(loc_1, Locatable, "loc_1"),
+                p_check(loc_2, Locatable, "loc_2"),
+        *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+            ]),
             append_to_reader=True
         )
 
     @classmethod
-    def set_block_data(cls) -> "GameAction":
+    def set_block_metadata(cls, loc: Locatable, metadata: BlockMetadata) -> "GameAction":
         """Sets a metadata tag for a certain block.
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            The location of the block that will have its metadata set.
+
+        metadata : Optional[Union[:class:`dict`, List[:attr:`~.Textable`]]]
+            The new metadata of the block. Can be in two forms:
+
+            1. **As a dictionary:** If this is specified, then:
+                - The keys must be strings;
+                - The values can be one of:
+                    - :class:`str` (the written out option);
+                    - :class:`int` (is converted into a string accordingly);
+                    - :class:`bool` (is turned into "true"/"false" accordingly);
+                    - ``None`` (is turned into "none");
+                    - :class:`~.DFVariable` (is turned into "%var(name)" accordingly).
+                    - Any other types not mentioned will simply be ``str()``\\ ed.
+                - Example::
+
+                    {
+                        "facing": "east",
+                        "drag": True,
+                        "west": None,
+                        "rotation": 8,
+                        "powered": DFVariable("my_var")
+                    }
+
+            2. **As a list/iterable:** If this is specified, then it must be a list of valid Textable parameters, \
+whose values DF expects to be formatted in one of the following ways:
+                - ``"tag=value"``
+                - ``"tag:value"``
+                - ``"tag,value"``
+
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 10, 3)   # where the block is
+            meta = { "facing": "east" }  # facing east; block metadata
+            # OR
+            meta = ["facing=east"]  # also possible, as long as you follow the format
+
+            GameAction.set_block(loc, meta)  # now the block will face east.
         """
+        true_metadata = load_metadata(metadata, allow_none=False)
+
+        if len(true_metadata) < 1:
+            raise ValueError("Metadata must be specified (length > 0).")
+
         return GameAction(
             action=GameActionType.SET_BLOCK_DATA,
-            args=Arguments(),
+            args=Arguments([
+                p_check(loc, Locatable, "loc"),
+        *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+            ]),
             append_to_reader=True
         )
 
     @classmethod
-    def set_container_name(cls) -> "GameAction":
+    def set_container(
+       cls, loc: Locatable, *items: ItemParam
+    ):
+        """Sets a containers contents.
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Container location.
+
+
+        items : :attr:`~.ItemParam`
+            Item(s) to set.
+
+
+        Returns
+        -------
+        :class:`GameAction`
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.set_container(loc, items)  # TODO: Example
+        """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+        *[p_check(obj, ItemParam, "items[{i}]") for obj in items]
+        ])
+        return GameAction(
+            action=GameActionType.SET_CONTAINER,
+            args=args,
+            append_to_reader=True
+        )
+
+    @classmethod
+    def set_container_name(
+       cls, loc: Locatable, name: Textable
+    ):
         """Sets the custom name of a container (e.g. chests).
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Container location.
+
+
+        name : :attr:`~.Textable`
+            New container name.
+
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # where the container is
+            GameAction.set_container_name(loc, "Cool Container")  # set its name to "Cool Container"
         """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(name, Textable, "name")
+        ])
         return GameAction(
             action=GameActionType.SET_CONTAINER_NAME,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def set_furnace_speed(cls) -> "GameAction":
+    def set_furnace_speed(
+       cls, loc: Locatable, speed: typing.Optional[Numeric] = None
+    ):
         """Sets the cook time multiplier of a furnace.
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Furnace location.
+
+
+        speed : Optional[:attr:`~.Numeric`], optional
+            Cook speed multiplier, or ``None`` to let DF pick a default value. Default is ``None``.
+
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Notes
+        -----
+        - Cook speed = 200 ticks
+        - Fuel duration is unaffected by cook speed.
+        - Works with: Furnace, Blast Furnace, Smoker
+
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # location of furnace
+            GameAction.set_furnace_speed(loc, 2)  # furnace is now 2 times faster
         """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(speed, Numeric, "speed") if speed is not None else None
+        ])
         return GameAction(
             action=GameActionType.SET_FURNACE_SPEED,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def set_sc_obj(cls) -> "GameAction":
+    def set_scoreboard_objective(
+       cls, objective: Textable
+    ):
         """Sets the objective name of the scoreboard on your plot.
 
+        Parameters
+        ----------
+        objective : :attr:`~.Textable`
+            New objective name (32 characters or less).
+
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.set_sc_obj(text)  # TODO: Example
         """
+        args = Arguments([
+            p_check(objective, Textable, "objective")
+        ])
         return GameAction(
             action=GameActionType.SET_SC_OBJ,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def set_score(cls) -> "GameAction":
+    def set_score(
+       cls, score: Textable, new_value: typing.Optional[Numeric] = None
+    ):
         """Sets a score on the scoreboard.
+
+        Parameters
+        ----------
+        score : :attr:`~.Textable`
+            Score name (32 characters or less).
+
+
+        new_value : Optional[:attr:`~.Numeric`], optional
+            New score value, or ``None`` for the default (0). Default is ``None``.
+
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.set_score("User", 5)  # score "User" is now 5
         """
+        args = Arguments([
+            p_check(score, Textable, "score"),
+            p_check(new_value, Numeric, "new_value") if new_value is not None else None
+        ])
         return GameAction(
             action=GameActionType.SET_SCORE,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def show_sidebar(cls) -> "GameAction":
+    def show_sidebar(cls):  # TODO: finish documenting game actions and stuff
         """Enables the scoreboard sidebar on the plot.
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.show_sidebar()
         """
         return GameAction(
             action=GameActionType.SHOW_SIDEBAR,
@@ -1618,148 +1954,465 @@ lands.
         )
 
     @classmethod
-    def spawn_armor_stand(cls) -> "GameAction":
+    def spawn_armor_stand(
+       cls, loc: Locatable, text: typing.Optional[Textable] = None, *items: typing.Optional[ItemParam]
+        *, visibility=Visible
+    ):
         """Creates an armor stand at a certain location.
 
+        .. rank:: Mythic
+
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Armor stand location.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Name. Default is ``None``.
+
+
+        items : Optional[:attr:`~.ItemParam`], optional
+            Equipment. Default is ``None``.
+            visibility :
+            Visible, Visible (No hitbox), Invisible, Invisible (No hitbox)
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Notes
+        -----
+        - Options to set the pose and tags are in Entity Action ª Appearance.
+        - Equipment goes from the bottom left corner towards the right: Helmet, Chestplate, Leggings, Boots, Right Hand, Left Hand
+
+
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_armor_stand(loc, text, items)  # TODO: Example
         """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(text, Textable, "text") if text is not None else None,
+        *[p_check(obj, ItemParam, "items[{i}]") for obj in items]
+        ], tags=[
+            Tag(
+                "Visibility", option=Visible,
+                action=GameActionType.SPAWN_ARMOR_STAND, block=BlockType.GAME_ACTION
+            )
+        ])
         return GameAction(
             action=GameActionType.SPAWN_ARMOR_STAND,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def spawn_crystal(cls) -> "GameAction":
+    def spawn_crystal(
+       cls, loc: Locatable, text: typing.Optional[Textable] = None
+        *, show_bottom=True
+    ):
         """Spawns an End Crystal at a certain location.
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Location to spawn at.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Custom name. Default is ``None``.
+            show_bottom :
+            True, False
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_crystal(loc, text)  # TODO: Example
         """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(text, Textable, "text") if text is not None else None
+        ], tags=[
+            Tag(
+                "Show Bottom", option=True,
+                action=GameActionType.SPAWN_CRYSTAL, block=BlockType.GAME_ACTION
+            )
+        ])
         return GameAction(
             action=GameActionType.SPAWN_CRYSTAL,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def spawn_exp_orb(cls) -> "GameAction":
+    def spawn_exp_orb(
+       cls, loc: Locatable, num: typing.Optional[Numeric] = None, text: typing.Optional[Textable] = None
+    ):
         """Spawns an experience orb at a certain location.
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Orb location.
+
+
+        num : Optional[:attr:`~.Numeric`], optional
+            Experience amount. Default is ``None``.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Orb name. Default is ``None``.
+
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_exp_orb(loc, num, text)  # TODO: Example
         """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(num, Numeric, "num") if num is not None else None,
+            p_check(text, Textable, "text") if text is not None else None
+        ])
         return GameAction(
             action=GameActionType.SPAWN_EXP_ORB,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def spawn_fangs(cls) -> "GameAction":
+    def spawn_fangs(
+       cls, loc: Locatable, text: typing.Optional[Textable] = None
+    ):
         """Spawns Evoker Fangs at a certain location.
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Location to spawn at.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Custom name. Default is ``None``.
+
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Notes
+        -----
+        Evoker Fangs deal damage and remove themselves a second later.
+
+
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_fangs(loc, text)  # TODO: Example
         """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(text, Textable, "text") if text is not None else None
+        ])
         return GameAction(
             action=GameActionType.SPAWN_FANGS,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def spawn_item(cls) -> "GameAction":
+    def spawn_item(
+       cls, *items: ItemParam, loc: Locatable, text: typing.Optional[Textable] = None
+        *, apply_item_motion=True
+    ):
         """Spawns an item at a certain location.
 
+        Parameters
+        ----------
+        items : :attr:`~.ItemParam`
+            Item(s) to spawn.
+
+
+        loc : :attr:`~.Locatable`
+            Location to spawn at.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Item name. Default is ``None``.
+            apply_item_motion :
+            True, False
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_item(items, loc, text)  # TODO: Example
         """
+        args = Arguments([
+        *[p_check(obj, ItemParam, "items[{i}]") for obj in items],
+            p_check(loc, Locatable, "loc"),
+            p_check(text, Textable, "text") if text is not None else None
+        ], tags=[
+            Tag(
+                "Apply Item Motion", option=True,
+                action=GameActionType.SPAWN_ITEM, block=BlockType.GAME_ACTION
+            )
+        ])
         return GameAction(
             action=GameActionType.SPAWN_ITEM,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def spawn_mob(cls) -> "GameAction":
+    def spawn_mob(
+       cls, spawn_egg: SpawnEggable, loc: Locatable, num: typing.Optional[Numeric] = None,
+            text: typing.Optional[Textable] = None, *potions: typing.Optional[Potionable],
+        *items: typing.Optional[ItemParam]
+    ):
         """Spawns a mob at a certain location.
 
+        Parameters
+        ----------
+        spawn_egg : :attr:`~.SpawnEggable`
+            Mob type.
+
+
+        loc : :attr:`~.Locatable`
+            Location to spawn at.
+
+
+        num : Optional[:attr:`~.Numeric`], optional
+            Mob health. Default is ``None``.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Mob name. Default is ``None``.
+
+
+        potions : Optional[:attr:`~.Potionable`], optional
+            Potion effect(s). Default is ``None``.
+
+
+        items : Optional[:attr:`~.ItemParam`], optional
+            Mob equipment. Default is ``None``.
+
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Notes
+        -----
+        Equipment goes from the bottom left corner towards the right: Main Hand, Helmet, Chestplate, Leggings, Boots, Off Hand
+
+
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_mob(spawn_egg, loc, num, text, potions, items)  # TODO: Example
         """
+        args = Arguments([
+            p_check(spawn_egg, SpawnEggable, "spawn_egg"),
+            p_check(loc, Locatable, "loc"),
+            p_check(num, Numeric, "num") if num is not None else None,
+            p_check(text, Textable, "text") if text is not None else None,
+        *[p_check(obj, Potionable, "potions[{i}]") for obj in potions],
+        *[p_check(obj, ItemParam, "items[{i}]") for obj in items]
+        ])
         return GameAction(
             action=GameActionType.SPAWN_MOB,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def spawn_rng_item(cls) -> "GameAction":
+    def spawn_rng_item(
+       cls, *items: ItemParam, loc: Locatable, text: typing.Optional[Textable] = None
+        *, apply_item_motion=True
+    ):
         """Randomly spawns an item at a certain location.
 
+        Parameters
+        ----------
+        items : :attr:`~.ItemParam`
+            Items to pick from.
+
+
+        loc : :attr:`~.Locatable`
+            Location to spawn at.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Item name. Default is ``None``.
+            apply_item_motion :
+            True, False
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_rng_item(items, loc, text)  # TODO: Example
         """
+        args = Arguments([
+        *[p_check(obj, ItemParam, "items[{i}]") for obj in items],
+            p_check(loc, Locatable, "loc"),
+            p_check(text, Textable, "text") if text is not None else None
+        ], tags=[
+            Tag(
+                "Apply Item Motion", option=True,
+                action=GameActionType.SPAWN_RNG_ITEM, block=BlockType.GAME_ACTION
+            )
+        ])
         return GameAction(
             action=GameActionType.SPAWN_RNG_ITEM,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def spawn_tnt(cls) -> "GameAction":
+    def spawn_tnt(
+       cls, loc: Locatable, num_1: typing.Optional[Numeric] = None, num_2: typing.Optional[Numeric] = None,
+            text: typing.Optional[Textable] = None
+    ):
         """Spawns primed TNT at a certain location.
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            TNT location.
+
+
+        num_1 : Optional[:attr:`~.Numeric`], optional
+            TNT power (0-4, default = 4). Default is ``None``.
+
+
+        num_2 : Optional[:attr:`~.Numeric`], optional
+            Fuse duration (ticks, default = 0). Default is ``None``.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Custom name. Default is ``None``.
+
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_tnt(loc, num_1, num_2, text)  # TODO: Example
         """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(num_1, Numeric, "num_1") if num_1 is not None else None,
+            p_check(num_2, Numeric, "num_2") if num_2 is not None else None,
+            p_check(text, Textable, "text") if text is not None else None
+        ])
         return GameAction(
             action=GameActionType.SPAWN_TNT,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def spawn_vehicle(cls) -> "GameAction":
+    def spawn_vehicle(
+       cls, vehicle: BlockParam, loc: Locatable, text: typing.Optional[Textable] = None
+    ):
         """Spawns a vehicle at a certain location.
+
+        Parameters
+        ----------
+        vehicle : Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]
+            The type of Vehicle type.
+
+            The type can be specified either as:
+            - an instance of :class:`~.Material` (the material of the block to set);
+            - an item (:attr:`~.ItemParam` - the item representing the block to set);
+            - text (:attr:`~.Textable` - the material of the block to set as text).
+
+
+        loc : :attr:`~.Locatable`
+            Vehicle location.
+
+
+        text : Optional[:attr:`~.Textable`], optional
+            Vehicle name. Default is ``None``.
+
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.spawn_vehicle(vehicle, loc, text)  # TODO: Example
         """
+        args = Arguments([
+            p_check(vehicle, BlockParam, "vehicle"),
+            p_check(loc, Locatable, "loc"),
+            p_check(text, Textable, "text") if text is not None else None
+        ])
         return GameAction(
             action=GameActionType.SPAWN_VEHICLE,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def start_loop(cls) -> "GameAction":
+    def start_loop(cls):
         """Activates your plot's Loop Block if it has one.
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.start_loop()
         """
         return GameAction(
             action=GameActionType.START_LOOP,
@@ -1768,13 +2421,19 @@ lands.
         )
 
     @classmethod
-    def stop_loop(cls) -> "GameAction":
+    def stop_loop(cls):
         """Deactivates your plot's Loop Block if it has one.
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.stop_loop()
         """
         return GameAction(
             action=GameActionType.STOP_LOOP,
@@ -1783,49 +2442,384 @@ lands.
         )
 
     @classmethod
-    def summon_lightning(cls) -> "GameAction":
+    def summon_lightning(
+       cls, loc: Locatable, num: typing.Optional[Numeric] = None
+    ):
         """Strikes lightning at a certain location, damaging players in a radius.
 
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Strike location.
+
+
+        num : Optional[:attr:`~.Numeric`], optional
+            Damage radius (default = 3). Default is ``None``.
+
+
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.summon_lightning(loc, num)  # TODO: Example
         """
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(num, Numeric, "num") if num is not None else None
+        ])
         return GameAction(
             action=GameActionType.SUMMON_LIGHTNING,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def tick_block(cls) -> "GameAction":
+    def tick_block(
+       cls, *locs: Locatable, num: typing.Optional[Numeric] = None
+    ):
         """Causes a block to get random ticked.
+
+        Parameters
+        ----------
+        locs : :attr:`~.Locatable`
+            Block(s) to tick.
+
+
+        num : Optional[:attr:`~.Numeric`], optional
+            Number of ticks. Default is ``None``.
+
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.tick_block(locs, num)  # TODO: Example
         """
+        args = Arguments([
+        *[p_check(obj, Locatable, "locs[{i}]") for obj in locs],
+            p_check(num, Numeric, "num") if num is not None else None
+        ])
         return GameAction(
             action=GameActionType.TICK_BLOCK,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def uncancel_event(cls) -> "GameAction":
+    def uncancel_event(cls):
         """Uncancels the initial event that triggered this line of code.
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            GameAction.uncancel_event()
         """
         return GameAction(
             action=GameActionType.UNCANCEL_EVENT,
             args=Arguments(),
             append_to_reader=True
         )
+
+    # @classmethod
+    # def set_container_name(cls) -> "GameAction":
+    #     """Sets the custom name of a container (e.g. chests).
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SET_CONTAINER_NAME,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def set_furnace_speed(cls) -> "GameAction":
+    #     """Sets the cook time multiplier of a furnace.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SET_FURNACE_SPEED,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def set_sc_obj(cls) -> "GameAction":
+    #     """Sets the objective name of the scoreboard on your plot.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SET_SC_OBJ,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def set_score(cls) -> "GameAction":
+    #     """Sets a score on the scoreboard.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SET_SCORE,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def show_sidebar(cls) -> "GameAction":
+    #     """Enables the scoreboard sidebar on the plot.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SHOW_SIDEBAR,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_armor_stand(cls) -> "GameAction":
+    #     """Creates an armor stand at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_ARMOR_STAND,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_crystal(cls) -> "GameAction":
+    #     """Spawns an End Crystal at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_CRYSTAL,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_exp_orb(cls) -> "GameAction":
+    #     """Spawns an experience orb at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_EXP_ORB,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_fangs(cls) -> "GameAction":
+    #     """Spawns Evoker Fangs at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_FANGS,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_item(cls) -> "GameAction":
+    #     """Spawns an item at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_ITEM,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_mob(cls) -> "GameAction":
+    #     """Spawns a mob at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_MOB,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_rng_item(cls) -> "GameAction":
+    #     """Randomly spawns an item at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_RNG_ITEM,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_tnt(cls) -> "GameAction":
+    #     """Spawns primed TNT at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_TNT,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def spawn_vehicle(cls) -> "GameAction":
+    #     """Spawns a vehicle at a certain location.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SPAWN_VEHICLE,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def start_loop(cls) -> "GameAction":
+    #     """Activates your plot's Loop Block if it has one.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.START_LOOP,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def stop_loop(cls) -> "GameAction":
+    #     """Deactivates your plot's Loop Block if it has one.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.STOP_LOOP,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def summon_lightning(cls) -> "GameAction":
+    #     """Strikes lightning at a certain location, damaging players in a radius.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.SUMMON_LIGHTNING,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def tick_block(cls) -> "GameAction":
+    #     """Causes a block to get random ticked.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.TICK_BLOCK,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
+    # 
+    # @classmethod
+    # def uncancel_event(cls) -> "GameAction":
+    #     """Uncancels the initial event that triggered this line of code.
+    # 
+    #     Returns
+    #     -------
+    #     :class:`GameAction`
+    #         The generated Game Action codeblock.
+    #     """
+    #     return GameAction(
+    #         action=GameActionType.UNCANCEL_EVENT,
+    #         args=Arguments(),
+    #         append_to_reader=True
+    #     )
 
     # endregion:humanized-gameaction
 
@@ -1969,8 +2963,8 @@ class Control(ActionBlock, JSONData):
 
     @classmethod
     def wait(
-            cls, duration: typing.Union[int, float, DFNumber] = DEFAULT_VAL,
-            *, time_unit: enums.CWaitTag = DEFAULT_VAL,
+        cls, duration: typing.Union[int, float, DFNumber] = DEFAULT_VAL,
+        *, time_unit: enums.CWaitTag = DEFAULT_VAL,
             ticks: bool = True, seconds: bool = False, minutes: bool = False
     ) -> "Control":
         """Pauses the current line of code for a certain amount of ticks. seconds, or minutes.
