@@ -338,7 +338,7 @@ class GameAction(ActionBlock, JSONData):
 
     # region:humanized-gameaction
 
-    @classmethod  # TODO: Finish game actions
+    @classmethod
     def block_drops_off(cls) -> "GameAction":
         """Disables blocks dropping as items when broken.
 
@@ -380,7 +380,7 @@ class GameAction(ActionBlock, JSONData):
             append_to_reader=True
         )
 
-    @classmethod  # TODO: Tag default values
+    @classmethod
     def bone_meal(cls, *locs: Locatable, amount: Numeric, show_particles: bool = True) -> "GameAction":
         """Applies bone meal to a block.
 
@@ -735,7 +735,7 @@ second cooldown."
 
             particle = DFParticle(ParticleType.BARRIER)  # Type of particle.
             base = DFLocation(1, 2, 3, 45, 60)  # 45, 60 are pitch and yaw, to determine the rotation of the spiral
-            GameAction.create_animated_particle_circle(particle, base, 15, 3, 40)
+            GameAction.create_animated_particle_spiral(particle, base, 15, 3, 40)
             # length: 15 blocks; diameter: 3 blocks; duration: 2 s (40 ticks)
         """
         if diameter is not None and length is None:
@@ -924,70 +924,189 @@ second cooldown."
         )
 
     @classmethod
-    def create_particle_path(cls) -> "GameAction":
-        """Creates a path of particles that goes through each location in the chest from first to last.
+    def create_particle_path(
+        cls, particle: ParticleParam, *locs: Locatable
+    ) -> "GameAction":
+        """Creates a path of particles that goes through each location given from first to last.
 
-        .. rank:: Noble
+        Parameters
+        ----------
+        particle : :attr:`~.ParticleParam`
+            Particle to spawn.
+
+        locs : :attr:`~.Locatable`
+            Path locations to go through.
+
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            particle = DFParticle(ParticleType.SWEEP_ATTACK)  # particle
+            loc_1 = DFLocation(1, 2, 3)
+            loc_2 = LocVar("my var")
+            loc_3 = DFVariable("other var")
+            GameAction.create_particle_path(particle, loc_1, loc_2, loc_3)  # particle goes through loc_1, _2 and _3
         """
+        args = Arguments([
+            p_check(particle, ParticleParam, "particle"),
+            *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)]
+        ])
         return GameAction(
             action=GameActionType.CREATE_PARTICLE_PATH,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def create_particle_ray(cls) -> "GameAction":
+    def create_particle_ray(
+        cls, particle: ParticleParam, origin: Locatable, length: typing.Optional[Numeric] = None
+    ) -> "GameAction":
         """Creates a ray of particles starting at a certain location.
 
-        .. rank:: Noble
+        Parameters
+        ----------
+        particle : :attr:`~.ParticleParam`
+            Particle to spawn.
+
+        origin : :attr:`~.Locatable`
+            Ray origin.
+
+            .. note:
+
+                The rotation of the ray is determined by the pitch and yaw of this location.
+
+        length : Optional[:attr:`~.Numeric`], optional
+            Ray length, or ``None`` for the default (10 blocks). Defaults to ``None``.
+
 
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+
+        Examples
+        --------
+        ::
+
+            particle = DFParticle(ParticleType.ANGRY_VILLAGER)  # particle type
+            origin = DFLocation(1, 2, 3, 40, 60)  # origin of ray; pitch=40 yaw=60 for the rotation
+            GameAction.create_particle_ray(particle, origin, 5)  # length of 5 blocks
         """
+        args = Arguments([
+            p_check(particle, ParticleParam, "particle"),
+            p_check(origin, Locatable, "origin"),
+            p_check(length, typing.Optional[Numeric], "length") if length is not None else None
+        ])
         return GameAction(
             action=GameActionType.CREATE_PARTICLE_RAY,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def create_particle_sphere(cls) -> "GameAction":
+    def create_particle_sphere(
+        cls, particle: ParticleParam, center: Locatable, diameter: typing.Optional[Numeric] = None
+    ) -> "GameAction":
         """Creates a sphere of particles at a certain location.
-
+    
         .. rank:: Noble
-
+    
+        
+        Parameters
+        ----------
+        particle : :attr:`~.ParticleParam`
+            Particle type to spawn.
+            
+        center : :attr:`~.Locatable`
+            Sphere center location.
+            
+        diameter : Optional[:attr:`~.Numeric`], optional
+            Sphere diameter, or ``None`` for the default (2 blocks). Default is ``None``.
+            
+        
         Returns
         -------
         :class:`GameAction`
-            The generated Game Action codeblock.
+            The generated GameAction instance.
+        
+        Examples
+        --------
+        ::
+
+            particle = DFParticle(ParticleType.BARRIER)  # particle type
+            center = DFLocation(1, 2, 3)  # center of the sphere
+            GameAction.create_particle_sphere(particle, center, 6)  # diameter of 6 blocks
         """
+        args = Arguments([
+            p_check(particle, ParticleParam, "particle"),
+            p_check(center, Locatable, "center"),
+            p_check(diameter, typing.Optional[Numeric], "diameter") if diameter is not None else None
+        ])
         return GameAction(
             action=GameActionType.CREATE_PARTICLE_SPHERE,
-            args=Arguments(),
+            args=args,
             append_to_reader=True
         )
 
     @classmethod
-    def create_particle_spiral(cls) -> "GameAction":
+    def create_particle_spiral(
+        cls, particle: ParticleParam, base: Locatable,
+        length: typing.Optional[Numeric] = None, diameter: typing.Optional[Numeric] = None,
+        duration: typing.Optional[Numeric] = None
+    ) -> "GameAction":
         """Creates a spiral of particles at a certain location.
 
         .. rank:: Noble
 
+        Parameters
+        ----------
+        particle : :attr:`~.ParticleParam`
+            The particle to spawn.
+
+        base : :attr:`~.Locatable`
+            The base location of the spiral.
+
+            .. note::
+
+                The rotation of the spiral is determined by this location's pitch and yaw.
+
+        length : Optional[:attr:`~.Numeric`], optional
+            The length of the spiral, in blocks, or ``None`` for the default value (10 blocks).
+
+        diameter : Optional[:attr:`~.Numeric`], optional
+            The diameter of the spiral, in blocks, or ``None`` for the default value (2 blocks).
+
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            particle = DFParticle(ParticleType.BARRIER)  # Type of particle.
+            base = DFLocation(1, 2, 3, 45, 60)  # 45, 60 are pitch and yaw, to determine the rotation of the spiral
+            GameAction.create_particle_spiral(particle, base, 15, 3)
+            # length: 15 blocks; diameter: 3 blocks
         """
+        if diameter is not None and length is None:
+            length = 10  # default: 10 blocks
+
         return GameAction(
             action=GameActionType.CREATE_PARTICLE_SPIRAL,
-            args=Arguments(),
+            args=Arguments([
+                p_check(particle, ParticleParam, "particle"),
+                p_check(base, Locatable, "base"),
+                p_check(length, Numeric, "length") if length is not None else None,
+                p_check(diameter, Numeric, "diameter") if diameter is not None else None
+            ]),
             append_to_reader=True
         )
 
@@ -1593,6 +1712,7 @@ lands.
             The type of block to set.
 
             The type can be specified either as:
+
             - an instance of :class:`~.Material` (the material of the block to set);
             - an item (:attr:`~.ItemParam` - the item representing the block to set);
             - text (:attr:`~.Textable` - the material of the block to set as text).
@@ -1808,7 +1928,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def set_container_name(
        cls, loc: Locatable, name: Textable
-    ):
+    ) -> "GameAction":
         """Sets the custom name of a container (e.g. chests).
 
         Parameters
@@ -1845,7 +1965,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def set_furnace_speed(
        cls, loc: Locatable, speed: typing.Optional[Numeric] = None
-    ):
+    ) -> "GameAction":
         """Sets the cook time multiplier of a furnace.
 
         Parameters
@@ -1890,7 +2010,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def set_scoreboard_objective(
        cls, objective: Textable
-    ):
+    ) -> "GameAction":
         """Sets the objective name of the scoreboard on your plot.
 
         Parameters
@@ -1922,7 +2042,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def set_score(
        cls, score: Textable, new_value: typing.Optional[Numeric] = None
-    ):
+    ) -> "GameAction":
         """Sets a score on the scoreboard.
 
         Parameters
@@ -1981,7 +2101,7 @@ whose values DF expects to be formatted in one of the following ways:
        cls, loc: Locatable, name: typing.Optional[Textable] = None,
        *equipment: typing.Optional[ItemParam],
        visible: bool = True, has_hitbox: bool = True
-    ):
+    ) -> "GameAction":
         """Creates an armor stand at a certain location.
 
         .. rank:: Mythic
@@ -2054,7 +2174,7 @@ whose values DF expects to be formatted in one of the following ways:
     def spawn_crystal(
        cls, loc: Locatable, name: typing.Optional[Textable] = None,
        *, show_bottom: bool = True
-    ):
+    ) -> "GameAction":
         """Spawns an End Crystal at a certain location.
 
         Parameters
@@ -2099,7 +2219,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def spawn_exp_orb(
        cls, loc: Locatable, exp_amount: typing.Optional[Numeric] = None, name: typing.Optional[Textable] = None
-    ):
+    ) -> "GameAction":
         """Spawns an experience orb at a certain location.
 
         Parameters
@@ -2150,7 +2270,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def spawn_evoker_fangs(
        cls, loc: Locatable, name: typing.Optional[Textable] = None
-    ):
+    ) -> "GameAction":
         """Spawns Evoker Fangs at a certain location.
 
         Parameters
@@ -2194,7 +2314,7 @@ whose values DF expects to be formatted in one of the following ways:
        cls, loc: Locatable, name: typing.Optional[Textable] = None,
        *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]],
        apply_item_motion: bool = True
-    ):
+    ) -> "GameAction":
         """Spawns an item at a certain location.
 
         Parameters
@@ -2258,7 +2378,7 @@ whose values DF expects to be formatted in one of the following ways:
        cls, spawn_egg: SpawnEggable, loc: Locatable, health: typing.Optional[Numeric] = None,
        name: typing.Optional[Textable] = None, potions: typing.Optional[typing.Iterable[Potionable]] = None,
        *equipment: typing.Optional[typing.Union[Item, ItemCollection, typing.Iterable[Item]]]
-    ):
+    ) -> "GameAction":
         """Spawns a mob at a certain location.
 
         Parameters
@@ -2326,7 +2446,7 @@ whose values DF expects to be formatted in one of the following ways:
         cls, loc: Locatable, name: typing.Optional[Textable] = None,
         *items: typing.Optional[typing.Union[Item, ItemCollection, typing.Iterable[Item]]],
         apply_item_motion: bool = True
-    ):
+    ) -> "GameAction":
         """Randomly spawns an item at a certain location.
 
         Parameters
@@ -2338,7 +2458,7 @@ whose values DF expects to be formatted in one of the following ways:
             Item stack name to show above. Default is ``None``.
 
         items : typing.Union[Item, ItemCollection, typing.Iterable[Item]]
-            The items can be specified either as:
+            Items to pick from. The items can be specified either as:
 
             - ``None`` for an empty slot;
             - :class:`~.Item` for one item;
@@ -2363,7 +2483,9 @@ whose values DF expects to be formatted in one of the following ways:
 
             loc = DFLocation(1, 2, 3)  # location to spawn the item stack
             my_item = 64 * Item(Material.STONE)  # 64 stones
-            GameAction.spawn_item(loc, "Some items", my_item)  # Spawns 64 stones at the location, named "Some items"
+            other_item = 32 * Item(Material.GOLD_BLOCK)  # or 32 gold blocks
+            GameAction.spawn_item(loc, "Some items", my_item, other_item)
+            # Spawns either 64 stones or 32 gold blocks at the location, with the stack named "Some items"
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
         if not item_list or not any(item_list):
@@ -2387,9 +2509,9 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def spawn_tnt(
-       cls, loc: Locatable, num_1: typing.Optional[Numeric] = None, num_2: typing.Optional[Numeric] = None,
-            text: typing.Optional[Textable] = None
-    ):
+        cls, loc: Locatable, *, power: typing.Optional[Numeric] = None, duration: typing.Optional[Numeric] = None,
+        name: typing.Optional[Textable] = None
+    ) -> "GameAction":
         """Spawns primed TNT at a certain location.
 
         Parameters
@@ -2397,17 +2519,14 @@ whose values DF expects to be formatted in one of the following ways:
         loc : :attr:`~.Locatable`
             TNT location.
 
+        power : Optional[:attr:`~.Numeric`], optional
+            TNT power (0-4), or ``None`` for the default (4). Defaults to ``None``.
 
-        num_1 : Optional[:attr:`~.Numeric`], optional
-            TNT power (0-4, default = 4). Default is ``None``.
+        duration : Optional[:attr:`~.Numeric`], optional
+            Fuse duration (ticks), or ``None`` for the default (0). Defaults to ``None`` (0).
 
-
-        num_2 : Optional[:attr:`~.Numeric`], optional
-            Fuse duration (ticks, default = 0). Default is ``None``.
-
-
-        text : Optional[:attr:`~.Textable`], optional
-            Custom name. Default is ``None``.
+        name : Optional[:attr:`~.Textable`], optional
+            Custom name for the TNT. Default is ``None`` (no name).
 
 
         Returns
@@ -2419,13 +2538,20 @@ whose values DF expects to be formatted in one of the following ways:
         --------
         ::
 
-            GameAction.spawn_tnt(loc, num_1, num_2, text)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # location of the TNT
+            GameAction.spawn_tnt(loc, power=3, duration=40, name="My TNT")
         """
+        if isinstance(power, (int, float, DFNumber)) and not 0 <= float(power) <= 4:
+            raise ValueError("'power' argument must be between 0 and 4.")
+
+        if duration is not None and power is None:
+            power = 4  # default
+
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(num_1, Numeric, "num_1") if num_1 is not None else None,
-            p_check(num_2, Numeric, "num_2") if num_2 is not None else None,
-            p_check(text, Textable, "text") if text is not None else None
+            p_check(power, Numeric, "power") if power is not None else None,
+            p_check(duration, Numeric, "duration") if duration is not None else None,
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return GameAction(
             action=GameActionType.SPAWN_TNT,
@@ -2435,26 +2561,24 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def spawn_vehicle(
-       cls, vehicle: BlockParam, loc: Locatable, text: typing.Optional[Textable] = None
-    ):
+        cls, vehicle: BlockParam, loc: Locatable, name: typing.Optional[Textable] = None
+    ) -> "GameAction":
         """Spawns a vehicle at a certain location.
 
         Parameters
         ----------
         vehicle : Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]
-            The type of Vehicle type.
+            The type of vehicle.
 
             The type can be specified either as:
-            - an instance of :class:`~.Material` (the material of the block to set);
-            - an item (:attr:`~.ItemParam` - the item representing the block to set);
-            - text (:attr:`~.Textable` - the material of the block to set as text).
-
+            - an instance of :class:`~.Material` (the material of the vehicle);
+            - an item (:attr:`~.ItemParam` - the item representing the vehicle to spawn);
+            - text (:attr:`~.Textable` - the material of the vehicle to spawn as text).
 
         loc : :attr:`~.Locatable`
             Vehicle location.
 
-
-        text : Optional[:attr:`~.Textable`], optional
+        name : Optional[:attr:`~.Textable`], optional
             Vehicle name. Default is ``None``.
 
 
@@ -2467,12 +2591,17 @@ whose values DF expects to be formatted in one of the following ways:
         --------
         ::
 
-            GameAction.spawn_vehicle(vehicle, loc, text)  # TODO: Example
+            vehicle = Material.MINECART  # vehicle to spawn
+            loc = DFLocation(1, 2, 3)  # where to spawn
+            GameAction.spawn_vehicle(vehicle, loc, "My Vehicle")
         """
+        if isinstance(vehicle, (Material, str, DFText, collections.UserString)):
+            vehicle = Material(vehicle).value
+
         args = Arguments([
-            p_check(vehicle, BlockParam, "vehicle"),
+            p_check(vehicle, typing.Union[ItemParam, Textable], "vehicle"),
             p_check(loc, Locatable, "loc"),
-            p_check(text, Textable, "text") if text is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return GameAction(
             action=GameActionType.SPAWN_VEHICLE,
@@ -2481,51 +2610,9 @@ whose values DF expects to be formatted in one of the following ways:
         )
 
     @classmethod
-    def start_loop(cls):
-        """Activates your plot's Loop Block if it has one.
-
-        Returns
-        -------
-        :class:`GameAction`
-            The generated GameAction instance.
-
-        Examples
-        --------
-        ::
-
-            GameAction.start_loop()
-        """
-        return GameAction(
-            action=GameActionType.START_LOOP,
-            args=Arguments(),
-            append_to_reader=True
-        )
-
-    @classmethod
-    def stop_loop(cls):
-        """Deactivates your plot's Loop Block if it has one.
-
-        Returns
-        -------
-        :class:`GameAction`
-            The generated GameAction instance.
-
-        Examples
-        --------
-        ::
-
-            GameAction.stop_loop()
-        """
-        return GameAction(
-            action=GameActionType.STOP_LOOP,
-            args=Arguments(),
-            append_to_reader=True
-        )
-
-    @classmethod
     def summon_lightning(
-       cls, loc: Locatable, num: typing.Optional[Numeric] = None
-    ):
+        cls, loc: Locatable, radius: typing.Optional[Numeric] = None
+    ) -> "GameAction":
         """Strikes lightning at a certain location, damaging players in a radius.
 
         Parameters
@@ -2533,9 +2620,8 @@ whose values DF expects to be formatted in one of the following ways:
         loc : :attr:`~.Locatable`
             Strike location.
 
-
-        num : Optional[:attr:`~.Numeric`], optional
-            Damage radius (default = 3). Default is ``None``.
+        radius : Optional[:attr:`~.Numeric`], optional
+            Damage radius in blocks, or ``None`` for the default (3). Default is ``None``.
 
 
         Returns
@@ -2547,11 +2633,12 @@ whose values DF expects to be formatted in one of the following ways:
         --------
         ::
 
-            GameAction.summon_lightning(loc, num)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # where to strike a lightning
+            GameAction.summon_lightning(loc, 5)  # radius: 5 blocks
         """
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(num, Numeric, "num") if num is not None else None
+            p_check(radius, Numeric, "radius") if radius is not None else None
         ])
         return GameAction(
             action=GameActionType.SUMMON_LIGHTNING,
@@ -2561,17 +2648,16 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def tick_block(
-       cls, *locs: Locatable, num: typing.Optional[Numeric] = None
-    ):
-        """Causes a block to get random ticked.
+        cls, *locs: Locatable, ticks: typing.Optional[Numeric] = None
+    ) -> "GameAction":
+        """Causes a block/multiple blocks to get random ticked.
 
         Parameters
         ----------
         locs : :attr:`~.Locatable`
             Block(s) to tick.
 
-
-        num : Optional[:attr:`~.Numeric`], optional
+        ticks : Optional[:attr:`~.Numeric`], optional
             Number of ticks. Default is ``None``.
 
 
@@ -2584,323 +2670,20 @@ whose values DF expects to be formatted in one of the following ways:
         --------
         ::
 
-            GameAction.tick_block(locs, num)  # TODO: Example
+            loc_1 = DFLocation(1, 2, 3)  # one location
+            loc_2 = LocVar("my var")  # another location
+            loc_3 = DFVariable("my var")  # yet another!
+            GameAction.tick_block(loc_1, loc_2, loc_3, ticks=20)  # tick those 3 blocks with 20 ticks
         """
         args = Arguments([
-        *[p_check(obj, Locatable, "locs[{i}]") for obj in locs],
-            p_check(num, Numeric, "num") if num is not None else None
+            *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)],
+            p_check(ticks, Numeric, "ticks") if ticks is not None else None
         ])
         return GameAction(
             action=GameActionType.TICK_BLOCK,
             args=args,
             append_to_reader=True
         )
-
-    @classmethod
-    def uncancel_event(cls):
-        """Uncancels the initial event that triggered this line of code.
-
-        Returns
-        -------
-        :class:`GameAction`
-            The generated GameAction instance.
-
-        Examples
-        --------
-        ::
-
-            GameAction.uncancel_event()
-        """
-        return GameAction(
-            action=GameActionType.UNCANCEL_EVENT,
-            args=Arguments(),
-            append_to_reader=True
-        )
-
-    # @classmethod
-    # def set_container_name(cls) -> "GameAction":
-    #     """Sets the custom name of a container (e.g. chests).
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SET_CONTAINER_NAME,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def set_furnace_speed(cls) -> "GameAction":
-    #     """Sets the cook time multiplier of a furnace.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SET_FURNACE_SPEED,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def set_sc_obj(cls) -> "GameAction":
-    #     """Sets the objective name of the scoreboard on your plot.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SET_SC_OBJ,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def set_score(cls) -> "GameAction":
-    #     """Sets a score on the scoreboard.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SET_SCORE,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def show_sidebar(cls) -> "GameAction":
-    #     """Enables the scoreboard sidebar on the plot.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SHOW_SIDEBAR,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_armor_stand(cls) -> "GameAction":
-    #     """Creates an armor stand at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_ARMOR_STAND,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_crystal(cls) -> "GameAction":
-    #     """Spawns an End Crystal at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_CRYSTAL,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_exp_orb(cls) -> "GameAction":
-    #     """Spawns an experience orb at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_EXP_ORB,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_fangs(cls) -> "GameAction":
-    #     """Spawns Evoker Fangs at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_FANGS,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_item(cls) -> "GameAction":
-    #     """Spawns an item at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_ITEM,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_mob(cls) -> "GameAction":
-    #     """Spawns a mob at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_MOB,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_rng_item(cls) -> "GameAction":
-    #     """Randomly spawns an item at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_RNG_ITEM,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_tnt(cls) -> "GameAction":
-    #     """Spawns primed TNT at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_TNT,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def spawn_vehicle(cls) -> "GameAction":
-    #     """Spawns a vehicle at a certain location.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SPAWN_VEHICLE,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def start_loop(cls) -> "GameAction":
-    #     """Activates your plot's Loop Block if it has one.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.START_LOOP,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def stop_loop(cls) -> "GameAction":
-    #     """Deactivates your plot's Loop Block if it has one.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.STOP_LOOP,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def summon_lightning(cls) -> "GameAction":
-    #     """Strikes lightning at a certain location, damaging players in a radius.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.SUMMON_LIGHTNING,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def tick_block(cls) -> "GameAction":
-    #     """Causes a block to get random ticked.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.TICK_BLOCK,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
-    # 
-    # @classmethod
-    # def uncancel_event(cls) -> "GameAction":
-    #     """Uncancels the initial event that triggered this line of code.
-    # 
-    #     Returns
-    #     -------
-    #     :class:`GameAction`
-    #         The generated Game Action codeblock.
-    #     """
-    #     return GameAction(
-    #         action=GameActionType.UNCANCEL_EVENT,
-    #         args=Arguments(),
-    #         append_to_reader=True
-    #     )
 
     # endregion:humanized-gameaction
 

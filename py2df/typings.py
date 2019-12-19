@@ -38,8 +38,8 @@ parameter."""
     SoundParam = typing.Union[DFSound, SoundType, DFVariable]  # no sound game value
     """Union[:class:`~.DFSound`, :class:`~.SoundType`, :class:`~.DFVariable`] : The possible types of a Sound param."""
 
-    ItemParam = typing.Union[Item, DFGameValue, DFVariable, Material]
-    """Union[:class:`~.Item`, :class:`~.Material` :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types \
+    ItemParam = typing.Union[Item, Material, DFGameValue, DFVariable]
+    """Union[:class:`~.Item`, :class:`~.Material`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types \
 of an Item parameter."""
 
     SpawnEggable = typing.Union[DFCustomSpawnEgg, ItemParam]

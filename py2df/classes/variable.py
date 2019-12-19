@@ -25,7 +25,7 @@ if typing.TYPE_CHECKING:
     from ..typings import Param, Numeric, Locatable, Textable, Listable, ItemParam
 
 
-_VarOpEl = typing.Union["Numeric", "DFVariable", "Locatable", "VarOp"]
+_VarOpEl = typing.Union["Numeric", "_Var", "Locatable", "VarOp"]
 
 op_to_expr = {
     SetVarType.SET_TO: "=",
@@ -919,7 +919,7 @@ Stone ...
 
     # region:var_ops
 
-    def __add__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+    def __add__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
 
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
@@ -928,10 +928,10 @@ Stone ...
 
         return VarOp(SetVarType.SET_TO_ADDITION, self, other)
 
-    def __radd__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+    def __radd__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
         return self.__add__(other)
 
-    def __sub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+    def __sub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
         ):
@@ -939,7 +939,7 @@ Stone ...
 
         return VarOp(SetVarType.SET_TO_SUBTRACTION, self, other)
 
-    def __rsub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "DFVariable"]):
+    def __rsub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
         ):
@@ -951,7 +951,7 @@ Stone ...
             error_incompatible=True, modify_self=True
         )
 
-    def __mul__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]):
+    def __mul__(self, other: typing.Union["Numeric", VarOp, "_Var"]):
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -959,10 +959,10 @@ Stone ...
 
         return VarOp(SetVarType.SET_TO_PRODUCT, self, other)
 
-    def __rmul__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+    def __rmul__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         return self.__mul__(other)
 
-    def __pow__(self, power: typing.Union["Numeric", VarOp, "DFVariable"], modulo=None) -> VarOp:
+    def __pow__(self, power: typing.Union["Numeric", VarOp, "_Var"], modulo=None) -> VarOp:
         if isinstance(power, VarOp):
             vars = power.vars
             if len(vars) > 1:
@@ -983,7 +983,7 @@ Stone ...
 
         return VarOp(SetVarType.SET_TO_POWER, self, power)
 
-    def __rpow__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+    def __rpow__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if isinstance(other, VarOp):
             vars = other.vars
             if len(vars) > 1:
@@ -1004,7 +1004,7 @@ Stone ...
 
         return VarOp(SetVarType.SET_TO_POWER, other, self)
 
-    def __mod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+    def __mod__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if isinstance(other, VarOp):
             vars = other.vars
             if len(vars) > 1:
@@ -1025,7 +1025,7 @@ Stone ...
 
         return VarOp(SetVarType.SET_TO_MOD, self, other)
 
-    def __rmod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+    def __rmod__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if isinstance(other, VarOp):
             vars = other.vars
             if len(vars) > 1:
@@ -1046,7 +1046,7 @@ Stone ...
 
         return VarOp(SetVarType.SET_TO_MOD, other, self)  # notice the change in order.
 
-    def __truediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+    def __truediv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -1058,7 +1058,7 @@ Stone ...
                 Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
         )
 
-    def __rtruediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+    def __rtruediv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -1070,7 +1070,7 @@ Stone ...
                 Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
         )
 
-    def __floordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+    def __floordiv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -1084,7 +1084,7 @@ Stone ...
             )]
         )
 
-    def __rfloordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> VarOp:
+    def __rfloordiv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -1346,7 +1346,7 @@ target={repr(str(self.target) if self.target else self.target)}>"
         return hash((self.__class__.__name__, self.gval_type, str(self.target)))
 
 
-class DFVariable(DFType, VarOperable):
+class _Var(DFType, VarOperable):
     """Represents a DiamondFire variable. **Note that all variables with same 'name' attribute represent the same
     var.**
 
@@ -1585,7 +1585,7 @@ generated IfVariable block). Example usage::
         )
 
     @classmethod
-    def from_json_data(cls, data: dict) -> "DFVariable":
+    def from_json_data(cls, data: dict) -> "_Var":
         """Obtain a DFVariable from pre-existing parsed JSON data (as a dict).
 
         Must have, at least, the following keys with the following format::
@@ -1627,7 +1627,7 @@ generated IfVariable block). Example usage::
     def __str__(self):
         return f"%var({self.name})"
 
-    def __iadd__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
+    def __iadd__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> "_Var":
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -1647,7 +1647,7 @@ generated IfVariable block). Example usage::
 
         return self
 
-    def __isub__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
+    def __isub__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> "_Var":
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -1667,28 +1667,28 @@ generated IfVariable block). Example usage::
 
         return self
 
-    def __imul__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
+    def __imul__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> "_Var":
         self.set(self.__mul__(other))
 
         return self
 
-    def __ipow__(self, power: typing.Union["Numeric", VarOp, "DFVariable"], modulo=None) -> "DFVariable":
+    def __ipow__(self, power: typing.Union["Numeric", VarOp, "_Var"], modulo=None) -> "_Var":
         self.set(self.__pow__(power))
 
         return self
 
-    def __imod__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
+    def __imod__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> "_Var":
         self.set(self.__mod__(other))
 
         return self
 
-    def __itruediv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
+    def __itruediv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> "_Var":
         self.set(self.__truediv__(other))
 
         return self
         # [Tag("Division Mode", option="Default", action=SetVarType.SET_TO_QUOTIENT, block=BlockType.SET_VAR)]
 
-    def __ifloordiv__(self, other: typing.Union["Numeric", VarOp, "DFVariable"]) -> "DFVariable":
+    def __ifloordiv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> "_Var":
         self.set(self.__floordiv__(other))
 
         return self
@@ -1698,6 +1698,143 @@ generated IfVariable block). Example usage::
         return hash((self.name, self.scope))
 
 
-remove_u200b_from_doc(DFVariable, VarOp, DFGameValue, VarOperable)
+class DFVariable(_Var):
+    """Represents a DiamondFire variable. **Note that all variables with same 'name' attribute represent the same
+    var.**
+
+    Parameters
+    ----------\u200b
+    name : :class:`str`
+        The name of this variable. This uniquely identifies it, along with its scope.
+
+    init_value : Optional[Union[:attr:`~.Param`, :class:`VarOp`, Iterable[:attr:`~.Param`]]], optional
+        An optional initial value for this variable. Defaults to ``None`` (i.e., doesn't set a value).
+
+        .. note::
+
+            If any value is specified, **this creates a Set Var block**. As such, **this behaves identically to**
+            :meth:`set` (therefore, see its documentation).
+
+    scope : :class:`~.VariableScope`, optional
+        The scope of this variable. This can also be set through the kwargs ``unsaved``, ``saved`` and ``local`` .
+        Defaults to :attr:`~.VariableScope.UNSAVED`.
+
+    unsaved : :class:`bool`, optional
+        If ``True``, the variable's scope is set to :attr:`~.VariableScope.UNSAVED` - i.e., the value does not persist
+        between successive plot uses (when the amount of players reaches 0, the variable is reset).
+
+
+    .. container:: comparisons
+
+        .. describe:: a == b, a != b
+
+            Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
+
+            1. **Is used to compare the variables with an If Var.** Note that equaling to an iterable means checking \
+if the variable is equal to at least one of its elements. Example usage::
+
+                with var_a == var_b:
+                    # code that is only executed in DiamondFire if 'var_a' and 'var_b' are equal in value.
+
+                with var_c != var_d:
+                    # code that is only executed in DiamondFire if 'var_c' and 'var_d' are different in value.
+
+                with var_e == (var_f, var_g, var_i):
+                    # code that is only executed in DiamondFire if 'var_e' is equal to one of 'var_f', 'var_g' or \
+'var_i'.
+
+            2. **Is used to compare, IN PYTHON, the variables' names and scopes** (by calling :func:`bool` on the \
+generated IfVariable block). Example usage::
+
+                if var_a == var_b:
+                    # code that is only read, IN PYTHON, if 'var_a' and 'var_b' have the same 'name' and 'scope' attrs.
+
+                if var_c != var_d:
+                    # code that is only read, IN PYTHON, if 'var_c' and 'var_b' have a different 'name' or 'scope' attr.
+
+        .. describe:: a > b, a >= b, a < b, a <= b
+
+            Returns the equivalent :class:`~.IfVariable` block for the given comparison. **Its only usage is as
+            a Codeblock** (in a `with`).
+            For example::
+
+                with var_a > var_b:
+                    # code that is only executed in DiamondFire if 'var_a' is bigger than 'var_b' in value.
+
+                with var_c < var_d:
+                    # code that is only executed in DiamondFire if 'var_c' is less than 'var_d' in value.
+
+            .. note::
+
+                Those comparisons are not usable in Python if's; if a :func:`bool` is attempted on the resulting
+                IfVariable block, it will always return True. This mechanism is only implemented for ``==`` and ``!=``.
+
+            .. warning::
+
+                Assuming that one of them is a DFVariable, the other has to be a valid :attr:`~.Numeric` parameter.
+                Otherwise, a TypeError may be raised (if the given type does not support operations with DFVariable,
+                which is likely).
+
+    .. container:: operations
+
+        .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
+
+            Creates a :class:`VarOp` instance representing this operation between different variables/variables
+            and values/etc.
+            It is meant to be given as the parameter for :meth:`set`, which will then place the appropriate
+            Set Variable type.
+
+            `a` is the :class:`DFVariable`, while `b`, in this case, is the :attr:`~.Numeric` to realize this
+            operation with.
+
+            .. note::
+
+                If the operation is addition or subtraction, `b` can also be a :attr:`~.Locatable` parameter (represent
+                a location), besides Numeric.
+
+            .. warning::
+
+                **You cannot mix operations.** For example, ``a + b - c * d ** e`` will raise. Stick to only one
+                at once, and have one :meth:`set` call for each kind. (There is only one Set Var for each kind.)
+                (However, operations with multiple variables, up to 27, work: ``a + b + c + ... + z``)
+
+                If there is an attempt to mix operations, a :exc:`TypeError` is raised.
+
+                Similarly, if there is an attempt to have an operation with more than 26 variables (chest size is
+                up to 27 items, while 1 slot is the variable being set), then a :exc:`~.LimitReachedError` is raised
+                instead.
+
+        .. describe:: a += b, a -= b, a *= b, a **= b. a /= b, a //= b, a %= b
+
+            Same behavior as ``a.set(a ? b)``, where ``?`` is the given operation (`b` must be :attr:`~.Numeric`).
+
+            .. note::
+
+                If the operation given is either ``+=`` or ``-=``, then it will place the respective
+                ``+=`` and ``-=`` Set Var blocks instead of ``a.set(a +/- b)``. This is because those are
+                the only ones that have a SetVar equivalent.
+
+        .. describe:: str(a)
+
+            Returns this variable as a string in the form ``%var(name)``, where `name` is the variable's name.
+            When used in a string, DiamondFire replaces it with the variable's value.
+
+        .. describe:: hash(a)
+
+            Returns an unique hash identifying this variable by name and scope.
+
+
+    Attributes
+    ----------\u200b
+    name : :class:`str`
+        The name of this variable. This uniquely identifies it, along with its scope.
+
+    scope : :class:`~.VariableScope`
+        The scope of this variable (:attr:`~.UNSAVED`, :attr:`~.SAVED` or :attr:`~.LOCAL`).
+    """
+    pass
+
+
+remove_u200b_from_doc(_Var, DFVariable, VarOp, DFGameValue, VarOperable)
 
 

@@ -886,8 +886,12 @@ class Material(AutoLowerNameEnum):
     ZOMBIE_SPAWN_EGG = auto()
     ZOMBIE_VILLAGER_SPAWN_EGG = auto()
 
-    def __new__(cls, value):
-        if isinstance(value, (str, collections.UserString)) and str(value).startswith("minecraft:"):
-            value = str(value).replace("minecraft:", "")
 
-        return super().__new__(cls, value)
+def _material_new(cls, value):  # allow `minecraft:`
+    if isinstance(value, (str, collections.UserString)) and str(value).startswith("minecraft:"):
+        value = str(value).replace("minecraft:", "")
+
+    return super(Material, cls).__new__(cls, value)
+
+
+setattr(Material, "__new__", _material_new)
