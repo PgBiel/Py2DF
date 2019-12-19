@@ -7,7 +7,7 @@ from ..enums import (
     Material)
 from ..classes import JSONData, Arguments, ActionBlock, Tag, DFNumber, DFVariable, DFText, Item, ItemCollection
 from ..utils import remove_u200b_from_doc, flatten
-from ..typings import p_check, Numeric, Locatable, Textable, ParticleParam, ItemParam
+from ..typings import p_check, Numeric, Locatable, Textable, ParticleParam, ItemParam, SpawnEggable, Potionable
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
 
@@ -1211,6 +1211,12 @@ lands.
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Raises
+        ------
+        :exc:`ValueError`
+            If no item was specified.
+
         Examples
         --------
         ::
@@ -1222,9 +1228,15 @@ lands.
             GameAction.fill_container(loc, item_1, item_2, some_items)  # fill the container at 'loc' with those 4 items
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
+        if not item_list or not any(item_list):
+            raise ValueError("No item was specified.")
+
         return GameAction(
             action=GameActionType.FILL_CONTAINER,
-            args=Arguments([loc, *item_list]),
+            args=Arguments([
+                p_check(loc, Locatable, "loc"),
+                *([p_check(it, ItemParam, "items") for it in item_list])
+            ]),
             append_to_reader=True
         )
 
@@ -1745,38 +1757,51 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def set_container(
-       cls, loc: Locatable, *items: ItemParam
-    ):
-        """Sets a containers contents.
+        cls, loc: Locatable, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+    ) -> "GameAction":
+        """Sets a container's contents.
 
         Parameters
         ----------
         loc : :attr:`~.Locatable`
-            Container location.
+            Location of the container to have its contents set.
 
-
-        items : :attr:`~.ItemParam`
-            Item(s) to set.
-
+        items: Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]]
+            The items can be specified either as:
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
 
         Returns
         -------
         :class:`GameAction`
-            The generated GameAction instance.
+            The generated Game Action codeblock.
+
+        Raises
+        ------
+        :exc:`ValueError`
+            If no item was specified.
 
         Examples
         --------
         ::
 
-            GameAction.set_container(loc, items)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # loc of the container
+            item_1 = Item(Material.STONE, name="some item")
+            item_2 = Item(Material.STONE, name="some other item")
+            some_items = ItemCollection([Item(Material.GRASS_BLOCK), Item(Material.GRANITE_SLAB)])  # more items
+            GameAction.set_container(loc, item_1, item_2, some_items)  # set the container at 'loc' to those 4 items
         """
-        args = Arguments([
-            p_check(loc, Locatable, "loc"),
-        *[p_check(obj, ItemParam, "items[{i}]") for obj in items]
-        ])
+        item_list = flatten(*items, except_iterables=[str], max_depth=1)
+        if not item_list or not any(item_list):
+            raise ValueError("No item was specified.")
+
         return GameAction(
             action=GameActionType.SET_CONTAINER,
-            args=args,
+            args=Arguments([
+                p_check(loc, Locatable, "loc"),
+                *([p_check(it, ItemParam, "items") for it in item_list])
+            ]),
             append_to_reader=True
         )
 
@@ -1789,11 +1814,10 @@ whose values DF expects to be formatted in one of the following ways:
         Parameters
         ----------
         loc : :attr:`~.Locatable`
-            Container location.
-
+            The container's location.
 
         name : :attr:`~.Textable`
-            New container name.
+            The new container name.
 
 
         Returns
@@ -1884,7 +1908,7 @@ whose values DF expects to be formatted in one of the following ways:
         --------
         ::
 
-            GameAction.set_sc_obj(text)  # TODO: Example
+            GameAction.set_scoreboard_objective("New objective")
         """
         args = Arguments([
             p_check(objective, Textable, "objective")
@@ -1905,7 +1929,6 @@ whose values DF expects to be formatted in one of the following ways:
         ----------
         score : :attr:`~.Textable`
             Score name (32 characters or less).
-
 
         new_value : Optional[:attr:`~.Numeric`], optional
             New score value, or ``None`` for the default (0). Default is ``None``.
@@ -1933,7 +1956,7 @@ whose values DF expects to be formatted in one of the following ways:
         )
 
     @classmethod
-    def show_sidebar(cls):  # TODO: finish documenting game actions and stuff
+    def show_scoreboard(cls):
         """Enables the scoreboard sidebar on the plot.
 
         Returns
@@ -1945,7 +1968,7 @@ whose values DF expects to be formatted in one of the following ways:
         --------
         ::
 
-            GameAction.show_sidebar()
+            GameAction.show_scoreboard()
         """
         return GameAction(
             action=GameActionType.SHOW_SIDEBAR,
@@ -1955,8 +1978,9 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def spawn_armor_stand(
-       cls, loc: Locatable, text: typing.Optional[Textable] = None, *items: typing.Optional[ItemParam]
-        *, visibility=Visible
+       cls, loc: Locatable, name: typing.Optional[Textable] = None,
+       *equipment: typing.Optional[ItemParam],
+       visible: bool = True, has_hitbox: bool = True
     ):
         """Creates an armor stand at a certain location.
 
@@ -1966,17 +1990,27 @@ whose values DF expects to be formatted in one of the following ways:
         Parameters
         ----------
         loc : :attr:`~.Locatable`
-            Armor stand location.
+            The new rmor stand's location.
 
+        name : Optional[:attr:`~.Textable`], optional
+            The new armor stand's name. Default is ``None``.
 
-        text : Optional[:attr:`~.Textable`], optional
-            Name. Default is ``None``.
+        equipment : Optional[:attr:`~.ItemParam`], optional
+            Equipment. The items can be specified either as:
 
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
 
-        items : Optional[:attr:`~.ItemParam`], optional
-            Equipment. Default is ``None``.
-            visibility :
-            Visible, Visible (No hitbox), Invisible, Invisible (No hitbox)
+            .. note::
+
+                Equipment goes, from left to right: Helmet, Chestplate, Leggings, Boots, Right Hand, Left Hand.
+
+        visible : :class:`bool`, optional
+            If ``False``, the armor stand will be invisible. Defaults to ``True`` (visible).
+
+        has_hitbox : :class:`bool`, optional
+            If ``False``, the armor stand won't have a hitbox. Defaults to ``True`` (has hitbox).
 
         Returns
         -------
@@ -1985,24 +2019,28 @@ whose values DF expects to be formatted in one of the following ways:
 
         Notes
         -----
-        - Options to set the pose and tags are in Entity Action ª Appearance.
-        - Equipment goes from the bottom left corner towards the right: Helmet, Chestplate, Leggings, Boots, Right Hand, Left Hand
-
-
+        - Options to set the pose and tags are in Entity Action - Appearance.
 
         Examples
         --------
         ::
 
-            GameAction.spawn_armor_stand(loc, text, items)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # location of the armor stand
+            helmet = Item(Material.DIAMOND_HELMET, unbreakable=True)  # example helmet
+            chestp = Item(Material.IRON_CHESTPLATE, name="My Chestplate")  # example chestplate
+            # ... etc ...
+            GameAction.spawn_armor_stand(loc, "My Armor Stand", helmet, chestp, visible=True, has_hitbox=False)
+            # armor stand named "My Armor Stand" with some helmet and chestplate; visible without hitbox
         """
+        item_list = flatten(*equipment, except_iterables=[str], max_depth=1)
+
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(text, Textable, "text") if text is not None else None,
-        *[p_check(obj, ItemParam, "items[{i}]") for obj in items]
+            p_check(name, Textable, "name") if name is not None else None,
+            *([p_check(it, ItemParam, "equipment") for it in item_list])
         ], tags=[
             Tag(
-                "Visibility", option=Visible,
+                "Visibility", option=f"{'Visible' if visible else 'Invisible'}{'' if has_hitbox else ' (No hitbox)'}",
                 action=GameActionType.SPAWN_ARMOR_STAND, block=BlockType.GAME_ACTION
             )
         ])
@@ -2014,8 +2052,8 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def spawn_crystal(
-       cls, loc: Locatable, text: typing.Optional[Textable] = None
-        *, show_bottom=True
+       cls, loc: Locatable, name: typing.Optional[Textable] = None,
+       *, show_bottom: bool = True
     ):
         """Spawns an End Crystal at a certain location.
 
@@ -2024,11 +2062,11 @@ whose values DF expects to be formatted in one of the following ways:
         loc : :attr:`~.Locatable`
             Location to spawn at.
 
+        name : Optional[:attr:`~.Textable`], optional
+            Custom name for the crystal. Default is ``None``.
 
-        text : Optional[:attr:`~.Textable`], optional
-            Custom name. Default is ``None``.
-            show_bottom :
-            True, False
+        show_bottom : :class:`bool`, optional
+            Whether or not the Crystal bottom should be shown. Defaults to ``True``.
 
         Returns
         -------
@@ -2039,14 +2077,16 @@ whose values DF expects to be formatted in one of the following ways:
         --------
         ::
 
-            GameAction.spawn_crystal(loc, text)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # location of the crystal
+            GameAction.spawn_crystal(loc, "My Crystal", show_bottom=False)  # spawns at loc, with name "My Crystal",
+                                                                            # without showing its bottom.
         """
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(text, Textable, "text") if text is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ], tags=[
             Tag(
-                "Show Bottom", option=True,
+                "Show Bottom", option=bool(show_bottom),
                 action=GameActionType.SPAWN_CRYSTAL, block=BlockType.GAME_ACTION
             )
         ])
@@ -2058,7 +2098,7 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def spawn_exp_orb(
-       cls, loc: Locatable, num: typing.Optional[Numeric] = None, text: typing.Optional[Textable] = None
+       cls, loc: Locatable, exp_amount: typing.Optional[Numeric] = None, name: typing.Optional[Textable] = None
     ):
         """Spawns an experience orb at a certain location.
 
@@ -2067,13 +2107,15 @@ whose values DF expects to be formatted in one of the following ways:
         loc : :attr:`~.Locatable`
             Orb location.
 
+        exp_amount : Optional[:attr:`~.Numeric`], optional
+            Experience amount, or ``None`` for a default value set by DF. Default is ``None``.
 
-        num : Optional[:attr:`~.Numeric`], optional
-            Experience amount. Default is ``None``.
+            .. warning::
 
+                This parameter has to be specified in order to specify `name`, or a :exc:`ValueError` is raised.
 
-        text : Optional[:attr:`~.Textable`], optional
-            Orb name. Default is ``None``.
+        name : Optional[:attr:`~.Textable`], optional
+            Orb name, or ``None`` for none.. Default is ``None``.
 
 
         Returns
@@ -2081,16 +2123,23 @@ whose values DF expects to be formatted in one of the following ways:
         :class:`GameAction`
             The generated GameAction instance.
 
+        Raises
+        ------
+        :exc:`ValueError`
+            If `name` is specified but `exp_amount` isn't.
+
         Examples
         --------
         ::
 
-            GameAction.spawn_exp_orb(loc, num, text)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # where to spawn the orb
+
+            GameAction.spawn_exp_orb(loc, 5, "My Orb")  # 5 experience given by the new orb named "My Orb".
         """
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(num, Numeric, "num") if num is not None else None,
-            p_check(text, Textable, "text") if text is not None else None
+            p_check(exp_amount, Numeric, "exp_amount") if exp_amount is not None else None,
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return GameAction(
             action=GameActionType.SPAWN_EXP_ORB,
@@ -2099,19 +2148,18 @@ whose values DF expects to be formatted in one of the following ways:
         )
 
     @classmethod
-    def spawn_fangs(
-       cls, loc: Locatable, text: typing.Optional[Textable] = None
+    def spawn_evoker_fangs(
+       cls, loc: Locatable, name: typing.Optional[Textable] = None
     ):
         """Spawns Evoker Fangs at a certain location.
 
         Parameters
         ----------
         loc : :attr:`~.Locatable`
-            Location to spawn at.
+            Location to spawn the fangs at.
 
-
-        text : Optional[:attr:`~.Textable`], optional
-            Custom name. Default is ``None``.
+        name : Optional[:attr:`~.Textable`], optional
+            Custom name for the fangs, or ``None`` for none. Default is ``None``.
 
 
         Returns
@@ -2121,19 +2169,19 @@ whose values DF expects to be formatted in one of the following ways:
 
         Notes
         -----
-        Evoker Fangs deal damage and remove themselves a second later.
-
+        Evoker Fangs deal damage and disappear a second later.
 
 
         Examples
         --------
         ::
 
-            GameAction.spawn_fangs(loc, text)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # where they spawn
+            GameAction.spawn_evoker_fangs(loc, "My Fangs")
         """
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(text, Textable, "text") if text is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return GameAction(
             action=GameActionType.SPAWN_FANGS,
@@ -2143,44 +2191,59 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def spawn_item(
-       cls, *items: ItemParam, loc: Locatable, text: typing.Optional[Textable] = None
-        *, apply_item_motion=True
+       cls, loc: Locatable, name: typing.Optional[Textable] = None,
+       *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]],
+       apply_item_motion: bool = True
     ):
         """Spawns an item at a certain location.
 
         Parameters
         ----------
-        items : :attr:`~.ItemParam`
-            Item(s) to spawn.
-
-
         loc : :attr:`~.Locatable`
-            Location to spawn at.
+            Location to spawn the item at.
 
+        name : Optional[:attr:`~.Textable`], optional
+            Item stack name to show above. Default is ``None``.
 
-        text : Optional[:attr:`~.Textable`], optional
-            Item name. Default is ``None``.
-            apply_item_motion :
-            True, False
+        items : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]
+            The items can be specified either as:
+
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+
+        apply_item_motion : :class:`bool`, optional
+            If motion should be applied to the item. Defaults to ``True``.
 
         Returns
         -------
         :class:`GameAction`
             The generated GameAction instance.
 
+        Raises
+        ------
+        :exc:`ValueError`
+            If no item was specified.
+
         Examples
         --------
         ::
 
-            GameAction.spawn_item(items, loc, text)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # location to spawn the item stack
+            my_item = 64 * Item(Material.STONE)  # 64 stones
+            GameAction.spawn_item(loc, "Some items", my_item)  # Spawns 64 stones at the location, named "Some items"
         """
+        item_list = flatten(*items, except_iterables=[str], max_depth=1)
+        if not item_list or not any(item_list):
+            raise ValueError("No item was specified.")
+
         args = Arguments([
-        *[p_check(obj, ItemParam, "items[{i}]") for obj in items],
+            *[p_check(it, ItemParam, "items") for it in item_list],
             p_check(loc, Locatable, "loc"),
-            p_check(text, Textable, "text") if text is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ], tags=[
             Tag(
-                "Apply Item Motion", option=True,
+                "Apply Item Motion", option=bool(apply_item_motion),
                 action=GameActionType.SPAWN_ITEM, block=BlockType.GAME_ACTION
             )
         ])
@@ -2192,9 +2255,9 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def spawn_mob(
-       cls, spawn_egg: SpawnEggable, loc: Locatable, num: typing.Optional[Numeric] = None,
-            text: typing.Optional[Textable] = None, *potions: typing.Optional[Potionable],
-        *items: typing.Optional[ItemParam]
+       cls, spawn_egg: SpawnEggable, loc: Locatable, health: typing.Optional[Numeric] = None,
+       name: typing.Optional[Textable] = None, potions: typing.Optional[typing.Iterable[Potionable]] = None,
+       *equipment: typing.Optional[typing.Union[Item, ItemCollection, typing.Iterable[Item]]]
     ):
         """Spawns a mob at a certain location.
 
@@ -2203,51 +2266,54 @@ whose values DF expects to be formatted in one of the following ways:
         spawn_egg : :attr:`~.SpawnEggable`
             Mob type.
 
-
         loc : :attr:`~.Locatable`
             Location to spawn at.
 
+        health : Optional[:attr:`~.Numeric`], optional
+            Mob health. Default is ``None`` (full health).
 
-        num : Optional[:attr:`~.Numeric`], optional
-            Mob health. Default is ``None``.
+        name : Optional[:attr:`~.Textable`], optional
+            Mob name. Default is ``None`` (no name).
 
+        potions : Optional[Iterable[:attr:`~.Potionable`]], optional
+            Potion effect(s). Default is ``None`` (no potion effect).
 
-        text : Optional[:attr:`~.Textable`], optional
-            Mob name. Default is ``None``.
+        equipment : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]], optional
+            Mob equipment. Default is ``None`` (no equipment). The items can be specified either as:
 
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
 
-        potions : Optional[:attr:`~.Potionable`], optional
-            Potion effect(s). Default is ``None``.
+            .. note::
 
-
-        items : Optional[:attr:`~.ItemParam`], optional
-            Mob equipment. Default is ``None``.
-
+                Equipment goes from left to right: Main Hand, Helmet, Chestplate, Leggings, Boots, Off Hand.
 
         Returns
         -------
         :class:`GameAction`
             The generated GameAction instance.
 
-        Notes
-        -----
-        Equipment goes from the bottom left corner towards the right: Main Hand, Helmet, Chestplate, Leggings, Boots, Off Hand
-
-
 
         Examples
         --------
         ::
 
-            GameAction.spawn_mob(spawn_egg, loc, num, text, potions, items)  # TODO: Example
+            spawn_egg = Item(Material.ZOMBIE_SPAWN_EGG)  # zombie
+            loc = DFLocation(1, 2, 3)  # where to spawn
+            potions = [DFPotion(PotionType.ABSORPTION, 255, (999, 99))]  # Absorption 255; inf duration (999:99)
+            hand_item = Item(Material.DIAMOND_SWORD, name="Epic Sword", unbreakable=True)  # some item
+            GameAction.spawn_mob(spawn_egg, loc, 10, "My mob", potions, hand_item, ...)  # ... for other items
+            # Spawns a zombie at the given location, named "My mob" and with 10 health (5 hearts) plus the absorption
+            # hearts, while holding an unbreakable diamond sword named "Epic Sword".
         """
         args = Arguments([
             p_check(spawn_egg, SpawnEggable, "spawn_egg"),
             p_check(loc, Locatable, "loc"),
-            p_check(num, Numeric, "num") if num is not None else None,
-            p_check(text, Textable, "text") if text is not None else None,
-        *[p_check(obj, Potionable, "potions[{i}]") for obj in potions],
-        *[p_check(obj, ItemParam, "items[{i}]") for obj in items]
+            p_check(health, Numeric, "health") if health is not None else None,
+            p_check(name, Textable, "name") if name is not None else None,
+            *[p_check(obj, Potionable, f"potions[{i}]") for i, obj in enumerate(potions)],
+            *[p_check(obj, ItemParam, "items") for obj in flatten(equipment, except_iterables=[str], max_depth=1)]
         ])
         return GameAction(
             action=GameActionType.SPAWN_MOB,
@@ -2257,44 +2323,59 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def spawn_rng_item(
-       cls, *items: ItemParam, loc: Locatable, text: typing.Optional[Textable] = None
-        *, apply_item_motion=True
+        cls, loc: Locatable, name: typing.Optional[Textable] = None,
+        *items: typing.Optional[typing.Union[Item, ItemCollection, typing.Iterable[Item]]],
+        apply_item_motion: bool = True
     ):
         """Randomly spawns an item at a certain location.
 
         Parameters
         ----------
-        items : :attr:`~.ItemParam`
-            Items to pick from.
-
-
         loc : :attr:`~.Locatable`
-            Location to spawn at.
+            Location to spawn the item at.
 
+        name : Optional[:attr:`~.Textable`], optional
+            Item stack name to show above. Default is ``None``.
 
-        text : Optional[:attr:`~.Textable`], optional
-            Item name. Default is ``None``.
-            apply_item_motion :
-            True, False
+        items : typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+            The items can be specified either as:
+
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+
+        apply_item_motion : :class:`bool`, optional
+            If motion should be applied to the item. Defaults to ``True``.
 
         Returns
         -------
         :class:`GameAction`
             The generated GameAction instance.
 
+        Raises
+        ------
+        :exc:`ValueError`
+            If no item was specified.
+
         Examples
         --------
         ::
 
-            GameAction.spawn_rng_item(items, loc, text)  # TODO: Example
+            loc = DFLocation(1, 2, 3)  # location to spawn the item stack
+            my_item = 64 * Item(Material.STONE)  # 64 stones
+            GameAction.spawn_item(loc, "Some items", my_item)  # Spawns 64 stones at the location, named "Some items"
         """
+        item_list = flatten(*items, except_iterables=[str], max_depth=1)
+        if not item_list or not any(item_list):
+            raise ValueError("No item was specified.")
+
         args = Arguments([
-        *[p_check(obj, ItemParam, "items[{i}]") for obj in items],
+            *[p_check(it, ItemParam, "items") for it in item_list],
             p_check(loc, Locatable, "loc"),
-            p_check(text, Textable, "text") if text is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ], tags=[
             Tag(
-                "Apply Item Motion", option=True,
+                "Apply Item Motion", option=bool(apply_item_motion),
                 action=GameActionType.SPAWN_RNG_ITEM, block=BlockType.GAME_ACTION
             )
         ])

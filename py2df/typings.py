@@ -38,11 +38,11 @@ parameter."""
     SoundParam = typing.Union[DFSound, SoundType, DFVariable]  # no sound game value
     """Union[:class:`~.DFSound`, :class:`~.SoundType`, :class:`~.DFVariable`] : The possible types of a Sound param."""
 
-    ItemParam = typing.Union[Item, DFGameValue, DFVariable]
-    """Union[:class:`~.Item`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of an Item \
-parameter."""
+    ItemParam = typing.Union[Item, DFGameValue, DFVariable, Material]
+    """Union[:class:`~.Item`, :class:`~.Material` :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types \
+of an Item parameter."""
 
-    SpawnEggable = typing.Union[DFCustomSpawnEgg, Material, ItemParam]
+    SpawnEggable = typing.Union[DFCustomSpawnEgg, ItemParam]
     """Union[:class:`~.DFCustomSpawnEgg`, :attr:`ItemParam`] : The possible types of a Spawn Egg parameter."""
 
     Param = typing.Union[
@@ -202,9 +202,16 @@ def convert_all(param: Param) -> Param:
     return convert_particle(convert_sound(convert_numeric(convert_text(convert_material(param)))))
 
 
-_P = typing.TypeVar("_P", Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable)
-_A = typing.TypeVar("_A", Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable)
-_B = typing.TypeVar("_B", Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable)
+_P = typing.TypeVar(
+    "_P",
+    Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable, SpawnEggable
+)
+_A = typing.TypeVar("_A",
+    Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable, SpawnEggable
+)
+_B = typing.TypeVar("_B",
+    Param, Numeric, Textable, Listable, Locatable, Potionable, ItemParam, DFVariable, SpawnEggable
+)
 
 
 @typing.overload
@@ -259,6 +266,12 @@ def p_check(
 @typing.overload
 def p_check(
     obj: DFVariable, typeof: typing.Type[DFVariable], arg_name: typing.Optional[str] = None, *, convert: bool = True
+) -> DFVariable: ...
+
+
+@typing.overload
+def p_check(
+    obj: SpawnEggable, typeof: typing.Type[SpawnEggable], arg_name: typing.Optional[str] = None, *, convert: bool = True
 ) -> DFVariable: ...
 
 
@@ -352,7 +365,13 @@ documentation to see valid 'GameValueType' attrs for this parameter type.)"
         ))
 
     if convert:
-        return convert_all(typing.cast(_P, obj))
+        obj = convert_all(typing.cast(_P, obj))
+
+    if typeof == SpawnEggable and isinstance(obj, Item) and "spawn_egg" not in obj.material.value:
+        raise TypeError(
+            f"Object must be a valid spawn egg item, not a(n) '{obj.material.value}'."
+            + (f" (Arg '{arg_name}')" if arg_name else "")
+        )
 
     return typing.cast(_P, obj)
 

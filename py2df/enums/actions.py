@@ -251,6 +251,7 @@ class GameActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     REMOVE_SCORE = auto()  #: Removes a score from the scoreboard.
     SET_BLOCK = auto()  #: Sets the block at a certain location or region.
     SET_BLOCK_DATA = auto()  #: Sets a metadata tag for a certain block.
+    SET_CONTAINER = auto()  #: Sets a container's contents.
     SET_CONTAINER_NAME = auto()  #: Sets the custom name of a container (e.g. chests).
     SET_FURNACE_SPEED = auto()  #: Sets the cook time multiplier of a furnace.
     SET_SC_OBJ = auto()  #: Sets the objective name of the scoreboard on your plot.
