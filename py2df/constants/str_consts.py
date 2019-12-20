@@ -1,5 +1,5 @@
 ITEM_ID_TEXT_VAR = "txt"
-ITEM_ID_NUMBER_VAR = "num"
+ITEM_ID_NUMBER_VAR = "range"
 ITEM_ID_LOCATION = "loc"
 ITEM_ID_ITEM = "item"
 ITEM_ID_SOUND = "snd"

@@ -175,10 +175,10 @@ def clamp(num: AnyNumber, min_: AnyNumber, max_: AnyNumber) -> AnyNumber:
         Number to be clamped.
 
     min_ : Union[:class:`int`, :class:`float`]
-        Lower bound; the minimum value that this number can be, and is returned if ``num <= min_`` holds.
+        Lower bound; the minimum value that this number can be, and is returned if ``range <= min_`` holds.
 
     max_ : Union[:class:`int`, :class:`float`]
-        Upper bound; the maximum value that this number can be, and is returned if ``num => max_`` holds.
+        Upper bound; the maximum value that this number can be, and is returned if ``range => max_`` holds.
 
     Returns
     -------

@@ -483,7 +483,7 @@ class IfGame(IfBlock):
             DFReader().append_codeblock(self)
 
     def __neg__(self):
-        return IfGame(
+        return cls(
             self.action, self.args, append_to_reader=False, invert=-self.invert,
             codeblocks=self.codeblocks
         )
@@ -548,7 +548,7 @@ class IfGame(IfBlock):
             )
         ])
 
-        return IfGame(
+        return cls(
             action=IfGameType.SIGN_HAS_TXT,
             args=args,
             append_to_reader=False,
@@ -640,7 +640,7 @@ class IfGame(IfBlock):
             ],
             *[p_check(meta, Textable, f"metadata[{i}]") for i, meta in enumerate(true_metadata)]
         ])
-        return IfGame(
+        return cls(
             action=IfGameType.BLOCK_EQUALS,
             args=args,
             append_to_reader=False,
@@ -690,9 +690,9 @@ class IfGame(IfBlock):
 
         args = Arguments([
             *[p_check(block_type, typing.Union[ItemParam, Textable], f"block_types[{i}]") for i, block_type in
-              enumerate(block_types)]
+              enumerate(true_btypes)]
         ])
-        return IfGame(
+        return cls(
             action=IfGameType.EVENT_BLOCK_EQUALS,
             args=args,
             append_to_reader=False,
@@ -747,7 +747,7 @@ class IfGame(IfBlock):
                 action=IfGameType.COMMAND_EQUALS, block=BlockType.IF_GAME
             )
         ])
-        return IfGame(
+        return cls(
             action=IfGameType.COMMAND_EQUALS,
             args=args,
             append_to_reader=False,
@@ -805,7 +805,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
                 action=IfGameType.EVENT_ITEM_EQUALS, block=BlockType.IF_GAME
             )
         ])
-        return IfGame(
+        return cls(
             action=IfGameType.EVENT_ITEM_EQUALS,
             args=args,
             append_to_reader=False,
@@ -848,7 +848,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
                 action=IfGameType.BLOCK_POWERED, block=BlockType.IF_GAME
             )
         ])
-        return IfGame(
+        return cls(
             action=IfGameType.BLOCK_POWERED,
             args=args,
             append_to_reader=False,
@@ -899,7 +899,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
             p_check(loc, Locatable, "loc"),
             *[p_check(item, ItemParam, "items") for item in item_list]
         ])
-        return IfGame(
+        return cls(
             action=IfGameType.CONTAINER_HAS,
             args=args,
             append_to_reader=False,
@@ -946,7 +946,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
             p_check(loc, Locatable, "loc"),
             *[p_check(item, ItemParam, "items") for item in item_list]
         ])
-        return IfGame(
+        return cls(
             action=IfGameType.CONTAINER_HAS_ALL,
             args=args,
             append_to_reader=False,
@@ -993,14 +993,14 @@ texts ...
         """
         args = Arguments([
             *[p_check(text, Textable, f"texts[{i}]") for i, text in enumerate(texts)],
-            p_check(arg_num, Numeric, "num")
+            p_check(arg_num, Numeric, "range")
         ], tags=[
             Tag(
                 "Ignore Case", option=bool(ignore_case),  # default is True
                 action=IfGameType.CMD_ARG_EQUALS, block=BlockType.IF_GAME
             )
         ])
-        return IfGame(
+        return cls(
             action=IfGameType.CMD_ARG_EQUALS,
             args=args,
             append_to_reader=False,
@@ -1023,7 +1023,7 @@ texts ...
             with IfGame.event_cancelled():
                 # ... code to be executed if the event is cancelled ...
         """
-        return IfGame(
+        return cls(
             action=IfGameType.EVENT_CANCELLED,
             args=Arguments(),
             append_to_reader=False,

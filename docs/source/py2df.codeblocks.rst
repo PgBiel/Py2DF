@@ -28,6 +28,14 @@ py2df.codeblocks.caller module
    :undoc-members:
    :show-inheritance:
 
+py2df.codeblocks.humanized_target module
+------------------------------
+
+.. automodule:: py2df.codeblocks.humanized_target
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 py2df.codeblocks.utilityblock module
 ------------------------------------
 

@@ -316,7 +316,7 @@ class GameAction(ActionBlock, JSONData):
 
             GameAction.blocks_drops_off()
         """
-        return GameAction(
+        return cls(
             action=GameActionType.BLOCK_DROPS_OFF,
             args=Arguments(),
             append_to_reader=True
@@ -337,7 +337,7 @@ class GameAction(ActionBlock, JSONData):
 
             GameAction.blocks_drops_on()
         """
-        return GameAction(
+        return cls(
             action=GameActionType.BLOCK_DROPS_ON,
             args=Arguments(),
             append_to_reader=True
@@ -383,7 +383,7 @@ class GameAction(ActionBlock, JSONData):
                 action=GameActionType.BONE_MEAL, block=BlockType.GAME_ACTION
             )]
         )
-        return GameAction(
+        return cls(
             action=GameActionType.BONE_MEAL,
             args=args,
             append_to_reader=True
@@ -412,7 +412,7 @@ class GameAction(ActionBlock, JSONData):
             loc_3 = DFVariable("other var")  # some locations
             GameAction.break_block(loc_1, loc_2, loc_3)  # breaks those blocks
         """
-        return GameAction(
+        return cls(
             action=GameActionType.BREAK_BLOCK,
             args=Arguments([p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)]),
             append_to_reader=True
@@ -433,7 +433,7 @@ class GameAction(ActionBlock, JSONData):
 
             GameAction.cancel_event()
         """
-        return GameAction(
+        return cls(
             action=GameActionType.CANCEL_EVENT,
             args=Arguments(),
             append_to_reader=True
@@ -473,7 +473,7 @@ class GameAction(ActionBlock, JSONData):
 
             line = DFNumber(int(line))  # floor; line numbers can only be ints
 
-        return GameAction(
+        return cls(
             action=GameActionType.CHANGE_SIGN,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
@@ -498,7 +498,7 @@ class GameAction(ActionBlock, JSONData):
 
             GameAction.clear_scoreboard()
         """
-        return GameAction(
+        return cls(
             action=GameActionType.CLEAR_SC_BOARD,
             args=Arguments(),
             append_to_reader=True
@@ -550,7 +550,7 @@ second cooldown."
             paste_pos = DFVariable("%default paste_pos")  # some variable containing a location
             GameAction.copy_blocks(loc_1, loc_2, copy_pos, paste_pos)
         """
-        return GameAction(
+        return cls(
             action=GameActionType.COPY_BLOCKS,
             args=Arguments([
                 p_check(loc_1, Locatable, "loc_1"),
@@ -606,7 +606,7 @@ second cooldown."
         if duration is not None and diameter is None:
             diameter = 2  # default: 2 blocks
 
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_ANIMATED_PARTICLE_CIRCLE,
             args=Arguments([
                 p_check(particle, ParticleParam, "particle"),
@@ -654,7 +654,7 @@ second cooldown."
             loc_2 = DFLocation(4, 2, 3)  # 4-block-long line
             GameAction.create_animated_particle_line(particle, loc_1, loc_2, 40)  # duration: 2 s (40 ticks)
         """
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_ANIMATED_PARTICLE_LINE,
             args=Arguments([
                 p_check(particle, ParticleParam, "particle"),
@@ -717,7 +717,7 @@ second cooldown."
             length = length if length is not None else 10       # default: 10 blocks
             diameter = diameter if diameter is not None else 2  # default: 2 blocks
 
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_ANIMATED_PARTICLE_SPIRAL,
             args=Arguments([
                 p_check(particle, ParticleParam, "particle"),
@@ -756,7 +756,7 @@ second cooldown."
             loc = DFVariable("some location")
             GameAction.create_hologram(loc, "Hey guys!")  # displays "Hey guys!" at the specified location
         """
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_HOLOGRAM,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
@@ -802,7 +802,7 @@ second cooldown."
             center = DFLocation(1, 2, 3, 45, 60)  # 45, 60 are pitch and yaw, to determine the rotation of the circle
             GameAction.create_particle_circle(particle, center, 5)  # diameter: 5 blocks
         """
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_PARTICLE_CIRCLE,
             args=Arguments([
                 p_check(particle, ParticleParam, "particle"),
@@ -843,7 +843,7 @@ second cooldown."
         if density is not None and size is None:
             size = 2  # default: 2 blocks (size)
 
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_PARTICLE_CLUSTER,
             args=Arguments([
                 p_check(particle, ParticleParam, "particle"),
@@ -885,7 +885,7 @@ second cooldown."
             loc_2 = DFLocation(4, 2, 3)  # 4-block-long line
             GameAction.create_animated_particle_line(particle, loc_1, loc_2)
         """
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_PARTICLE_LINE,
             args=Arguments([
                 p_check(particle, ParticleParam, "particle"),
@@ -929,7 +929,7 @@ second cooldown."
             p_check(particle, ParticleParam, "particle"),
             *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)]
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_PARTICLE_PATH,
             args=args,
             append_to_reader=True
@@ -975,7 +975,7 @@ second cooldown."
             p_check(origin, Locatable, "origin"),
             p_check(length, typing.Optional[Numeric], "length") if length is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_PARTICLE_RAY,
             args=args,
             append_to_reader=True
@@ -1020,7 +1020,7 @@ second cooldown."
             p_check(center, Locatable, "center"),
             p_check(diameter, typing.Optional[Numeric], "diameter") if diameter is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_PARTICLE_SPHERE,
             args=args,
             append_to_reader=True
@@ -1071,7 +1071,7 @@ second cooldown."
         if diameter is not None and length is None:
             length = 10  # default: 10 blocks
 
-        return GameAction(
+        return cls(
             action=GameActionType.CREATE_PARTICLE_SPIRAL,
             args=Arguments([
                 p_check(particle, ParticleParam, "particle"),
@@ -1186,7 +1186,7 @@ lands.
 
         true_metadata: typing.List[Textable] = _load_metadata(typing.cast(metadata, BlockMetadata), allow_none=True)
 
-        return GameAction(
+        return cls(
             action=GameActionType.DROP_BLOCK,
             args=Arguments(
                 [
@@ -1233,7 +1233,7 @@ lands.
             loc = DFLocation(1, 2, 3)  # loc of the container
             GameAction.empty_container(loc)  # empties it
         """
-        return GameAction(
+        return cls(
             action=GameActionType.EMPTY_CONTAINER,
             args=Arguments([p_check(loc, Locatable, "loc")]),
             append_to_reader=True
@@ -1272,7 +1272,7 @@ lands.
         if isinstance(power, (int, float, DFNumber)) and not 0 <= float(power) <= 4:
             raise ValueError("'power' argument must be between 0 and 4.")
 
-        return GameAction(
+        return cls(
             action=GameActionType.EXPLOSION,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
@@ -1323,7 +1323,7 @@ lands.
         if not item_list or not any(item_list):
             raise ValueError("No item was specified.")
 
-        return GameAction(
+        return cls(
             action=GameActionType.FILL_CONTAINER,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
@@ -1352,7 +1352,7 @@ lands.
         :class:`GameAction`
             The generated Game Action codeblock.
         """
-        return GameAction(
+        return cls(
             action=GameActionType.FIREWORK,
             args=Arguments([
                 p_check(firework, ItemParam, "firework"),
@@ -1389,7 +1389,7 @@ lands.
             loc = DFLocation(1, 2, 3)
             GameAction.firework_effect(firework, loc)
         """
-        return GameAction(
+        return cls(
             action=GameActionType.FIREWORK_EFFECT,
             args=Arguments(),
             append_to_reader=True
@@ -1413,7 +1413,7 @@ lands.
 
             GameAction.hide_scoreboard()
         """
-        return GameAction(
+        return cls(
             action=GameActionType.HIDE_SIDEBAR,
             args=Arguments(),
             append_to_reader=True
@@ -1527,7 +1527,7 @@ lands.
         if speed is None and inaccuracy is not None:
             raise ValueError("'speed' must be specified in order to specify 'inaccuracy'.")
 
-        return GameAction(
+        return cls(
             action=GameActionType.LAUNCH_PROJ,
             args=Arguments([
                 p_check(projectile, typing.Union[Textable, ItemParam], "projectile"),
@@ -1570,7 +1570,7 @@ lands.
             # OR
             GameAction.lock_container(loc)  # unlocks it; i.e., any item/bare hands can open it (the default behavior)
         """
-        return GameAction(
+        return cls(
             action=GameActionType.LOCK_CONTAINER,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
@@ -1596,7 +1596,7 @@ lands.
         :class:`GameAction`
             The generated Game Action codeblock.
         """
-        return GameAction(
+        return cls(
             action=GameActionType.PLAY_PARTICLE_EFFECT,
             args=Arguments([
                 p_check(particle, ParticleParam, "particle"),
@@ -1629,7 +1629,7 @@ lands.
             # OR
             GameAction.remove_hologram("hello there")  # removes hologram with text "hello there"
         """
-        return GameAction(
+        return cls(
             action=GameActionType.REMOVE_HOLOGRAM,
             args=Arguments([
                 p_check(loc_or_text, typing.Union[Locatable, Textable], "loc_or_text")
@@ -1657,7 +1657,7 @@ lands.
 
             GameAction.remove_score("User")  # or some var or something
         """
-        return GameAction(
+        return cls(
             action=GameActionType.REMOVE_SCORE,
             args=Arguments([
                 p_check(score, Textable, "score")
@@ -1761,7 +1761,7 @@ whose values DF expects to be formatted in one of the following ways:
 
         true_metadata = _load_metadata(metadata, allow_none=True)
 
-        return GameAction(
+        return cls(
             action=GameActionType.SET_BLOCK,
             args=Arguments([
                 p_check(
@@ -1832,7 +1832,7 @@ whose values DF expects to be formatted in one of the following ways:
         if len(true_metadata) < 1:
             raise ValueError("Metadata must be specified (length > 0).")
 
-        return GameAction(
+        return cls(
             action=GameActionType.SET_BLOCK_DATA,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
@@ -1882,7 +1882,7 @@ whose values DF expects to be formatted in one of the following ways:
         if not item_list or not any(item_list):
             raise ValueError("No item was specified.")
 
-        return GameAction(
+        return cls(
             action=GameActionType.SET_CONTAINER,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
@@ -1922,7 +1922,7 @@ whose values DF expects to be formatted in one of the following ways:
             p_check(loc, Locatable, "loc"),
             p_check(name, Textable, "name")
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SET_CONTAINER_NAME,
             args=args,
             append_to_reader=True
@@ -1968,7 +1968,7 @@ whose values DF expects to be formatted in one of the following ways:
             p_check(loc, Locatable, "loc"),
             p_check(speed, Numeric, "speed") if speed is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SET_FURNACE_SPEED,
             args=args,
             append_to_reader=True
@@ -2000,7 +2000,7 @@ whose values DF expects to be formatted in one of the following ways:
         args = Arguments([
             p_check(objective, Textable, "objective")
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SET_SC_OBJ,
             args=args,
             append_to_reader=True
@@ -2036,7 +2036,7 @@ whose values DF expects to be formatted in one of the following ways:
             p_check(score, Textable, "score"),
             p_check(new_value, Numeric, "new_value") if new_value is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SET_SCORE,
             args=args,
             append_to_reader=True
@@ -2057,7 +2057,7 @@ whose values DF expects to be formatted in one of the following ways:
 
             GameAction.show_scoreboard()
         """
-        return GameAction(
+        return cls(
             action=GameActionType.SHOW_SIDEBAR,
             args=Arguments(),
             append_to_reader=True
@@ -2131,7 +2131,7 @@ whose values DF expects to be formatted in one of the following ways:
                 action=GameActionType.SPAWN_ARMOR_STAND, block=BlockType.GAME_ACTION
             )
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_ARMOR_STAND,
             args=args,
             append_to_reader=True
@@ -2177,7 +2177,7 @@ whose values DF expects to be formatted in one of the following ways:
                 action=GameActionType.SPAWN_CRYSTAL, block=BlockType.GAME_ACTION
             )
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_CRYSTAL,
             args=args,
             append_to_reader=True
@@ -2228,7 +2228,7 @@ whose values DF expects to be formatted in one of the following ways:
             p_check(exp_amount, Numeric, "exp_amount") if exp_amount is not None else None,
             p_check(name, Textable, "name") if name is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_EXP_ORB,
             args=args,
             append_to_reader=True
@@ -2270,7 +2270,7 @@ whose values DF expects to be formatted in one of the following ways:
             p_check(loc, Locatable, "loc"),
             p_check(name, Textable, "name") if name is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_FANGS,
             args=args,
             append_to_reader=True
@@ -2334,7 +2334,7 @@ whose values DF expects to be formatted in one of the following ways:
                 action=GameActionType.SPAWN_ITEM, block=BlockType.GAME_ACTION
             )
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_ITEM,
             args=args,
             append_to_reader=True
@@ -2402,7 +2402,7 @@ whose values DF expects to be formatted in one of the following ways:
             *[p_check(obj, Potionable, f"potions[{i}]") for i, obj in enumerate(potions)],
             *[p_check(obj, ItemParam, "items") for obj in flatten(equipment, except_iterables=[str], max_depth=1)]
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_MOB,
             args=args,
             append_to_reader=True
@@ -2468,7 +2468,7 @@ whose values DF expects to be formatted in one of the following ways:
                 action=GameActionType.SPAWN_RNG_ITEM, block=BlockType.GAME_ACTION
             )
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_RNG_ITEM,
             args=args,
             append_to_reader=True
@@ -2520,7 +2520,7 @@ whose values DF expects to be formatted in one of the following ways:
             p_check(duration, Numeric, "duration") if duration is not None else None,
             p_check(name, Textable, "name") if name is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_TNT,
             args=args,
             append_to_reader=True
@@ -2570,7 +2570,7 @@ whose values DF expects to be formatted in one of the following ways:
             p_check(loc, Locatable, "loc"),
             p_check(name, Textable, "name") if name is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SPAWN_VEHICLE,
             args=args,
             append_to_reader=True
@@ -2607,7 +2607,7 @@ whose values DF expects to be formatted in one of the following ways:
             p_check(loc, Locatable, "loc"),
             p_check(radius, Numeric, "radius") if radius is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.SUMMON_LIGHTNING,
             args=args,
             append_to_reader=True
@@ -2646,7 +2646,7 @@ whose values DF expects to be formatted in one of the following ways:
             *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)],
             p_check(ticks, Numeric, "ticks") if ticks is not None else None
         ])
-        return GameAction(
+        return cls(
             action=GameActionType.TICK_BLOCK,
             args=args,
             append_to_reader=True
