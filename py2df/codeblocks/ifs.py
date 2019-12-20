@@ -1,3 +1,4 @@
+import collections
 import typing
 from collections import deque
 from abc import abstractmethod
@@ -6,11 +7,14 @@ from ..errors import DFSyntaxError
 from ..enums import (
     PlayerTarget, EntityTarget, BlockType, IfPlayerType, IfEntityType, IfGameType, IfVariableType,
     SelectionTarget,
-    BracketDirection, BracketType, IfType)
-from ..classes import JSONData, Arguments, BracketedBlock, Block, Bracket, DFVariable, DFGameValue
-from ..utils import remove_u200b_from_doc
+    BracketDirection, BracketType, IfType, Material, ItemEqComparisonMode)
+from ..classes import JSONData, Arguments, BracketedBlock, Block, Bracket, DFVariable, DFGameValue, Tag, DFText, Item, \
+    ItemCollection
+from ..utils import remove_u200b_from_doc, flatten
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
+from ..typings import Locatable, Textable, p_check, ItemParam, Numeric
+from ._block_utils import BlockParam, BlockMetadata, _load_metadata, _load_btypes
 
 
 class IfBlock(BracketedBlock, JSONData):
@@ -483,6 +487,550 @@ class IfGame(IfBlock):
             self.action, self.args, append_to_reader=False, invert=-self.invert,
             codeblocks=self.codeblocks
         )
+
+    # region:humanized-ifgame
+    @classmethod
+    def sign_has_text(
+        cls, loc: Locatable, text: Textable,
+        *, line_to_check: typing.Optional[int] = None, equals: bool = False
+    ) -> "IfGame":
+        """Checks if the text on a sign at a certain location contains the text given.
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            The location of the sign.
+
+        text : :attr:`~.Textable`
+            The text to look for.
+
+        line_to_check : Optional[:class:`int`], optional
+            The line where to check for containing the text (1-4), or ``None`` for all lines. Defaults to ``None``.
+
+        equals : :class:`bool`, optional
+            If the whole line(s) should be checked for being equal to the text, instead of just checking if the text
+            is contained within it/each. Defaults to ``False``.
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Raises
+        ------
+        :exc:`ValueError`
+            If the line to be checked is not within the range 1 <= line <= 4.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # location of sign
+            with IfGame.sign_has_text(loc, "Some Text", line_to_check=3, equals=False):
+                # ... code to be executed if 3rd line contains "Some Text" ...
+        """
+        if line_to_check is not None:
+            line_to_check = int(line_to_check)
+            if not 1 <= line_to_check <= 4:
+                raise ValueError("Sign line must be between 1 and 4.")
+
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            p_check(text, Textable, "text"),
+        ], tags=[
+            Tag(
+                "Sign Line", option=line_to_check if line_to_check is not None else "All Lines",
+                action=IfGameType.SIGN_HAS_TXT, block=BlockType.IF_GAME
+            ),
+            Tag(
+                "Check Mode", option="Sign Line Equals" if equals else "Sign Line Contains",
+                action=IfGameType.SIGN_HAS_TXT, block=BlockType.IF_GAME
+            )
+        ])
+
+        return IfGame(
+            action=IfGameType.SIGN_HAS_TXT,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def block_equals(
+        cls, loc: Locatable, *block_types: typing.Optional[BlockParam], metadata: typing.Optional[BlockMetadata]
+    ):
+        """Checks if a block at a certain location is a certain block.
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Location of the block to be checked.
+
+        block_types : Optional[Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]], optional
+            The type of Block(s) to check for.
+
+            The type can be specified either as:
+
+            - an instance of :class:`~.Material` (the material of the block to set);
+            - an item (:attr:`~.ItemParam` - the item representing the block to set);
+            - text (:attr:`~.Textable` - the material of the block to set as text).
+
+        metadata : Optional[Union[:class:`dict`, List[:attr:`~.Textable`]]], optional
+            Optionally, the metadata of the desired block (``None`` for none). If not ``None``, can be in two forms:
+
+            1. **As a dictionary:** If this is specified, then:
+                - The keys must be strings;
+                - The values can be one of:
+                    - :class:`str` (the written out option);
+                    - :class:`int` (is converted into a string accordingly);
+                    - :class:`bool` (is turned into "true"/"false" accordingly);
+                    - ``None`` (is turned into "none");
+                    - :class:`~.DFVariable` (is turned into "%var(name)" accordingly).
+                    - Any other types not mentioned will simply be ``str()``\ ed.
+                - Example::
+
+                    {
+                        "facing": "east",
+                        "drag": True,
+                        "west": None,
+                        "rotation": 8,
+                        "powered": DFVariable("my_var")
+                    }
+
+            2. **As a list/iterable:** If this is specified, then it must be a list of valid Textable parameters,         whose values DF expects to be formatted in one of the following ways:
+                - ``"tag=value"``
+                - ``"tag:value"``
+                - ``"tag,value"``
+
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Raises
+        ------
+        :exc:`ValueError`
+            If no block types are specified.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # where it is
+            block_1 = Material.STONE       # must either be a stone block...
+            block_2 = Material.GOLD_BLOCK  # ...or be a gold block.
+            meta = { "facing": "east" }  # must be facing east, for example
+
+            with IfGame.block_equals(loc, block_1, block_2, meta):  #
+                # ... code to be executed if the block at the given location is of the given type(s)...
+        """
+        if len(block_types) < 1:
+            raise ValueError("At least one block type must be specified.")
+
+        true_btypes: typing.List[typing.Union[ItemParam, Textable]] = _load_btypes(block_types)
+
+        true_metadata: typing.List[Textable] = _load_metadata(typing.cast(metadata, BlockMetadata), allow_none=True)
+
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            *[p_check(
+                block_type, typing.Union[ItemParam, Textable], f"block_types[{i}]") for i, block_type in
+                enumerate(true_btypes)
+            ],
+            *[p_check(meta, Textable, f"metadata[{i}]") for i, meta in enumerate(true_metadata)]
+        ])
+        return IfGame(
+            action=IfGameType.BLOCK_EQUALS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def event_block_equals(
+        cls, *block_types: BlockParam
+    ):
+        """Checks if the block in a block-related event is a certain block.
+
+        .. rank:: Emperor
+
+        .. workswith:: Place Block Event, Break Block Event
+
+        Parameters
+        ----------
+        block_types : Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]
+            The type of Block(s) to check for.
+
+            The type can be specified either as:
+
+            - an instance of :class:`~.Material` (the material of the block to set);
+            - an item (:attr:`~.ItemParam` - the item representing the block to set);
+            - text (:attr:`~.Textable` - the material of the block to set as text).
+
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Examples
+        --------
+        ::
+
+            block_1 = Material.STONE       # must either be a stone block...
+            block_2 = Material.GOLD_BLOCK  # ...or be a gold block.
+            with IfGame.event_block_equals(block_1, block_2):
+                # ... code to be executed if the Event Block is either a Stone block or a Gold Block.
+        """
+        if len(block_types) < 1:
+            raise ValueError("At least one block type must be specified.")
+
+        true_btypes: typing.List[typing.Union[ItemParam, Textable]] = _load_btypes(block_types)
+
+        args = Arguments([
+            *[p_check(block_type, typing.Union[ItemParam, Textable], f"block_types[{i}]") for i, block_type in
+              enumerate(block_types)]
+        ])
+        return IfGame(
+            action=IfGameType.EVENT_BLOCK_EQUALS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def command_equals(
+        cls, *texts: Textable,
+        only_first_word: bool = False, ignore_case: bool = True
+    ):
+        """Checks if the command entered in this Command Event is equal to a certain text.
+
+        .. rank:: Emperor
+
+        .. workswith:: Command Event
+
+        Parameters
+        ----------
+        texts : :attr:`~.Textable`
+            Text(s) to check for.
+
+        only_first_word : :class:`bool`, optional
+            If ``True``, only the first word the command is compared against the text(s). If ``False``, the whole
+            command line must be equal. Defaults to ``False``.
+
+        ignore_case : :class:`bool`, optional
+            If the check should be case insensitive. Defaults to ``True``.
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Examples
+        --------
+        ::
+
+            my_cmd_name = "kill"
+            with IfGame.command_equals("kill", only_first_word=True):
+                # ... code to be executed if user sent '@kill <anything after, or nothing>' ...
+        """
+        args = Arguments([
+            *[p_check(text, Textable, f"texts[{i}]") for i, text in enumerate(texts)]
+        ], tags=[
+            Tag(
+                "Check Mode", option="Check First Word" if only_first_word else "Check Entire Command",
+                action=IfGameType.COMMAND_EQUALS, block=BlockType.IF_GAME
+            ),
+            Tag(
+                "Ignore Case", option=bool(ignore_case),  # default is True
+                action=IfGameType.COMMAND_EQUALS, block=BlockType.IF_GAME
+            )
+        ])
+        return IfGame(
+            action=IfGameType.COMMAND_EQUALS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def event_item_equals(
+        cls, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]],
+        comparison_mode=ItemEqComparisonMode.IGNORE_DURABILITY_AND_STACK_SIZE
+    ):
+        """Checks if the item in an item-related event is a certain item.
+
+        .. workswith:: Click Item Events, Pickup Item Event, Drop Item Event, Consume Item Event
+
+        Parameters
+        ----------
+        items : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]
+            Item(s) to check for. The items can be specified either as:
+
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+
+        comparison_mode : :class:`~.ItemEqComparisonMode`, optional
+            The mode of comparison that will determine if the items are equal (Exactly equals, \
+Ignore stack size/durability or Material only). Defaults to Ignore stack size/durability \
+(:attr:`~.IGNORE_DURABILITY_AND_STACK_SIZE`).
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Examples
+        --------
+        ::
+
+            item_1 = Item(Material.STONE, name="aaa")          # must either be a stone named "aaa"...
+            item_2 = Item(Material.DIAMOND_SWORD, name="bbb")  # ...or a diamond sword named "bbb".
+            with IfGame.event_item_equals(item_1, item_2, comparison_mode=ItemEqComparisonMode.EXACTLY_EQUALS):
+                # ... code to be executed if the event item is EXACTLY EQUAL to one of the given items.
+        """
+        item_list = flatten(*items, except_iterables=[str], max_depth=1)
+
+        c_mode = ItemEqComparisonMode(comparison_mode)
+        if c_mode == ItemEqComparisonMode.IGNORE_STACK_SIZE:
+            c_mode = ItemEqComparisonMode.IGNORE_DURABILITY_AND_STACK_SIZE
+
+        args = Arguments([
+            p_check(item, ItemParam, "items") for item in item_list
+        ], tags=[
+            Tag(
+                "Comparison Mode", option=c_mode,  # default is Ignore stack size/durability
+                action=IfGameType.EVENT_ITEM_EQUALS, block=BlockType.IF_GAME
+            )
+        ])
+        return IfGame(
+            action=IfGameType.EVENT_ITEM_EQUALS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def block_powered(
+        cls, *locs: Locatable,
+        indirect_power: bool = False
+    ):
+        """Checks if a block/multiple blocks at a certain location is/some locations are powered by redstone.
+
+        Parameters
+        ----------
+        locs : :attr:`~.Locatable`
+            The location(s) of the block(s) to have their redstone power checked.
+
+        indirect_power : :class:`bool`, False
+            If ``True``, accepts blocks being indirectly redstone powered. If ``False``, only directly. Defaults to
+            ``False``.
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Examples
+        --------
+        ::
+
+            with IfGame.block_powered(locs):  # TODO: Example
+                # ... code to be executed if
+        """
+        args = Arguments([
+            p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)
+        ], tags=[
+            Tag(
+                "Redstone Power Mode", option="Indirect Power" if indirect_power else "Direct Power",
+                action=IfGameType.BLOCK_POWERED, block=BlockType.IF_GAME
+            )
+        ])
+        return IfGame(
+            action=IfGameType.BLOCK_POWERED,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def container_has_any(
+        cls, loc: Locatable, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+    ):
+        """Checks if a container has some item in its inventory.
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Container location.
+
+        items : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]
+            Item(s) to check for. The items can be specified either as:
+
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+
+            .. note::
+
+                If multiple items are given, the container only needs to have one of them.
+
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # location of the container
+            item_1 = Item(Material.STONE, name="stone")      # must either have a stone named "stone"...
+            item_2 = Item(Material.SLIMEBALL, name="slime")  # ...or a slimeball named "slime" in it.
+            with IfGame.container_has_any(loc, item_1, item_2):
+                # ... code to be executed if the container at the given location has one of the given items ...
+        """
+        item_list = flatten(*items, except_iterables=[str], max_depth=1)
+
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            *[p_check(item, ItemParam, "items") for item in item_list]
+        ])
+        return IfGame(
+            action=IfGameType.CONTAINER_HAS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def container_has_all(
+        cls, loc: Locatable, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+    ):
+        """Checks if a container has all of the given items.
+
+        Parameters
+        ----------
+        loc : :attr:`~.Locatable`
+            Container location.
+
+        items : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]
+            Item(s) to check for. The items can be specified either as:
+
+            - ``None`` for an empty slot;
+            - :class:`~.Item` for one item;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Examples
+        --------
+        ::
+
+            loc = DFLocation(1, 2, 3)  # location of the container
+            item_1 = Item(Material.STONE, name="stone")      # must have a stone named "stone"...
+            item_2 = Item(Material.SLIMEBALL, name="slime")  # ...and a slimeball named "slime" in it.
+            with IfGame.container_has_all(loc, items):
+                # ... code to be executed if the container at the given location has all of the given items ...
+        """
+        item_list = flatten(*items, except_iterables=[str], max_depth=1)
+
+        args = Arguments([
+            p_check(loc, Locatable, "loc"),
+            *[p_check(item, ItemParam, "items") for item in item_list]
+        ])
+        return IfGame(
+            action=IfGameType.CONTAINER_HAS_ALL,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def cmd_arg_equals(
+        cls, *texts: Textable, arg_num: Numeric,
+        ignore_case: bool = True
+    ):
+        """Checks if part of the command entered in this Command Event is equal to a certain text.
+
+        .. rank:: Emperor
+
+        .. workswith:: Command Event
+
+        Parameters
+        ----------
+        texts : :attr:`~.Textable`
+            Text(s) to check for. (Must be equal to one of them.)
+
+        arg_num : :attr:`~.Numeric`
+            Number of the argument to be compared.
+
+            .. note:: Argument number **1** is the command. **2, 3, ...** are the ones that follow.
+
+        ignore_case : :class:`bool`, optional
+            If the equality check should be done case insensitively. Defaults to ``True``.
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Examples
+        --------
+        ::
+
+            with IfGame.cmd_arg_equals("test", "input", arg_num=2):
+                # ... code to be executed if the second argument of a user-sent command is equal to one of the given \
+texts ...
+                # for example: '@somecmd test' or '@cmd input' would match.
+        """
+        args = Arguments([
+            *[p_check(text, Textable, f"texts[{i}]") for i, text in enumerate(texts)],
+            p_check(arg_num, Numeric, "num")
+        ], tags=[
+            Tag(
+                "Ignore Case", option=bool(ignore_case),  # default is True
+                action=IfGameType.CMD_ARG_EQUALS, block=BlockType.IF_GAME
+            )
+        ])
+        return IfGame(
+            action=IfGameType.CMD_ARG_EQUALS,
+            args=args,
+            append_to_reader=False,
+            invert=False
+        )
+
+    @classmethod
+    def event_cancelled(cls):
+        """Checks if the current event is cancelled.
+
+        Returns
+        -------
+        :class:`IfGame`
+            The generated IfGame instance.
+
+        Examples
+        --------
+        ::
+
+            with IfGame.event_cancelled():
+                # ... code to be executed if the event is cancelled ...
+        """
+        return IfGame(
+            action=IfGameType.EVENT_CANCELLED,
+            args=Arguments(),
+            append_to_reader=False,
+            invert=False
+        )
+
+    # endregion:humanized-ifgame
 
 
 class IfVariable(IfBlock):

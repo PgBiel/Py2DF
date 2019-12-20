@@ -10,44 +10,7 @@ from ..utils import remove_u200b_from_doc, flatten
 from ..typings import p_check, Numeric, Locatable, Textable, ParticleParam, ItemParam, SpawnEggable, Potionable
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
-
-
-BlockParam = typing.Union[
-    Material, ItemParam, Textable
-]
-
-
-BlockMetadata = typing.Union[
-    typing.Dict[str, typing.Optional[typing.Union[str, int, bool, DFVariable]]],
-    typing.Iterable[Textable]
-]
-
-
-def load_metadata(metadata: BlockMetadata, allow_none: bool = True):
-    true_metadata: typing.List[Textable] = []
-    if isinstance(metadata, dict):
-        for k, v in metadata.items():
-            val_str: str
-            if isinstance(v, bool):
-                val_str = "true" if v else "false"
-            elif v is None:
-                val_str = "none"
-            else:
-                val_str = str(v)
-
-            separator: str = "="
-            if "=" in val_str:
-                separator = "," if ":" in val_str else ":"
-
-            true_metadata.append(DFText(f"{k}{separator}{val_str}"))
-
-    elif isinstance(metadata, collections.Iterable):
-        true_metadata.extend(list(metadata))
-
-    elif (metadata is not None) if allow_none else True:
-        raise TypeError("Metadata must either be a dictionary or an iterable of Textables.")
-
-    return true_metadata
+from ._block_utils import BlockParam, BlockMetadata, _load_metadata
 
 
 class PlayerAction(ActionBlock, JSONData):
@@ -439,6 +402,15 @@ class GameAction(ActionBlock, JSONData):
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
+
+        Examples
+        --------
+        ::
+
+            loc_1 = DFLocation(1, 2, 3)
+            loc_2 = LocVar("my var")
+            loc_3 = DFVariable("other var")  # some locations
+            GameAction.break_block(loc_1, loc_2, loc_3)  # breaks those blocks
         """
         return GameAction(
             action=GameActionType.BREAK_BLOCK,
@@ -1212,7 +1184,7 @@ lands.
         if metadata is not None and block_type is None:
             raise ValueError("'block_type' has to be specified in order to specify 'metadata'.")
 
-        true_metadata: typing.List[Textable] = load_metadata(typing.cast(metadata, BlockMetadata), allow_none=True)
+        true_metadata: typing.List[Textable] = _load_metadata(typing.cast(metadata, BlockMetadata), allow_none=True)
 
         return GameAction(
             action=GameActionType.DROP_BLOCK,
@@ -1222,7 +1194,7 @@ lands.
                     p_check(
                         block_type, typing.Union[Textable, ItemParam], "block_type"
                     ) if block_type is not None else None,
-        *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+                    *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
                 ], tags=[
                     Tag(
                         "Reform on Impact", option=bool(reform_on_impact),
@@ -1322,6 +1294,7 @@ lands.
 
         items: Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]]
             The items can be specified either as:
+
             - ``None`` for an empty slot;
             - :class:`~.Item` for one item;
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
@@ -1507,17 +1480,12 @@ lands.
         name : Optional[:attr:`~.Textable`], optional
             The name of the projectile, or ``None`` to keep it empty. Defaults to ``None``.
 
-            .. warning::
-
-                This has to be specified if either speed, inaccuracy or particle are specified, otherwise a ValueError
-                is raised.
-
         speed : Optional[:attr:`~.Numeric`], optional
             The speed of the projectile, or ``None`` to let DF decide the default value. Defaults to ``None``.
 
             .. warning::
 
-                This has to be specified if inaccuracy or particle are specified, otherwise a ValueError is raised.
+                This has to be specified if inaccuracy is specified, otherwise a ValueError is raised.
 
         inaccuracy : Optional[:attr:`~.Numeric`], optional
             The inaccuracy of the launch, i.e., how much random momentum is applied to the projectile, or ``None``
@@ -1534,7 +1502,7 @@ lands.
         Raises
         ------
         :exc:`ValueError`
-            If `name` or `speed` are not specified when required (i.e., `inaccuracy` or `particle` are specified).
+            If `speed` are not specified when `inaccuracy` is also specified.
 
         Examples
         --------
@@ -1556,14 +1524,8 @@ lands.
                 str(projectile) if isinstance(projectile, collections.UserString) else projectile
             ).value
 
-        if name is None and any(x is not None for x in (speed, inaccuracy, particle)):
-            raise ValueError("'name' must be specified in order to specify 'speed'/'inaccuracy'/'particle'.")
-
-        if speed is None and any(x is not None for x in (inaccuracy, particle)):
-            raise ValueError("'speed' must be specified in order to specify 'inaccuracy'/'particle'.")
-
-        if inaccuracy is None and particle is not None:
-            inaccuracy = 1  # default value: 1
+        if speed is None and inaccuracy is not None:
+            raise ValueError("'speed' must be specified in order to specify 'inaccuracy'.")
 
         return GameAction(
             action=GameActionType.LAUNCH_PROJ,
@@ -1590,14 +1552,14 @@ lands.
         key : Optional[:attr:`~.Textable`], optional
             The new lock key of the container, or ``None`` to unlock it. Defaults to ``None``.
 
+            .. note::
+
+                A lock key determines the item name the container must be opened with.
+
         Returns
         -------
         :class:`GameAction`
             The generated Game Action codeblock.
-
-        Notes
-        -----
-        A lock key determines the item name the container must be opened with.
 
         Examples
         --------
@@ -1669,7 +1631,9 @@ lands.
         """
         return GameAction(
             action=GameActionType.REMOVE_HOLOGRAM,
-            args=Arguments(),
+            args=Arguments([
+                p_check(loc_or_text, typing.Union[Locatable, Textable], "loc_or_text")
+            ]),
             append_to_reader=True
         )
 
@@ -1695,7 +1659,9 @@ lands.
         """
         return GameAction(
             action=GameActionType.REMOVE_SCORE,
-            args=Arguments(),
+            args=Arguments([
+                p_check(score, Textable, "score")
+            ]),
             append_to_reader=True
         )
 
@@ -1793,7 +1759,7 @@ whose values DF expects to be formatted in one of the following ways:
         if metadata is not None and loc_2 is None:
             loc_2 = loc_1  # just that block
 
-        true_metadata = load_metadata(metadata, allow_none=True)
+        true_metadata = _load_metadata(metadata, allow_none=True)
 
         return GameAction(
             action=GameActionType.SET_BLOCK,
@@ -1861,7 +1827,7 @@ whose values DF expects to be formatted in one of the following ways:
 
             GameAction.set_block(loc, meta)  # now the block will face east.
         """
-        true_metadata = load_metadata(metadata, allow_none=False)
+        true_metadata = _load_metadata(metadata, allow_none=False)
 
         if len(true_metadata) < 1:
             raise ValueError("Metadata must be specified (length > 0).")
@@ -1968,6 +1934,8 @@ whose values DF expects to be formatted in one of the following ways:
     ) -> "GameAction":
         """Sets the cook time multiplier of a furnace.
 
+        .. workswith:: Furnace, Blast Furnace, Smoker
+
         Parameters
         ----------
         loc : :attr:`~.Locatable`
@@ -1987,7 +1955,6 @@ whose values DF expects to be formatted in one of the following ways:
         -----
         - Cook speed = 200 ticks
         - Fuel duration is unaffected by cook speed.
-        - Works with: Furnace, Blast Furnace, Smoker
 
 
         Examples

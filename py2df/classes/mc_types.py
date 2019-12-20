@@ -12,7 +12,7 @@ from nbtlib.tag import Base
 from .. import constants
 from ..enums import (
     Material, HideFlags, SoundType, ParticleType, CustomSpawnEggType, PotionEffect, Color, Enchantments,
-    IfVariableType, BlockType, IfVItemEqComparisonMode)
+    IfVariableType, BlockType, ItemEqComparisonMode)
 from .subcollections import Lore
 from .dataclass import Enchantment, Tag
 from .abc import DFType, Itemable

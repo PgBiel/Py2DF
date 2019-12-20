@@ -100,9 +100,11 @@ class IfGameType(IfType, AutoSnakeToPascalCaseNameEnum):
 
 
 @unique
-class IfVItemEqComparisonMode(TagType):
+class ItemEqComparisonMode(TagType):
     EXACTLY_EQUALS = "Exactly equals"
     IGNORE_STACK_SIZE = "Ignore stack size"
+    """.. note:: If 'Ignore stack size' is used within If Game: EventItemEquals, it is automatically converted to \
+'Ignore durability and stack size', due to it not being a valid tag within that If Game condition."""
     IGNORE_DURABILITY_AND_STACK_SIZE = "Ignore durability and stack size"
     MATERIAL_ONLY = "Material only"
 

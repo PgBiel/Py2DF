@@ -14,7 +14,7 @@ from .collections import Arguments
 from .dataclass import Tag
 from ..utils import remove_u200b_from_doc, flatten, TrueLiteral, FalseLiteral, all_attr_eq
 from ..enums import SetVarType, VariableScope, BlockType, IfVariableType, PlayerTarget, EntityTarget, GameValueType, \
-    Target, IfVItemEqComparisonMode, IfVVarType
+    Target, ItemEqComparisonMode, IfVVarType
 from ..constants import ITEM_ID_DYNAMIC_VAR, DEFAULT_VAL
 from ..errors import LimitReachedError
 
@@ -458,18 +458,18 @@ if the variable is equal to at least one of its elements. Example usage::
 
     @typing.overload
     def in_range(
-            self, min_val: "Numeric", max_val: "Numeric"
+        self, min_val: "Numeric", max_val: "Numeric"
     ) -> "IfVariable":
         ...
 
     @typing.overload
     def in_range(
-            self, min_val: "Locatable", max_val: "Locatable"
+        self, min_val: "Locatable", max_val: "Locatable"
     ) -> "IfVariable":
         ...
 
     def in_range(
-            self, min_val: typing.Union["Numeric", "Locatable"], max_val: typing.Union["Numeric", "Locatable"]
+        self, min_val: typing.Union["Numeric", "Locatable"], max_val: typing.Union["Numeric", "Locatable"]
     ) -> "IfVariable":
         """Checks if this number var is within 2 other numbers, or if this location var is within the region of 2 other
         locations. Note that this method is also implemented within :class:`~.DFNumber` and :class:`~.DFLocation`.
@@ -516,7 +516,7 @@ if the variable is equal to at least one of its elements. Example usage::
         )
 
     def is_near(
-            self, center_val: typing.Union["Numeric", "Locatable"], valid_range: "Numeric"
+        self, center_val: typing.Union["Numeric", "Locatable"], valid_range: "Numeric"
     ) -> "IfVariable":
         """Checks if this :attr:`~.Numeric` is within a certain range of another number or if
         this :attr:`~.Locatable` is near another location. Note that this method is also implemented
@@ -560,8 +560,8 @@ var_b ...
         )
 
     def item_equals(
-            self, item: "ItemParam",
-            *, mode: IfVItemEqComparisonMode = IfVItemEqComparisonMode.EXACTLY_EQUALS
+        self, item: "ItemParam",
+        *, mode: ItemEqComparisonMode = ItemEqComparisonMode.EXACTLY_EQUALS
     ) -> "IfVariable":
         """Works the same as Variable = but has a few extra options for item comparison.
 
@@ -570,7 +570,7 @@ var_b ...
         item : :attr:`~.ItemParam`
             The item to compare self (which must be a valid :attr:`~.ItemParam` as well) to.
 
-        mode : :class:`~.IfVItemEqComparisonMode`, optional
+        mode : :class:`~.ItemEqComparisonMode`, optional
             The mode of comparison that will determine the equality between self and
             the given item. Defaults to :attr:`~.EXACTLY_EQUAL`.
 
@@ -584,7 +584,7 @@ var_b ...
         ::
 
             with var_a.item_equals(Item(Material.STONE, name="bruh moment"), \
-mode=IfVItemEqComparisonMode.MATERIAL_ONLY):
+mode=ItemEqComparisonMode.MATERIAL_ONLY):
                 # ... code to execute in DF if 'var_a' item has the same material as the given item; in this case, \
 Stone ...
         """
@@ -593,7 +593,7 @@ Stone ...
             [_tp.p_check(self, _tp.ItemParam, "self"), _tp.p_check(item, _tp.ItemParam, "item")],
             tags=[
                 Tag(
-                    "Comparison Mode", option=IfVItemEqComparisonMode(mode),
+                    "Comparison Mode", option=ItemEqComparisonMode(mode),
                     action=IfVariableType.ITEM_EQUALS, block=BlockType.IF_VAR
                 )
             ]
@@ -729,8 +729,8 @@ Stone ...
         )
 
     def text_matches(
-            self, *texts: typing.Union["Textable", typing.Pattern],
-            ignore_case: bool = DEFAULT_VAL, regexp: bool = False
+        self, *texts: typing.Union["Textable", typing.Pattern],
+        ignore_case: bool = DEFAULT_VAL, regexp: bool = False
     ) -> "IfVariable":
         """Checks if this :attr:`~.Textable` matches another text. Note that this method is also implemented within
         :class:`~.DFText`.
