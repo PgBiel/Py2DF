@@ -7,12 +7,20 @@ class exception_hierarchy(nodes.General, nodes.Element):
     pass
 
 
-def visit_exception_hierarchy_node(self, node):
+def visit_html_exception_hierarchy_node(self, node):
     self.body.append(self.starttag(node, 'div', CLASS='exception-hierarchy-content'))
 
 
-def depart_exception_hierarchy_node(self, node):
-    self.body.append('</div>\n')
+def depart_html_exception_hierarchy_node(self, node):
+    self.body.append('\n')
+
+
+def visit_any_exception_hierarchy_node(self, node):
+    self.visit_paragraph(node)
+
+
+def depart_any_exception_hierarchy_node(self, node):
+    self.depart_paragraph(node)
 
 
 class ExceptionHierarchyDirective(Directive):
@@ -26,5 +34,9 @@ class ExceptionHierarchyDirective(Directive):
 
 
 def setup(app):
-    app.add_node(exception_hierarchy, html=(visit_exception_hierarchy_node, depart_exception_hierarchy_node))
+    app.add_node(
+        exception_hierarchy,
+        html=(visit_html_exception_hierarchy_node, depart_html_exception_hierarchy_node),
+        latex=(visit_any_exception_hierarchy_node, depart_any_exception_hierarchy_node)
+    )
     app.add_directive('exception_hierarchy', ExceptionHierarchyDirective)

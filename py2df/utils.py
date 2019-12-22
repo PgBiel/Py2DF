@@ -29,7 +29,7 @@ def remove_u200b_from_doc(obj: IterOrSingleDocable, *other_objs: IterOrSingleDoc
     None
         None
     """
-    if isinstance(obj, collections.Iterable):
+    if isinstance(obj, collections.Iterable) and not isinstance(obj, type):
         for clz in obj:
             remove_u200b_from_doc(clz)
     else:
