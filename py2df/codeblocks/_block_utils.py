@@ -1,7 +1,7 @@
 import typing
 import collections
 from ..classes import DFVariable, DFText
-from ..typings import Material, ItemParam, Textable
+from ..typings import Material, ItemParam, Textable, Listable, p_bool_check
 
 BlockParam = typing.Union[
     Material, ItemParam, Textable
@@ -10,7 +10,8 @@ BlockParam = typing.Union[
 
 BlockMetadata = typing.Union[
     typing.Dict[str, typing.Optional[typing.Union[str, int, bool, DFVariable]]],
-    typing.Iterable[Textable]
+    typing.Iterable[Textable],
+    Listable
 ]
 
 
@@ -35,6 +36,9 @@ def _load_metadata(metadata: BlockMetadata, allow_none: bool = True):
     elif isinstance(metadata, collections.Iterable):
         true_metadata.extend(list(metadata))
 
+    elif p_bool_check(metadata, Listable):
+        true_metadata.extend(metadata)
+
     elif (metadata is not None) if allow_none else True:
         raise TypeError("Metadata must either be a dictionary or an iterable of Textables.")
 
@@ -51,5 +55,7 @@ def _load_btype(block_type: BlockParam, allow_none: bool = False) -> typing.Unio
     return block_type
 
 
-def _load_btypes(block_types: typing.Iterable[BlockParam]) -> typing.List[typing.Union[ItemParam, Textable]]:
-    return [_load_btype(b_t) for b_t in block_types]
+def _load_btypes(
+    block_types: typing.Union[typing.Iterable[BlockParam], Listable]
+) -> typing.List[typing.Union[ItemParam, Textable, Listable]]:
+    return [block_types] if p_bool_check(block_types, Listable) else [_load_btype(b_t) for b_t in block_types]

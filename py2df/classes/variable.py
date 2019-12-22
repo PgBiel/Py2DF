@@ -518,7 +518,7 @@ if the variable is equal to at least one of its elements. Example usage::
     def is_near(
         self, center_val: typing.Union["Numeric", "Locatable"], valid_range: "Numeric"
     ) -> "IfVariable":
-        """Checks if this :attr:`~.Numeric` is within a certain range of another number or if
+        """Checks if this :attr:`~.Numeric` is within a certain distance of another number or if
         this :attr:`~.Locatable` is near another location. Note that this method is also implemented
         within :class:`~.DFNumber` and :class:`~.DFLocation`.
 

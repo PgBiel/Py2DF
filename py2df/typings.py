@@ -49,8 +49,8 @@ of an Item parameter."""
         "ParamTypes.Numeric", "ParamTypes.Textable", "ParamTypes.Listable", "ParamTypes.Potionable",
         "ParamTypes.ParticleParam", "ParamTypes.SoundParam", "ParamTypes.ItemParam", "ParamTypes.SpawnEggable"
     ]
-    """Union[:attr:`Numeric`, :attr:`Textable`, :attr:`Listable`, :attr:`Potionable`, :attr:`ItemParam`, \
-:attr:`SpawnEggable`] : All the possible parameter types."""
+    """Union[:attr:`Numeric`, :attr:`Textable`, :attr:`Listable`, :attr:`Potionable`, :attr:`ParticleParam`, \
+:attr:`SoundParam`, :attr:`ItemParam`, :attr:`SpawnEggable`] : All the possible parameter types."""
 
 
 Numeric = ParamTypes.Numeric
@@ -99,6 +99,14 @@ def convert_numeric(param: Numeric) -> Numeric:
     -------
     :attr:`~.Numeric`
         Resulting conversion, or the parameter itself if nothing required change.
+
+    Examples
+    --------
+    >>> convert_numeric(5)
+    <DFNumber value=5.0>
+
+    >>> convert_numeric(6.54)
+    <DFNumber value=6.54>
     """
     if isinstance(param, (int, float)):
         return DFNumber(param)
@@ -119,6 +127,11 @@ def convert_text(param: Textable) -> Textable:
     -------
     :attr:`~.Textable`
         Resulting conversion, or the parameter itself if nothing required change.
+
+    Examples
+    --------
+    >>> convert_text("test")
+    <DFText data='test'>
     """
     if isinstance(param, (str, collections.UserString)):
         return DFText(str(param))
@@ -139,6 +152,11 @@ def convert_particle(param: ParticleParam) -> ParticleParam:
     -------
     :attr:`~.ParticleParam`
         Resulting conversion, or the parameter itself if nothing required change.
+
+    Examples
+    --------
+    >>> convert_particle(ParticleType.ANGRY_VILLAGER)
+    <DFParticle particle_type='Angry Villager'>
     """
     if isinstance(param, ParticleType):
         return DFParticle(param)
@@ -178,6 +196,11 @@ def convert_material(param: typing.Union[Param, Material]) -> Param:
     -------
     :attr:`~.Param`
         The generated item, or the param specified.
+
+    Examples
+    --------
+    >>> convert_material(Material.DIAMOND_SWORD)
+    <Item minecraft:diamond_sword x 1>
     """
     if isinstance(param, Material):
         return Item(param)
@@ -187,7 +210,7 @@ def convert_material(param: typing.Union[Param, Material]) -> Param:
 
 def convert_all(param: Param) -> Param:
     """Converts anything from a Param parameter to the appropriate DF(something) class, while leaving
-    Game Values and Variables untouched.
+    Game Values and Variables untouched. (Calls all other converting methods)
 
     Parameters
     ----------
@@ -198,6 +221,11 @@ def convert_all(param: Param) -> Param:
     -------
     :attr:`~.Param`
         Resulting conversion, or the parameter itself if nothing required change.
+
+    See Also
+    --------
+    :meth:`convert_particle`, :meth:`convert_sound`, :meth:`convert_numeric`, :meth:`convert_text`, \
+:meth:`convert_material`
     """
     return convert_particle(convert_sound(convert_numeric(convert_text(convert_material(param)))))
 
@@ -409,6 +437,14 @@ def p_bool_check(obj: _P, typeof: typing.Type[_P], gameval_check: bool = True, e
     See Also
     --------
     :func:`p_check`
+
+    Examples
+    --------
+    >>> p_bool_check(5, Numeric)
+    True
+
+    >>> p_bool_check(5, Locatable)
+    False
     """
     class _Check:  # kinda hacky solution, but...
         _val: typeof

@@ -162,7 +162,7 @@ class Color:
     RESET         = SECTION_SIGN + "r"
 
 
-Colour = Color  # alias
+Colour = ChatColor = Color  # aliases
 
 
 remove_u200b_from_doc(HideFlags)

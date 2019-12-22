@@ -559,7 +559,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         base_str = f"<{self.__class__.__name__} minecraft:{self.material.value} x {self.amount}"
         extras = []
         if self.name:
-            extras.append(f"name={self.name}")
+            extras.append(f"name={repr(self.name)}")
 
         if self.unbreakable:
             extras.append(f"unbreakable=True")
@@ -1064,7 +1064,7 @@ class DFNumber(DFType):
     def is_near(
         self, center_val: "Numeric", valid_range: "Numeric"
     ) -> "IfVariable":
-        """Checks if this number is within a certain range of another number.
+        """Checks if this number is within a certain distance of another number.
         Note that this method is also implemented within :class:`~.VarOperable` (i.e., :class:`~.DFGameValue`
         and :class:`~.DFVariable`) and :class:`~.DFLocation`.
 
@@ -1962,7 +1962,7 @@ class DFSound(DFType):
     Raises
     ------\u200b
     :exc:`ValueError`
-        Raised if the given pitch is outside the range ``0.0 <= x <= 2.0`` .
+        Raised if the given pitch is outside the distance ``0.0 <= x <= 2.0`` .
 
 
     .. container: comparisons
@@ -2009,7 +2009,7 @@ class DFSound(DFType):
         Raises
         ------
         :exc:`ValueError`
-            Raised if the given pitch is outside the range ``0.0 <= x <= 2.0`` .
+            Raised if the given pitch is outside the distance ``0.0 <= x <= 2.0`` .
         """
         self.sound_type: SoundType = SoundType(sound_type)
 
@@ -2147,7 +2147,8 @@ class DFSound(DFType):
         return cls(SoundType(data["data"]["sound"]), pitch=pitch, volume=vol)
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} sound_type={self.sound_type.value} pitch={self.pitch} volume={self.volume}>"
+        return f"<{self.__class__.__name__} sound_type={repr(self.sound_type.value)} pitch={self.pitch} \
+volume={self.volume}>"
 
     def __str__(self):
         return self.sound_type.value
@@ -2269,7 +2270,7 @@ class DFParticle(DFType):
         return cls(ParticleType(data["data"]["particle"]))
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} particle_type={self.particle_type.value}>"
+        return f"<{self.__class__.__name__} particle_type={repr(self.particle_type.value)}>"
 
     def __str__(self) -> str:
         return str(self.particle_type.value)
@@ -2365,7 +2366,7 @@ class DFCustomSpawnEgg(DFType, Itemable):
         )
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} egg_type={self.egg_type.name}>"
+        return f"<{self.__class__.__name__} egg_type={repr(self.egg_type.name)}>"
 
     def __str__(self) -> str:
         return str(self.egg_type.name)
@@ -2581,7 +2582,7 @@ class DFPotion(DFType):
         return DFPotion(self.effect, amplifier=self.amplifier, duration=self.duration)
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} effect={self.effect.value} amplifier={self.amplifier} \
+        return f"<{self.__class__.__name__} effect={repr(self.effect.value)} amplifier={self.amplifier} \
 duration={self.duration[0]}:{self.duration[1]}>"
 
     def __str__(self) -> str:

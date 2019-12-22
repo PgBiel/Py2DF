@@ -7,7 +7,8 @@ from ..enums import (
     Material)
 from ..classes import JSONData, Arguments, ActionBlock, Tag, DFNumber, DFVariable, DFText, Item, ItemCollection
 from ..utils import remove_u200b_from_doc, flatten
-from ..typings import p_check, Numeric, Locatable, Textable, ParticleParam, ItemParam, SpawnEggable, Potionable
+from ..typings import p_check, Numeric, Locatable, Textable, ParticleParam, ItemParam, SpawnEggable, Potionable, \
+    Listable, p_bool_check
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
 from ._block_utils import BlockParam, BlockMetadata, _load_metadata
@@ -344,14 +345,14 @@ class GameAction(ActionBlock, JSONData):
         )
 
     @classmethod
-    def bone_meal(cls, *locs: Locatable, amount: Numeric, show_particles: bool = True) -> "GameAction":
+    def bone_meal(cls, *locs: typing.Union[Locatable, Listable], amount: Numeric, show_particles: bool = True) -> "GameAction":
         """Applies bone meal to a block.
 
         .. rank:: Noble
 
         Parameters
         ----------
-        locs : :attr:`~.Locatable`
+        locs : Union[:attr:`~.Locatable`, :attr:`~.Listable`]
             The location(s) of the block(s) that will receive the Bone Meal.
 
         amount : :attr:`~.Numeric`
@@ -375,7 +376,7 @@ class GameAction(ActionBlock, JSONData):
         """
         args = Arguments(
             [
-        *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)],
+                *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)],
                 p_check(amount, Numeric, "amount")
             ],
             tags=[Tag(
@@ -390,12 +391,12 @@ class GameAction(ActionBlock, JSONData):
         )
 
     @classmethod
-    def break_block(cls, *locs: Locatable) -> "GameAction":
+    def break_block(cls, *locs: typing.Union[Locatable, Listable]) -> "GameAction":
         """Breaks a block at a certain location as if it was broken by a player.
 
         Parameters
         ----------
-        locs : :attr:`~.Locatable`
+        locs : Union[:attr:`~.Locatable`, :attr:`~.Listable`]
             The location(s) of the block(s) that will be broken.
 
         Returns
@@ -414,7 +415,7 @@ class GameAction(ActionBlock, JSONData):
         """
         return cls(
             action=GameActionType.BREAK_BLOCK,
-            args=Arguments([p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)]),
+            args=Arguments([p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)]),
             append_to_reader=True
         )
 
@@ -897,7 +898,7 @@ second cooldown."
 
     @classmethod
     def create_particle_path(
-        cls, particle: ParticleParam, *locs: Locatable
+        cls, particle: ParticleParam, *locs: typing.Union[Locatable, Listable]
     ) -> "GameAction":
         """Creates a path of particles that goes through each location given from first to last.
 
@@ -906,7 +907,7 @@ second cooldown."
         particle : :attr:`~.ParticleParam`
             Particle to spawn.
 
-        locs : :attr:`~.Locatable`
+        locs : Union[:attr:`~.Locatable`, :attr:`~.Listable`]
             Path locations to go through.
 
 
@@ -927,7 +928,7 @@ second cooldown."
         """
         args = Arguments([
             p_check(particle, ParticleParam, "particle"),
-            *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)]
+            *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)]
         ])
         return cls(
             action=GameActionType.CREATE_PARTICLE_PATH,
@@ -1194,7 +1195,7 @@ lands.
                     p_check(
                         block_type, typing.Union[Textable, ItemParam], "block_type"
                     ) if block_type is not None else None,
-                    *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+                    *([p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]") for i, text in enumerate(true_metadata)])
                 ], tags=[
                     Tag(
                         "Reform on Impact", option=bool(reform_on_impact),
@@ -1283,7 +1284,7 @@ lands.
 
     @classmethod
     def fill_container(
-        cls, loc: Locatable, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+        cls, loc: Locatable, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]
     ) -> "GameAction":
         """Fills a container with items.
 
@@ -1292,12 +1293,14 @@ lands.
         loc : :attr:`~.Locatable`
             Location of the container to be filled.
 
-        items: Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]]
+        items : Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`], \
+:attr:`Listable`]]
             The items can be specified either as:
 
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a predetermined list of items.
 
         Returns
         -------
@@ -1327,7 +1330,7 @@ lands.
             action=GameActionType.FILL_CONTAINER,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
-                *([p_check(it, ItemParam, "items") for it in item_list])
+                *([p_check(it, typing.Union[ItemParam, Listable], "items") for it in item_list])
             ]),
             append_to_reader=True
         )
@@ -1769,7 +1772,7 @@ whose values DF expects to be formatted in one of the following ways:
                 ) if block_type is not None else None,
                 p_check(loc_1, Locatable, "loc_1"),
                 p_check(loc_2, Locatable, "loc_2"),
-        *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+                *([p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]") for i, text in enumerate(true_metadata)])
             ]),
             append_to_reader=True
         )
@@ -1836,14 +1839,14 @@ whose values DF expects to be formatted in one of the following ways:
             action=GameActionType.SET_BLOCK_DATA,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
-        *([p_check(text, Textable, f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+                *([p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]") for i, text in enumerate(true_metadata)])
             ]),
             append_to_reader=True
         )
 
     @classmethod
     def set_container(
-        cls, loc: Locatable, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+        cls, loc: Locatable, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]
     ) -> "GameAction":
         """Sets a container's contents.
 
@@ -1852,11 +1855,14 @@ whose values DF expects to be formatted in one of the following ways:
         loc : :attr:`~.Locatable`
             Location of the container to have its contents set.
 
-        items: Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]]
-            The items can be specified either as:
+        items : Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`], \
+:attr:`Listable`]]
+            The new contents of the container. The items can be specified either as:
+
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a predetermined list of items.
 
         Returns
         -------
@@ -1886,7 +1892,7 @@ whose values DF expects to be formatted in one of the following ways:
             action=GameActionType.SET_CONTAINER,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
-                *([p_check(it, ItemParam, "items") for it in item_list])
+                *([p_check(it, typing.Union[ItemParam, Listable], "items") for it in item_list])
             ]),
             append_to_reader=True
         )
@@ -2066,7 +2072,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def spawn_armor_stand(
        cls, loc: Locatable, name: typing.Optional[Textable] = None,
-       *equipment: typing.Optional[ItemParam],
+       *equipment: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]],
        visible: bool = True, has_hitbox: bool = True
     ) -> "GameAction":
         """Creates an armor stand at a certain location.
@@ -2086,8 +2092,9 @@ whose values DF expects to be formatted in one of the following ways:
             Equipment. The items can be specified either as:
 
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a list of items.
 
             .. note::
 
@@ -2124,7 +2131,7 @@ whose values DF expects to be formatted in one of the following ways:
         args = Arguments([
             p_check(loc, Locatable, "loc"),
             p_check(name, Textable, "name") if name is not None else None,
-            *([p_check(it, ItemParam, "equipment") for it in item_list])
+            *([p_check(it, typing.Union[ItemParam, Listable], "equipment") for it in item_list])
         ], tags=[
             Tag(
                 "Visibility", option=f"{'Visible' if visible else 'Invisible'}{'' if has_hitbox else ' (No hitbox)'}",
@@ -2279,7 +2286,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def spawn_item(
        cls, loc: Locatable, name: typing.Optional[Textable] = None,
-       *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]],
+       *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
        apply_item_motion: bool = True
     ) -> "GameAction":
         """Spawns an item at a certain location.
@@ -2292,12 +2299,13 @@ whose values DF expects to be formatted in one of the following ways:
         name : Optional[:attr:`~.Textable`], optional
             Item stack name to show above. Default is ``None``.
 
-        items : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]
+        items : Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`]]
             The items can be specified either as:
 
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a list of items.
 
         apply_item_motion : :class:`bool`, optional
             If motion should be applied to the item. Defaults to ``True``.
@@ -2325,7 +2333,7 @@ whose values DF expects to be formatted in one of the following ways:
             raise ValueError("No item was specified.")
 
         args = Arguments([
-            *[p_check(it, ItemParam, "items") for it in item_list],
+            *[p_check(it, typing.Union[ItemParam, Listable], "items") for it in item_list],
             p_check(loc, Locatable, "loc"),
             p_check(name, Textable, "name") if name is not None else None
         ], tags=[
@@ -2344,7 +2352,7 @@ whose values DF expects to be formatted in one of the following ways:
     def spawn_mob(
        cls, spawn_egg: SpawnEggable, loc: Locatable, health: typing.Optional[Numeric] = None,
        name: typing.Optional[Textable] = None, potions: typing.Optional[typing.Iterable[Potionable]] = None,
-       *equipment: typing.Optional[typing.Union[Item, ItemCollection, typing.Iterable[Item]]]
+       *equipment: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]]
     ) -> "GameAction":
         """Spawns a mob at a certain location.
 
@@ -2362,15 +2370,16 @@ whose values DF expects to be formatted in one of the following ways:
         name : Optional[:attr:`~.Textable`], optional
             Mob name. Default is ``None`` (no name).
 
-        potions : Optional[Iterable[:attr:`~.Potionable`]], optional
-            Potion effect(s). Default is ``None`` (no potion effect).
+        potions : Optional[Union[Iterable[:attr:`~.Potionable`], Listable]], optional
+            Potion effect(s), or a list var of them. Default is ``None`` (no potion effect).
 
-        equipment : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]], optional
+        equipment : Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`]], optional
             Mob equipment. Default is ``None`` (no equipment). The items can be specified either as:
 
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a list of items.
 
             .. note::
 
@@ -2394,13 +2403,19 @@ whose values DF expects to be formatted in one of the following ways:
             # Spawns a zombie at the given location, named "My mob" and with 10 health (5 hearts) plus the absorption
             # hearts, while holding an unbreakable diamond sword named "Epic Sword".
         """
+        if p_bool_check(potions, Listable):
+            potions = [potions]
+
         args = Arguments([
             p_check(spawn_egg, SpawnEggable, "spawn_egg"),
             p_check(loc, Locatable, "loc"),
             p_check(health, Numeric, "health") if health is not None else None,
             p_check(name, Textable, "name") if name is not None else None,
-            *[p_check(obj, Potionable, f"potions[{i}]") for i, obj in enumerate(potions)],
-            *[p_check(obj, ItemParam, "items") for obj in flatten(equipment, except_iterables=[str], max_depth=1)]
+            *[p_check(obj, typing.Union[Potionable, Listable], f"potions[{i}]") for i, obj in enumerate(potions)],
+            *[
+                p_check(obj, typing.Union[ItemParam, Listable], "items")
+                for obj in flatten(equipment, except_iterables=[str], max_depth=1)
+            ]
         ])
         return cls(
             action=GameActionType.SPAWN_MOB,
@@ -2411,7 +2426,7 @@ whose values DF expects to be formatted in one of the following ways:
     @classmethod
     def spawn_rng_item(
         cls, loc: Locatable, name: typing.Optional[Textable] = None,
-        *items: typing.Optional[typing.Union[Item, ItemCollection, typing.Iterable[Item]]],
+        *items: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]],
         apply_item_motion: bool = True
     ) -> "GameAction":
         """Randomly spawns an item at a certain location.
@@ -2424,12 +2439,13 @@ whose values DF expects to be formatted in one of the following ways:
         name : Optional[:attr:`~.Textable`], optional
             Item stack name to show above. Default is ``None``.
 
-        items : typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+        items : typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]
             Items to pick from. The items can be specified either as:
 
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a list of items.
 
         apply_item_motion : :class:`bool`, optional
             If motion should be applied to the item. Defaults to ``True``.
@@ -2459,7 +2475,7 @@ whose values DF expects to be formatted in one of the following ways:
             raise ValueError("No item was specified.")
 
         args = Arguments([
-            *[p_check(it, ItemParam, "items") for it in item_list],
+            *[p_check(it, typing.Union[ItemParam, Listable], "items") for it in item_list],
             p_check(loc, Locatable, "loc"),
             p_check(name, Textable, "name") if name is not None else None
         ], tags=[
@@ -2615,14 +2631,14 @@ whose values DF expects to be formatted in one of the following ways:
 
     @classmethod
     def tick_block(
-        cls, *locs: Locatable, ticks: typing.Optional[Numeric] = None
+        cls, *locs: typing.Union[Locatable, Listable], ticks: typing.Optional[Numeric] = None
     ) -> "GameAction":
         """Causes a block/multiple blocks to get random ticked.
 
         Parameters
         ----------
-        locs : :attr:`~.Locatable`
-            Block(s) to tick.
+        locs : Union[:attr:`~.Locatable`, :attr:`~.Listable`]
+            Location(s) of the block(s) to be ticked.
 
         ticks : Optional[:attr:`~.Numeric`], optional
             Number of ticks. Default is ``None``.
@@ -2643,7 +2659,7 @@ whose values DF expects to be formatted in one of the following ways:
             GameAction.tick_block(loc_1, loc_2, loc_3, ticks=20)  # tick those 3 blocks with 20 ticks
         """
         args = Arguments([
-            *[p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)],
+            *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)],
             p_check(ticks, Numeric, "ticks") if ticks is not None else None
         ])
         return cls(

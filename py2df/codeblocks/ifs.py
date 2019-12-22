@@ -13,7 +13,7 @@ from ..classes import JSONData, Arguments, BracketedBlock, Block, Bracket, DFVar
 from ..utils import remove_u200b_from_doc, flatten
 from ..constants import BLOCK_ID, DEFAULT_VAL
 from ..reading.reader import DFReader
-from ..typings import Locatable, Textable, p_check, ItemParam, Numeric
+from ..typings import Locatable, Textable, p_check, ItemParam, Numeric, Listable
 from ._block_utils import BlockParam, BlockMetadata, _load_metadata, _load_btypes
 
 
@@ -519,7 +519,7 @@ class IfGame(IfBlock):
         Raises
         ------
         :exc:`ValueError`
-            If the line to be checked is not within the range 1 <= line <= 4.
+            If the line to be checked is not within the distance 1 <= line <= 4.
 
         Examples
         --------
@@ -557,7 +557,8 @@ class IfGame(IfBlock):
 
     @classmethod
     def block_equals(
-        cls, loc: Locatable, *block_types: typing.Optional[BlockParam], metadata: typing.Optional[BlockMetadata]
+        cls, loc: Locatable, *block_types: typing.Optional[typing.Union[BlockParam, Listable]],
+        metadata: typing.Optional[BlockMetadata]
     ):
         """Checks if a block at a certain location is a certain block.
 
@@ -566,16 +567,17 @@ class IfGame(IfBlock):
         loc : :attr:`~.Locatable`
             Location of the block to be checked.
 
-        block_types : Optional[Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]], optional
+        block_types : Optional[Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`, :attr:`~.Listable`]], optional
             The type of Block(s) to check for.
 
             The type can be specified either as:
 
             - an instance of :class:`~.Material` (the material of the block to set);
             - an item (:attr:`~.ItemParam` - the item representing the block to set);
-            - text (:attr:`~.Textable` - the material of the block to set as text).
+            - text (:attr:`~.Textable` - the material of the block to set as text);
+            - a :attr:`~.Listable` (A List - in DF - variable containing either Item or Text parameters).
 
-        metadata : Optional[Union[:class:`dict`, List[:attr:`~.Textable`]]], optional
+        metadata : Optional[Union[:class:`dict`, List[:attr:`~.Textable`]], :attr:`~.Listable`], optional
             Optionally, the metadata of the desired block (``None`` for none). If not ``None``, can be in two forms:
 
             1. **As a dictionary:** If this is specified, then:
@@ -622,7 +624,7 @@ class IfGame(IfBlock):
             block_2 = Material.GOLD_BLOCK  # ...or be a gold block.
             meta = { "facing": "east" }  # must be facing east, for example
 
-            with IfGame.block_equals(loc, block_1, block_2, meta):  #
+            with IfGame.block_equals(loc, block_1, block_2, meta):
                 # ... code to be executed if the block at the given location is of the given type(s)...
         """
         if len(block_types) < 1:
@@ -635,10 +637,10 @@ class IfGame(IfBlock):
         args = Arguments([
             p_check(loc, Locatable, "loc"),
             *[p_check(
-                block_type, typing.Union[ItemParam, Textable], f"block_types[{i}]") for i, block_type in
+                block_type, typing.Union[ItemParam, Textable, Listable], f"block_types[{i}]") for i, block_type in
                 enumerate(true_btypes)
             ],
-            *[p_check(meta, Textable, f"metadata[{i}]") for i, meta in enumerate(true_metadata)]
+            *[p_check(meta, typing.Union[Textable, Listable], f"metadata[{i}]") for i, meta in enumerate(true_metadata)]
         ])
         return cls(
             action=IfGameType.BLOCK_EQUALS,
@@ -649,7 +651,7 @@ class IfGame(IfBlock):
 
     @classmethod
     def event_block_equals(
-        cls, *block_types: BlockParam
+        cls, *block_types: typing.Union[BlockParam, Listable]
     ):
         """Checks if the block in a block-related event is a certain block.
 
@@ -659,14 +661,15 @@ class IfGame(IfBlock):
 
         Parameters
         ----------
-        block_types : Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]
+        block_types : Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`, :attr:`~.Listable`]
             The type of Block(s) to check for.
 
             The type can be specified either as:
 
             - an instance of :class:`~.Material` (the material of the block to set);
             - an item (:attr:`~.ItemParam` - the item representing the block to set);
-            - text (:attr:`~.Textable` - the material of the block to set as text).
+            - text (:attr:`~.Textable` - the material of the block to set as text);
+            - a :attr:`~.Listable` (A List - in DF - variable containing either Item or Text parameters).
 
 
         Returns
@@ -689,7 +692,7 @@ class IfGame(IfBlock):
         true_btypes: typing.List[typing.Union[ItemParam, Textable]] = _load_btypes(block_types)
 
         args = Arguments([
-            *[p_check(block_type, typing.Union[ItemParam, Textable], f"block_types[{i}]") for i, block_type in
+            *[p_check(block_type, typing.Union[ItemParam, Textable, Listable], f"block_types[{i}]") for i, block_type in
               enumerate(true_btypes)]
         ])
         return cls(
@@ -701,7 +704,7 @@ class IfGame(IfBlock):
 
     @classmethod
     def command_equals(
-        cls, *texts: Textable,
+        cls, *texts: typing.Union[Textable, Listable],
         only_first_word: bool = False, ignore_case: bool = True
     ):
         """Checks if the command entered in this Command Event is equal to a certain text.
@@ -712,7 +715,7 @@ class IfGame(IfBlock):
 
         Parameters
         ----------
-        texts : :attr:`~.Textable`
+        texts : Union[:attr:`~.Textable`, :attr:`~.Listable`]
             Text(s) to check for.
 
         only_first_word : :class:`bool`, optional
@@ -736,7 +739,7 @@ class IfGame(IfBlock):
                 # ... code to be executed if user sent '@kill <anything after, or nothing>' ...
         """
         args = Arguments([
-            *[p_check(text, Textable, f"texts[{i}]") for i, text in enumerate(texts)]
+            p_check(text, typing.Union[Textable, Listable], f"texts[{i}]") for i, text in enumerate(texts)
         ], tags=[
             Tag(
                 "Check Mode", option="Check First Word" if only_first_word else "Check Entire Command",
@@ -756,7 +759,7 @@ class IfGame(IfBlock):
 
     @classmethod
     def event_item_equals(
-        cls, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]],
+        cls, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
         comparison_mode=ItemEqComparisonMode.IGNORE_DURABILITY_AND_STACK_SIZE
     ):
         """Checks if the item in an item-related event is a certain item.
@@ -765,12 +768,13 @@ class IfGame(IfBlock):
 
         Parameters
         ----------
-        items : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]
+        items : Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`]], :attr:`~.Listable`]
             Item(s) to check for. The items can be specified either as:
 
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a list of items.
 
         comparison_mode : :class:`~.ItemEqComparisonMode`, optional
             The mode of comparison that will determine if the items are equal (Exactly equals, \
@@ -798,7 +802,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
             c_mode = ItemEqComparisonMode.IGNORE_DURABILITY_AND_STACK_SIZE
 
         args = Arguments([
-            p_check(item, ItemParam, "items") for item in item_list
+            p_check(item, typing.Union[ItemParam, Listable], "items") for item in item_list
         ], tags=[
             Tag(
                 "Comparison Mode", option=c_mode,  # default is Ignore stack size/durability
@@ -814,14 +818,14 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
 
     @classmethod
     def block_powered(
-        cls, *locs: Locatable,
+        cls, *locs: typing.Union[Locatable, Listable],
         indirect_power: bool = False
     ):
         """Checks if a block/multiple blocks at a certain location is/some locations are powered by redstone.
 
         Parameters
         ----------
-        locs : :attr:`~.Locatable`
+        locs : Union[:attr:`~.Locatable`, :attr:`~.Listable`]
             The location(s) of the block(s) to have their redstone power checked.
 
         indirect_power : :class:`bool`, False
@@ -841,7 +845,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
                 # ... code to be executed if
         """
         args = Arguments([
-            p_check(loc, Locatable, f"locs[{i}]") for i, loc in enumerate(locs)
+            p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)
         ], tags=[
             Tag(
                 "Redstone Power Mode", option="Indirect Power" if indirect_power else "Direct Power",
@@ -857,7 +861,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
 
     @classmethod
     def container_has_any(
-        cls, loc: Locatable, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+        cls, loc: Locatable, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]
     ):
         """Checks if a container has some item in its inventory.
 
@@ -866,12 +870,13 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
         loc : :attr:`~.Locatable`
             Container location.
 
-        items : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]
+        items : Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`]], :attr:`~.Listable`]
             Item(s) to check for. The items can be specified either as:
 
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a list of items.
 
             .. note::
 
@@ -897,7 +902,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
 
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            *[p_check(item, ItemParam, "items") for item in item_list]
+            *[p_check(item, typing.Union[ItemParam, Listable], "items") for item in item_list]
         ])
         return cls(
             action=IfGameType.CONTAINER_HAS,
@@ -908,7 +913,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
 
     @classmethod
     def container_has_all(
-        cls, loc: Locatable, *items: typing.Union[Item, ItemCollection, typing.Iterable[Item]]
+        cls, loc: Locatable, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]
     ):
         """Checks if a container has all of the given items.
 
@@ -917,12 +922,13 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
         loc : :attr:`~.Locatable`
             Container location.
 
-        items : Optional[Union[:class:`~.Item`, :class:`~.ItemCollection`, Iterable[:class:`~.Item`]]
+        items : Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`]], :attr:`~.Listable`]
             Item(s) to check for. The items can be specified either as:
 
             - ``None`` for an empty slot;
-            - :class:`~.Item` for one item;
-            - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a list of items.
+            - :class:`~.ItemParam` for one item;
+            - :attr:`~.Listable` for a variable list of items;
+            - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a list of items.
 
 
         Returns
@@ -944,7 +950,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
 
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            *[p_check(item, ItemParam, "items") for item in item_list]
+            *[p_check(item, typing.Union[ItemParam, Listable], "items") for item in item_list]
         ])
         return cls(
             action=IfGameType.CONTAINER_HAS_ALL,
@@ -955,7 +961,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
 
     @classmethod
     def cmd_arg_equals(
-        cls, *texts: Textable, arg_num: Numeric,
+        cls, *texts: typing.Union[Textable, Listable], arg_num: Numeric,
         ignore_case: bool = True
     ):
         """Checks if part of the command entered in this Command Event is equal to a certain text.
@@ -966,7 +972,7 @@ Ignore stack size/durability or Material only). Defaults to Ignore stack size/du
 
         Parameters
         ----------
-        texts : :attr:`~.Textable`
+        texts : Union[:attr:`~.Textable`, :attr:`~.Listable`]
             Text(s) to check for. (Must be equal to one of them.)
 
         arg_num : :attr:`~.Numeric`
@@ -992,8 +998,8 @@ texts ...
                 # for example: '@somecmd test' or '@cmd input' would match.
         """
         args = Arguments([
-            *[p_check(text, Textable, f"texts[{i}]") for i, text in enumerate(texts)],
-            p_check(arg_num, Numeric, "range")
+            *[p_check(text, typing.Union[Textable, Listable], f"texts[{i}]") for i, text in enumerate(texts)],
+            p_check(arg_num, Numeric, "distance")
         ], tags=[
             Tag(
                 "Ignore Case", option=bool(ignore_case),  # default is True

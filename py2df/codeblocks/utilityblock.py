@@ -748,6 +748,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.all_entites()
         """
         return cls(
             SelectObjectType.ALL_ENTITIES,
@@ -762,6 +768,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.all_mobs()
         """
         return cls(
             SelectObjectType.ALL_MOBS,
@@ -776,6 +788,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.all_players()
         """
         return cls(
             SelectObjectType.ALL_PLAYERS,
@@ -790,6 +808,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.damager()
         """
         return cls(
             SelectObjectType.DAMAGER,
@@ -804,6 +828,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.default_entity()
         """
         return cls(
             SelectObjectType.DEFAULT_ENTITY,
@@ -818,6 +848,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.default_player()
         """
         return cls(
             SelectObjectType.DEFAULT_PLAYER,
@@ -847,6 +883,13 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.entities_by_cond(entity.is_projectile())  # selects projectiles
+            SelectObj.entities_by_cond(entity.exists())  # selects existing entities
         """
         if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
             raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
@@ -872,6 +915,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.entity_name("my entity")  # selects all entities named "my entity"
         """
         return cls(
             SelectObjectType.ENTITY_NAME,
@@ -898,6 +947,13 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.filter_selection(entity.is_projectile())  # filters selection to consist only of projectiles
+            # if no projectiles were selected, the selection will, then, become empty
         """
         if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
             raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
@@ -918,6 +974,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.killer()  # selects the killer entity/player
         """
         return cls(
             SelectObjectType.KILLER,
@@ -932,6 +994,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.last_entity()  # selects the last spawned entity
         """
         return cls(
             SelectObjectType.LAST_ENTITY,
@@ -946,6 +1014,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.last_mob()  # selects the last spawned mob
         """
         return cls(
             SelectObjectType.LAST_MOB,
@@ -965,6 +1039,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.entity_name("my mob")  # selects all mobs named "my mob"
         """
         return cls(
             SelectObjectType.MOB_NAME,
@@ -991,6 +1071,13 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            gold_block = Material.GOLD_BLOCK
+            SelectObj.filter_selection(entity.standing_on(gold_block))  # select all mobs standing on a gold block
         """
         if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
             raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
@@ -1011,6 +1098,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.none()  # selection is now empty
         """
         return cls(
             SelectObjectType.NONE,
@@ -1030,6 +1123,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.player_name("Rob")  # selects player "Rob"
         """
         return cls(
             SelectObjectType.PLAYER_NAME,
@@ -1056,6 +1155,13 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            diamond_block = Material.DIAMOND_BLOCK
+            SelectObj.filter_selection(player.standing_on(diamond_block))  # selects players standing on a diamond block
         """
         if not isinstance(cond, IfBlock) or type(cond) == IfBlock:  # must not be a raw 'IfBlock'
             raise TypeError("Condition must be a valid If block (IfPlayer, IfEntity, IfGame, IfVariable).")
@@ -1076,6 +1182,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.projectile()  # selects the projectile in question
         """
         return cls(
             SelectObjectType.PROJECTILE,
@@ -1090,6 +1202,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.random_entity()  # selects a random entity
         """
         return cls(
             SelectObjectType.RANDOM_ENTITY,
@@ -1104,6 +1222,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.random_mob()  # selects a random mob
         """
         return cls(
             SelectObjectType.RANDOM_MOB,
@@ -1118,6 +1242,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.random_player()  # selects a random player
         """
         return cls(
             SelectObjectType.RANDOM_PLAYER,
@@ -1137,6 +1267,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.select_randomly(5)  # randomly picks 5 previously selected objects to become the new selection
         """
         return cls(
             SelectObjectType.RANDOM_SELECTED,
@@ -1152,6 +1288,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.shooter()  # selects the shooter
         """
         return cls(
             SelectObjectType.SHOOTER,
@@ -1166,6 +1308,12 @@ class SelectObj(UtilityBlock, JSONData):
         -------
         :class:`SelectObj`
             The generated SelectObj instance.
+
+        Examples
+        --------
+        ::
+
+            SelectObj.victim()  # selects the victim entity/player
         """
         return cls(
             SelectObjectType.VICTIM,

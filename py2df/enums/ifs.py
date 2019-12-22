@@ -28,7 +28,7 @@ class IfPlayerType(IfType, AutoSnakeToPascalCaseNameEnum):
     IS_HOLDING_MAIN = auto()  #: 
     IS_HOLDING_OFF = auto()  #: 
     IS_LOOKING_AT = auto()  #: Checks if a player is looking at a block of a certain type or at a certain location.
-    IS_NEAR = auto()  #: Checks if a player is within a certain range of a location. (default is 5 blocks)
+    IS_NEAR = auto()  #: Checks if a player is within a certain distance of a location. (default is 5 blocks)
     IS_SNEAKING = auto()  #: Checks if a player is sneaking.
     IS_SPRINTING = auto()  #: Checks if a player is sprinting or using the sprint key to swim.
     IS_SWIMMING = auto()  #: Checks if a player is in water or lava.
@@ -56,7 +56,7 @@ class IfVariableType(IfType, AutoSnakeToPascalCaseNameEnum):
     IN_RANGE = auto(
     )  #: Checks if a number var is within 2 other numbers or a location var is within the region of 2 other locations.
     IS_NEAR = auto(
-    )  #: Checks if a number is within a certain range of another number or if a location is near another location.
+    )  #: Checks if a number is within a certain distance of another number or if a location is near another location.
     ITEM_EQUALS = auto()  #: Works the same as Variable = but has a few extra options for item comparison.
     ITEM_HAS_TAG = auto()  #: Checks if the given item has the given custom item tag.
     LESS_THAN = "<"  #: Checks if a number variable is less than another number.
@@ -76,7 +76,7 @@ class IfEntityType(IfType, AutoSnakeToPascalCaseNameEnum):
     EXISTS = auto()  #: Checks if an entity still exists in the world.
     IS_ITEM = auto()  #: Checks if an entity is an item.
     IS_MOB = auto()  #: Checks if an entity is a mob.
-    IS_NEAR = auto()  #: Checks if an entity is within a certain range of a location. (default is 5 blocks)
+    IS_NEAR = auto()  #: Checks if an entity is within a certain distance of a location. (default is 5 blocks)
     IS_PROJ = auto()  #: Checks if an entity is a projectile.
     IS_TYPE = auto()  #: Checks if an entity is a certain type.
     IS_VEHICLE = auto()  #: Checks if an entity is a vehicle.
@@ -119,3 +119,38 @@ class IfVVarType(TagType):
     POTION   = auto()
     SOUND    = auto()
     PARTICLE = auto()
+
+
+@unique
+class PlayerHand(TagType):
+    MAIN_HAND = auto()
+    OFF_HAND = auto()
+
+
+class IfPOpenInvType(TagType):
+    ANY_INVENTORY = auto()
+    PLOT_MENU = auto()
+    CRAFTING_TABLE = auto()
+    CHEST = auto()
+    DOUBLE_CHEST = auto()
+    ENDER_CHEST = auto()
+    SHULKER_BOX = auto()
+    BARREL = auto()
+    ANY_FURNACE = "Furnace (any)"
+    FURNACE = auto()
+    BLAST_FURNACE = auto()
+    SMOKER = auto()
+    DROPPER = auto()
+    DISPENSER = auto()
+    BEACON = auto()
+    HOPPER = auto()
+    ANVIL = auto()
+    BREWING_STAND = auto()
+    CARTOGRAPHY_TABLE = auto()
+    LOOM = auto()
+    GRINDSTONE = auto()
+    STONECUTTER = auto()
+    ENCHANTING_TABLE = auto()
+    TRADER_MENU = auto()
+    HORSE_INVENTORY = auto()
+    LLAMA_INVENTORY = auto()
