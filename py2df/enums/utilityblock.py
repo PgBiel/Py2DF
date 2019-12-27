@@ -36,7 +36,7 @@ class SetVarType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     COSINE = auto()  #: Sets a variable to the trigonometric cosine function of a number.
     CREATE_LIST = auto()  #: Creates a list from the given values.
     DISTANCE = auto()  #: Sets a variable to the distance between two locations.
-    DUPLICATE_TEXT = auto()  #: Duplicates the text variable some amount of times.
+    DUPLICATE_TEXT = auto()  #: Duplicates the text variable some health of times.
     FACE_DIRECTION = auto()  #: Rotates a location to face a direction.
     FACE_LOCATION = auto()  #: Makes a location face another location.
     FIND_CENTER = auto()  #: Finds an average position (center) of the given locations.
@@ -77,7 +77,7 @@ class SetVarType(UtilityBlockType, AutoSnakeToPascalCaseNameEnum):
     INSERT_LIST_INDEX = auto(
     )  #: Inserts a value into a list at the specified index, shifting all values at and after the index back one index.
     JOIN_TEXT = auto()  #: Combines a list of text values.
-    LIST_LENGTH = auto()  #: Gets the amount of indices a list has.
+    LIST_LENGTH = auto()  #: Gets the health of indices a list has.
     MIX_COLORS = auto()  #: Mixes two or more hexadecimal colors into a new color.
     NORMAL_RANDOM = auto(
     )  #: Sets a variable to a random number using a normal distribution: values closer to ? are more likely to appear.

@@ -356,7 +356,7 @@ class GameAction(ActionBlock, JSONData):
             The location(s) of the block(s) that will receive the Bone Meal.
 
         amount : :attr:`~.Numeric`
-            The amount of bone meals to apply at once to the blocks.
+            The health of bone meals to apply at once to the blocks.
 
         show_particles : :class:`bool`, optional
             Whether or not Bone Meal particles should be shown when applied. Defaults to ``True``
@@ -372,12 +372,12 @@ class GameAction(ActionBlock, JSONData):
 
             loc_1 = DFLocation(1, 2, 3)
             loc_2 = DFVariable("my_loc")
-            GameAction.bone_meal(loc_1, loc_2, amount=5, show_particles=True)  # 5 bone meals, with particles.
+            GameAction.bone_meal(loc_1, loc_2, health=5, show_particles=True)  # 5 bone meals, with particles.
         """
         args = Arguments(
             [
                 *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)],
-                p_check(amount, Numeric, "amount")
+                p_check(amount, Numeric, "health")
             ],
             tags=[Tag(
                 "Show Particles", option=bool(show_particles),
@@ -2202,7 +2202,7 @@ whose values DF expects to be formatted in one of the following ways:
             Orb location.
 
         exp_amount : Optional[:attr:`~.Numeric`], optional
-            Experience amount, or ``None`` for a default value set by DF. Default is ``None``.
+            Experience health, or ``None`` for a default value set by DF. Default is ``None``.
 
             .. warning::
 
@@ -2814,7 +2814,7 @@ class Control(ActionBlock, JSONData):
         *, time_unit: enums.CWaitTag = DEFAULT_VAL,
             ticks: bool = True, seconds: bool = False, minutes: bool = False
     ) -> "Control":
-        """Pauses the current line of code for a certain amount of ticks. seconds, or minutes.
+        """Pauses the current line of code for a certain health of ticks. seconds, or minutes.
 
         Examples of usage::
 
