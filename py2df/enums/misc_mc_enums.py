@@ -111,9 +111,9 @@ class Enchantments(AutoLowerNameEnum):
     FORTUNE               = auto()  #: Increases block drops from mining.
     FROST_WALKER          = auto()  #: Freezes water into ice so that you can walk on it.
     IMPALING              = auto()  #: Increases attack damage against sea creatures.
-    INFINITY              = auto()  #: Shoots an infinite health of arrows.
+    INFINITY              = auto()  #: Shoots an infinite amount of arrows.
     KNOCKBACK             = auto()  #: Increases knockback dealt (enemies repel backwards).
-    LOOTING               = auto()  #: Increases health of loot dropped when mob is killed.
+    LOOTING               = auto()  #: Increases amount of loot dropped when mob is killed.
     LOYALTY               = auto()  #: Returns your weapon when it is thrown like a spear.
     LUCK_OF_THE_SEA       = auto()  #: Increases chances of catching valuable items.
     LURE                  = auto()  #: Increases the rate of fish biting your hook.
@@ -124,7 +124,7 @@ class Enchantments(AutoLowerNameEnum):
     PROJECTILE_PROTECTION = auto()  #: Reduces projectile damage (arrows, fireballs, fire charges).
     PROTECTION            = auto()  #: General protection against attacks, fire, lava, and falling.
     PUNCH                 = auto()  #: Increases knockback dealt (enemies repel backwards).
-    QUICK_CHARGE          = auto()  #: Reduces the health of time to reload a crossbow.
+    QUICK_CHARGE          = auto()  #: Reduces the amount of time to reload a crossbow.
     RESPIRATION           = auto()  #: Extends underwater breathing (see better underwater).
     RIPTIDE               = auto()  #: Propels the player forward when enchanted item is thrown while in water or rain.
     SHARPNESS             = auto()  #: Increases attack damage dealt to mobs.

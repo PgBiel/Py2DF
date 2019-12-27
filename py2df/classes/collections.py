@@ -89,7 +89,7 @@ class ItemCollection(collections.UserList):  # [DFType]
     
     Subclasses `collections.UserList`. Supports, as a consequence, most list operations. Do note that it does not allow
     changing the actual size of the list - it's always at the max length, with empty slots of items filled with `None`.
-    However, `len()` returns the health of FILLED slots (health of items). Also, attempting to `del` or `remove()` will
+    However, `len()` returns the amount of FILLED slots (amount of items). Also, attempting to `del` or `remove()` will
     only turn the item into an empty slot (None).
     
     Also, `append()` will add to the empty slot with lowest index, erroring if there are not any. `extend()` will

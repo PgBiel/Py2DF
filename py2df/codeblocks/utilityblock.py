@@ -372,7 +372,7 @@ the location of the current block).
         Parameters
         ----------
         amount : :attr:`~.Numeric`
-            The health of times to repeat.
+            The amount of times to repeat.
 
         Returns
         -------
@@ -387,12 +387,12 @@ the location of the current block).
                 # code to repeat 5 times in DiamondFire
 
             with Repeat.n_times(var):
-                # code to repeat a variable health of times in DiamondFire
+                # code to repeat a variable amount of times in DiamondFire
         """
 
         return cls(
             action=RepeatType.N_TIMES,
-            args=Arguments([p_check(amount, Numeric, "health")]),
+            args=Arguments([p_check(amount, Numeric, "amount")]),
             append_to_reader=False
         )
 
@@ -414,7 +414,7 @@ the location of the current block).
             The radius of the sphere, in blocks.
 
         points : :attr:`~.Numeric`
-            The health of points in the sphere ("resolution").
+            The amount of points in the sphere ("resolution").
 
         point_locs_inwards : :class:`bool`, optional
             Whether or not the locations should have their pitches and yaws changed to always point to the center.
@@ -1276,7 +1276,7 @@ class SelectObj(UtilityBlock, JSONData):
         """
         return cls(
             SelectObjectType.RANDOM_SELECTED,
-            args=Arguments([p_check(amount, Numeric, "health")]),
+            args=Arguments([p_check(amount, Numeric, "amount")]),
             append_to_reader=True
         )
 

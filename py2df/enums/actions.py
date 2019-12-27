@@ -41,15 +41,15 @@ class PlayerActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     GIVE_RNG_ITEM = auto()  #: Gives the player a random item or stack of items from the chest.
     GM_ADVENTURE = auto()  #: Sets the player's gamemode to adventure mode.
     GM_SURVIVAL = auto()  #: Sets the player's gamemode to survival mode.
-    HEAL = auto()  #: Restores the player's health fully or by an health.
+    HEAL = auto()  #: Restores the player's health fully or by an amount.
     HIDE_DISGUISE = auto()  #: Hides the player's disguise on their screen.
     KEEP_INV = auto()  #: The player will now keep the contents of their inventory when they die.
     KICK = auto()  #: Kicks the player from the plot.
-    LAUNCH_FWD = auto()  #: Launches the player a certain health forward or backward.
+    LAUNCH_FWD = auto()  #: Launches the player a certain amount forward or backward.
     LAUNCH_PROJ = auto()  #: Launches a projectile from the player.
     LAUNCH_TOWARD = auto()  #: Launches the player toward a certain location.
     LAUNCH_UP = auto(
-    )  #: Launches the player a certain health up or down. Positive health is up; negative health is down.
+    )  #: Launches the player a certain amount up or down. Positive amount is up; negative amount is down.
     LIGHTNING_EFFECT = auto()  #: Plays a thunderbolt effect to the player that is silent and deals no damage.
     LOAD_INV = auto()  #: Loads the selected saved inventory.
     MOB_DISGUISE = auto()  #: Disguises the player as a mob.
@@ -102,7 +102,7 @@ class PlayerActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     SET_ITEM_COOLDOWN = auto()  #: Applies a cooldown visual effect to an item type.
     SET_ITEMS = auto()  #: Changes the player's inventory accordingly to the items in the  parameter chest.
     SET_LIST_HEADER = auto()  #: Sets the player list header / footer for the player.
-    SET_MAX_HEALTH = auto()  #: Sets the maximum health of health that the player can have.
+    SET_MAX_HEALTH = auto()  #: Sets the maximum amount of health that the player can have.
     SET_MENU_ITEM = auto()  #: Sets the specified slot in the player's currently open inventory menu to the given item.
     SET_NAME_COLOR = auto()  #: Sets the color the player's name tag appears in.
     SET_SATURATION = auto()  #: Sets the player's saturation level.
@@ -131,7 +131,7 @@ class EntityActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     BLOCK_DISGUISE = auto()  #: Disguises the entity as a block.
     CREEPER_CHARGED = auto()  #: Sets whether a creeper has the charged effect.
     CREEPER_IGNITED = auto()  #: Sets whether a creeper is currently ignited. (getting ready to explode)
-    CREEPER_MAX_FUSE = auto()  #: Sets the starting health of fuse ticks of a creeper.
+    CREEPER_MAX_FUSE = auto()  #: Sets the starting amount of fuse ticks of a creeper.
     CREEPER_RADIUS = auto()  #: Sets the explosion radius of a creeper.
     DAMAGE = auto()  #: Damages the mob.
     DISABLE_GLOWING = auto()  #: Makes the entity no longer glow.
@@ -142,14 +142,14 @@ class EntityActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     EXPLODE_CREEPER = auto()  #: Causes a creeper to instantly explode.
     GIVE_EFFECT = auto()  #: Gives the mob one or more potion effects.
     GRAVITY = auto()  #: Enables gravity for the entity.
-    HEAL = auto()  #: Restores the mob's health fully or by an health.
+    HEAL = auto()  #: Restores the mob's health fully or by an amount.
     HIDE_NAME = auto()  #: Hides the name tag of the entity.
     HORSE_APPEARANCE = auto()  #: Sets the appearance (the variant) of a horse.
     JUMP_STRENGTH = auto()  #: Sets the jump strength of a horse.
-    LAUNCH_FWD = auto()  #: Launches the entity a certain health forward or backward.
+    LAUNCH_FWD = auto()  #: Launches the entity a certain amount forward or backward.
     LAUNCH_PROJ = auto()  #: Launches a projectile from the mob.
     LAUNCH_TOWARD = auto()  #: Launches the entity toward a certain location.
-    LAUNCH_UP = auto()  #: Launches the entity some health up or down. Positive health is up; negative health is down.
+    LAUNCH_UP = auto()  #: Launches the entity some amount up or down. Positive amount is up; negative amount is down.
     MOB_DISGUISE = auto()  #: Disguises the entity as a mob.
     MOOSHROOM_VARIANT = auto()  #: Sets the skin type of a mooshroom.
     MOVE_TO = auto()  #: Instructs the mob's AI to always pathfind to a certain location at a certain speed.
@@ -175,7 +175,7 @@ class EntityActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     SET_HORSE_ARMOR = auto()  #: Sets the armor of a horse.
     SET_HORSE_CHEST = auto()  #: Sets whether a horse has a chest equipped.
     SET_ITEM_OWNER = auto()  #: Sets an item's owner.
-    SET_MAX_HEALTH = auto()  #: Sets the maximum health of health that the mob can have.
+    SET_MAX_HEALTH = auto()  #: Sets the maximum amount of health that the mob can have.
     SET_NAME = auto()  #: Changes the name of the entity.
     SET_PANDA_GENES = auto()  #: Sets the genes (traits) of a panda.
     SET_PARROT_VARIANT = auto()  #: Sets the skin variant of a parrot.
@@ -212,7 +212,7 @@ class ControlType(ActionType, AutoSnakeToPascalCaseNameEnum):
     )  #: Returns to the Call Function block the current Function was called from, and continues code from there.
     SKIP = auto()  #: Skips the rest of this repeat statement's code and continues to the next repetition.
     STOP_REPEAT = auto()  #: Stops a repeating sequence and continues to the next code block.
-    WAIT = auto()  #: Pauses the current line of code for a certain health of ticks seconds, or minutes.
+    WAIT = auto()  #: Pauses the current line of code for a certain amount of ticks seconds, or minutes.
 
 
 @unique
@@ -281,34 +281,6 @@ class GameActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     # endregion:player_action_tags
 
     # region:entity_action_tags
-
-@unique
-class HorseColor(TagType):
-    WHITE = auto(),
-    CREAMY = auto(),
-    CHESTNUT = auto(),
-    BROWN = auto(),
-    BLACK = auto(),
-    GRAY = auto(),
-    DARK_BROWN = auto()
-
-
-@unique
-class HorseVariant(TagType):
-    NONE = auto(),
-    WHITE = auto(),
-    WHITEFIELD = auto(),
-    WHITE_DOTS = auto(),
-    BLACK_DOTS = auto()
-
-
-
-@unique
-class EffectParticleMode(TagType):
-    SHOWN = auto()
-    BEACON = auto()
-    HIDDEN = auto()
-
     # endregion:entity_action_tags
 
     # region:control_tags

@@ -1369,7 +1369,7 @@ class _Var(DFType, VarOperable):
 
     unsaved : :class:`bool`, optional
         If ``True``, the variable's scope is set to :attr:`~.VariableScope.UNSAVED` - i.e., the value does not persist
-        between successive plot uses (when the health of players reaches 0, the variable is reset).
+        between successive plot uses (when the amount of players reaches 0, the variable is reset).
 
 
     .. container:: comparisons
@@ -1721,7 +1721,7 @@ class DFVariable(_Var):
 
     unsaved : :class:`bool`, optional
         If ``True``, the variable's scope is set to :attr:`~.VariableScope.UNSAVED` - i.e., the value does not persist
-        between successive plot uses (when the health of players reaches 0, the variable is reset).
+        between successive plot uses (when the amount of players reaches 0, the variable is reset).
 
 
     .. container:: comparisons

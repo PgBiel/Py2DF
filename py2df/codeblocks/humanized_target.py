@@ -5,9 +5,9 @@ import typing
 from ._block_utils import _load_btype, BlockParam, _load_btypes
 from .actions import PlayerAction, EntityAction
 from .ifs import IfPlayer, IfEntity
-from ..classes import Arguments, ItemCollection, Tag, DFNumber, DFPotion
+from ..classes import Arguments, ItemCollection, Tag
 from ..enums import PlayerTarget, EntityTarget, PlayerActionType, EntityActionType, IfPlayerType, IfEntityType, \
-    BlockType, PlayerHand, IfPOpenInvType, EffectParticleMode, HorseColor, HorseVariant
+    BlockType, PlayerHand, IfPOpenInvType
 from ..typings import Textable, Numeric, Locatable, ItemParam, Potionable, ParticleParam, p_check, SpawnEggable, \
     p_bool_check, Listable
 from ..utils import remove_u200b_from_doc, flatten
@@ -538,7 +538,7 @@ location, at most 10 blocks away ...
         Parameters
         ----------
         locs : Union[:attr:`~.Locatable`, :attr:`~.Listable`]
-            Center location(s) - must be near to at least one of them by the given distance health.
+            Center location(s) - must be near to at least one of them by the given distance amount.
             (A variable representing a list of locations can also be specified.)
 
         distance : Optional[:attr:`~.Numeric`], optional
@@ -1532,12 +1532,11 @@ class Entity:
     # region:entityactions
 
     def armor_stand_tags(
-        self,
-        *, is_visible: typing.Optional[bool] = None, is_marker: typing.Optional[bool] = None,
-        allow_item_taking_or_adding: typing.Optional[bool] = None,
-        has_physics_or_updates: typing.Optional[bool] = None, is_small: typing.Optional[bool] = None,
-        has_arms: typing.Optional[bool] = None, has_base_plate: typing.Optional[bool] = None,
-        target: typing.Optional[EntityTarget] = None
+            self,
+            *, is_visible="Don't Change", is_marker_no_hitbox="Don't Change",
+            allow_item_taking_or_adding="Don't Change", has_physics_or_updates="Don't Change", is_small="Don't Change",
+            has_arms="Don't Change", has_base_plate="Don't Change",
+            target: typing.Optional[EntityTarget] = None
     ):
         """Changes the settings of an armor stand, such as visibility.
 
@@ -1546,36 +1545,26 @@ class Entity:
 
         Parameters
         ----------
-        is_visible : Optional[:class:`bool`], optional
-            Whether this Armor Stand is visible.
-            Specify ``True`` or ``False`` to change this setting, or ``None`` to leave it untouched. Defaults to
-            ``None``.
+        is_visible :
+            Set to True, Set to False, Don't Change
 
-        is_marker : Optional[:class:`bool`], optional
-            Whether this Armor Stand is a marker (has no hitbox).
-            Specify ``True`` or ``False`` to change this setting, or ``None`` to leave it untouched. Defaults to
-            ``None``.
+        is_marker_no_hitbox :
+            Set to True, Set to False, Don't Change
 
-        allow_item_taking_or_adding : Optional[:class:`bool`], optional
-            Whether this armor stand should have item taking/adding allowed.
-            Specify ``True`` or ``False`` to change this setting, or ``None`` to leave it untouched. Defaults to
-            ``None``.
+        allow_item_taking_or_adding :
+            Set to True, Set to False, Don't Change
 
-        has_physics_or_updates : Optional[:class:`bool`], optional
-            Specify ``True`` or ``False`` to change this setting, or ``None`` to leave it untouched. Defaults to
-            ``None``.
+        has_physics_or_updates :
+            Set to True, Set to False, Don't Change
 
-        is_small : Optional[:class:`bool`], optional
-            Specify ``True`` or ``False`` to change this setting, or ``None`` to leave it untouched. Defaults to
-            ``None``.
+        is_small :
+            Set to True, Set to False, Don't Change
 
-        has_arms : Optional[:class:`bool`], optional
-            Specify ``True`` or ``False`` to change this setting, or ``None`` to leave it untouched. Defaults to
-            ``None``.
+        has_arms :
+            Set to True, Set to False, Don't Change
 
-        has_base_plate : Optional[:class:`bool`], optional
-            Specify ``True`` or ``False`` to change this setting, or ``None`` to leave it untouched. Defaults to
-            ``None``.
+        has_base_plate :
+            Set to True, Set to False, Don't Change
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -1590,59 +1579,37 @@ class Entity:
         --------
         ::
 
-            last_mob.armor_stand_tags(is_visible=True, has_physics_or_updates=False)
+            last_mob.armor_stand_tags():
             # OR
-            Entity(EntityTarget.LAST_MOB).armor_stand_tags(is_visible=True, has_physics_or_updates=False)
-            # Makes the armor stand visible and makes it not affected by physics or updates; other params unchanged
+            Entity(EntityTarget.LAST_MOB).armor_stand_tags()  # TODO: Example
         """
-        args = Arguments([], tags=[  # Set to True, Set to False, Don't Change
+        args = Arguments([], tags=[
             Tag(
-                "Is Visible",
-                option="Set to True" if is_visible else (
-                    "Set to False" if is_visible is not None else "Don't Change"
-                ),  # default is Don't Change
+                "Is Visible", option=is_visible,  # default is Don't Change
                 action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
             ),
             Tag(
-                "Is Marker (No Hitbox)",
-                option="Set to True" if is_marker else (
-                    "Set to False" if is_marker is not None else "Don't Change"
-                ),  # default is Don't Change
+                "Is Marker (No Hitbox)", option=is_marker_no_hitbox,  # default is Don't Change
                 action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
             ),
             Tag(
-                "Allow Item Taking / Adding",
-                option="Set to True" if allow_item_taking_or_adding else (
-                    "Set to False" if allow_item_taking_or_adding is not None else "Don't Change"
-                ),  # default is Don't Change
+                "Allow Item Taking / Adding", option=allow_item_taking_or_adding,  # default is Don't Change
                 action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
             ),
             Tag(
-                "Has Physics / Updates",
-                option="Set to True" if has_physics_or_updates else (
-                    "Set to False" if has_physics_or_updates is not None else "Don't Change"
-                ),  # default is Don't Change
+                "Has Physics / Updates", option=has_physics_or_updates,  # default is Don't Change
                 action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
             ),
             Tag(
-                "Is Small",
-                option="Set to True" if is_small else (
-                    "Set to False" if is_small is not None else "Don't Change"
-                ),  # default is Don't Change
+                "Is Small", option=is_small,  # default is Don't Change
                 action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
             ),
             Tag(
-                "Has Arms",
-                option="Set to True" if has_arms else (
-                    "Set to False" if has_arms is not None else "Don't Change"
-                ),  # default is Don't Change
+                "Has Arms", option=has_arms,  # default is Don't Change
                 action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
             ),
             Tag(
-                "Has Base Plate",
-                option="Set to True" if has_base_plate else (
-                    "Set to False" if has_base_plate is not None else "Don't Change"
-                ),  # default is Don't Change
+                "Has Base Plate", option=has_base_plate,  # default is Don't Change
                 action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
             )
         ])
@@ -1654,8 +1621,8 @@ class Entity:
         )
 
     def block_disguise(
-        self, block_type: BlockParam, name: typing.Optional[Textable] = None,
-        *, target: typing.Optional[EntityTarget] = None
+            self, block_type: BlockParam, name: typing.Optional[Textable] = None,
+            *, target: typing.Optional[EntityTarget] = None
     ):
         """Disguises the entity as a block.
 
@@ -1671,10 +1638,11 @@ class Entity:
 
             - an instance of :class:`~.Material` (the material of the block to set);
             - an item (:attr:`~.ItemParam` - the item representing the block to set);
-            - text (:attr:`~.Textable` - the material of the block to set as text).
+            - text (:attr:`~.Textable` - the material of the block to set as text);
+            - a :attr:`~.Listable` (A List - in DF - variable containing either Item or Text parameters).
 
         name : Optional[:attr:`~.Textable`], optional
-            Name of disguise. Default is ``None`` (no special name).
+            Name of disguise. Default is ``None``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -1689,11 +1657,9 @@ class Entity:
         --------
         ::
 
-            block_type = Material.GRASS_BLOCK  # disguise as a grass block
-            last_mob.block_disguise(block_type, "Some Block")
+            last_mob.block_disguise(block_type, name):
             # OR
-            Entity(EntityTarget.LAST_MOB).block_disguise(block_type, "Some Block)
-            # entity is disguised as a grass blcok named "Some Block"
+            Entity(EntityTarget.LAST_MOB).block_disguise(block_type, name)  # TODO: Example
         """
         args = Arguments([
             p_check(block_type, typing.Union[ItemParam, Textable], "block_type"),
@@ -1707,15 +1673,16 @@ class Entity:
         )
 
     def creeper_charged(
-        self, is_charged: bool = True,
-        *, target: typing.Optional[EntityTarget] = None
+            self,
+            *, is_charged: bool = True,
+            target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a creeper has the charged effect.
 
         Parameters
         ----------
         is_charged : :class:`bool`, optional
-            Whether or not the target creeper should be target. Defaults to ``True`` (should be charged).
+            Defaults to ``True``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -1730,10 +1697,9 @@ class Entity:
         --------
         ::
 
-            last_mob.creeper_charged(True)
+            last_mob.creeper_charged():
             # OR
-            Entity(EntityTarget.LAST_MOB).creeper_charged(True)
-            # Creeper is now charged; False for not charged.
+            Entity(EntityTarget.LAST_MOB).creeper_charged()  # TODO: Example
         """
         args = Arguments([], tags=[
             Tag(
@@ -1749,15 +1715,16 @@ class Entity:
         )
 
     def creeper_ignited(
-        self, is_ignited: bool = True,
-        *, target: typing.Optional[EntityTarget] = None
+            self,
+            *, is_ignited: bool = True,
+            target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a creeper is currently ignited. (getting ready to explode)
 
         Parameters
         ----------
         is_ignited : :class:`bool`, optional
-            Whether or not the Creeper is ignited. Defaults to ``True`` (is ignited).
+            Defaults to ``True``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -1772,9 +1739,9 @@ class Entity:
         --------
         ::
 
-            last_mob.creeper_ignited(True)
+            last_mob.creeper_ignited():
             # OR
-            Entity(EntityTarget.LAST_MOB).creeper_ignited(True)  # creeper is now ignited; False for not ignited
+            Entity(EntityTarget.LAST_MOB).creeper_ignited()  # TODO: Example
         """
         args = Arguments([], tags=[
             Tag(
@@ -1790,10 +1757,10 @@ class Entity:
         )
 
     def creeper_max_fuse(
-        self, ticks: Numeric,
-        *, target: typing.Optional[EntityTarget] = None
+            self, ticks: Numeric,
+            *, target: typing.Optional[EntityTarget] = None
     ):
-        """Sets the starting health of fuse ticks of a creeper.
+        """Sets the starting amount of fuse ticks of a creeper.
 
         Parameters
         ----------
@@ -1813,9 +1780,9 @@ class Entity:
         --------
         ::
 
-            last_mob.creeper_max_fuse(40)
+            last_mob.creeper_max_fuse(ticks):
             # OR
-            Entity(EntityTarget.LAST_MOB).creeper_max_fuse(40)  # fuse is now 2 seconds
+            Entity(EntityTarget.LAST_MOB).creeper_max_fuse(ticks)  # TODO: Example
         """
         args = Arguments([
             p_check(ticks, Numeric, "ticks")
@@ -1828,19 +1795,20 @@ class Entity:
         )
 
     def creeper_radius(
-        self, radius: Numeric,
-        *, target: typing.Optional[EntityTarget] = None
+            self, radius: Numeric,
+            *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the explosion radius of a creeper.
 
         Parameters
         ----------
         radius : :attr:`~.Numeric`
-            The new explosion radius.
+            Radius.
 
-            .. note::
+        .. note::
 
-                The maximum radius is 25.
+            Max radius = 25
+
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -1851,22 +1819,14 @@ class Entity:
         :class:`EntityAction`
             The generated EntityAction instance.
 
-        Raises
-        ------
-        :exc:`ValueError`
-            If the explosion radius is not within the range `0 <= radius <= 25`.
-
         Examples
         --------
         ::
 
-            last_mob.creeper_radius(radius)
+            last_mob.creeper_radius(radius):
             # OR
             Entity(EntityTarget.LAST_MOB).creeper_radius(radius)  # TODO: Example
         """
-        if isinstance(radius, (int, float, DFNumber)) and not 0 <= radius <= 25:
-            raise ValueError("Invalid creeper explosion radius (must be between 0 and 25).")
-
         args = Arguments([
             p_check(radius, Numeric, "radius")
         ])
@@ -1878,8 +1838,8 @@ class Entity:
         )
 
     def damage(
-        self, damage: Numeric,
-        *, target: typing.Optional[EntityTarget] = None
+            self, damage: Numeric,
+            *, target: typing.Optional[EntityTarget] = None
     ):
         """Damages the mob.
 
@@ -1906,9 +1866,9 @@ class Entity:
         --------
         ::
 
-            last_mob.damage(6)
+            last_mob.damage(damage):
             # OR
-            Entity(EntityTarget.LAST_MOB).damage(6)  # deals 3 hearts of damage to the mob
+            Entity(EntityTarget.LAST_MOB).damage(damage)  # TODO: Example
         """
         args = Arguments([
             p_check(damage, Numeric, "damage")
@@ -2040,20 +2000,15 @@ class Entity:
         )
 
     def end_crystal_target(
-        self, loc: typing.Optional[Locatable] = None,
-        *, target: typing.Optional[EntityTarget] = None
+            self, loc: typing.Optional[Locatable] = None,
+            *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets an end crystal's beam target.
 
         Parameters
         ----------
         loc : Optional[:attr:`~.Locatable`], optional
-            The end crystal beam's new target, or ``None`` to remove the beam. Default is ``None``.
-
-            .. note::
-
-                - To remove the beam, specify ``None`` (i.e., not a location).
-                - The target location is rounded to the nearest block.
+            Target. Default is ``None``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -2064,12 +2019,17 @@ class Entity:
         :class:`EntityAction`
             The generated EntityAction instance.
 
+        Notes
+        -----
+        - To remove the beam, do not specify a location.
+        - The target location is rounded to the nearest block.
+
+
         Examples
         --------
         ::
 
-            loc = DFLocation(1, 2, 3)  # location of the new beam target
-            last_mob.end_crystal_target(loc)
+            last_mob.end_crystal_target(loc):
             # OR
             Entity(EntityTarget.LAST_MOB).end_crystal_target(loc)  # TODO: Example
         """
@@ -2113,24 +2073,22 @@ class Entity:
         )
 
     def give_effect(
-        self, *potions: typing.Union[Potionable, Listable],
-        effect_particle_mode: EffectParticleMode = EffectParticleMode.SHOWN, overwrite_existing_effect: bool = False,
-        target: typing.Optional[EntityTarget] = None
+            self, *potions: typing.Union[Potionable, Listable],
+            effect_particle_mode="Shown", overwrite_existing_effect: bool = False,
+            target: typing.Optional[EntityTarget] = None
     ):
         """Gives the mob one or more potion effects.
 
         Parameters
         ----------
         potions : Union[:attr:`~.Potionable`, :attr:`~.Listable`]
-            Potion effect(s) to give, or a List variable with all the potion effects.
+            Potion effects.
 
-        effect_particle_mode : :class:`~.EffectParticleMode`, optional
-            The mode applied to the effect particles (either :attr:`~.EffectParticleMode.SHOWN`,
-            :attr:`~.EffectParticleMode.BEACON` or :attr:`~.EffectParticleMode.HIDDEN`). Defaults to
-            :attr:`~.EffectParticleMode.SHOWN`.
+        effect_particle_mode :
+            Shown, Beacon, Hidden
 
         overwrite_existing_effect : :class:`bool`, optional
-            If existing effects should be overriden by the given ones. Defaults to ``False`` (no).
+            Defaults to ``False``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -2145,12 +2103,9 @@ class Entity:
         --------
         ::
 
-            potion_1 = DFPotion(PotionEffect.ABSORPTION, amplifier=255, duration=(5, 0))  # Absorption 255, 5 min dur.
-            potion_2 = PotionVar("my var")  # potion variable
-            last_mob.give_effect(potion_1, potion_2, effect_particle_mode=EffectParticleMode.BEACON)
+            last_mob.give_effect(potions):
             # OR
-            Entity(EntityTarget.LAST_MOB).give_effect(potion_1, potion_2, effect_particle_mode=EffectParticleMode.BEACON)
-            # gives two potion effects with beacon-mode particles.
+            Entity(EntityTarget.LAST_MOB).give_effect(potions)  # TODO: Example
         """
         args = Arguments([
             p_check(potion, typing.Union[Potionable, Listable], f"potions[{i}]") for i, potion in enumerate(potions)
@@ -2171,7 +2126,7 @@ class Entity:
             append_to_reader=True
         )
 
-    def enable_gravity(self, *, target: typing.Optional[EntityTarget] = None):
+    def gravity(self, *, target: typing.Optional[EntityTarget] = None):
         """Enables gravity for the entity.
 
         .. rank:: Overlord
@@ -2192,9 +2147,9 @@ class Entity:
         --------
         ::
 
-            last_mob.enable_gravity()
+            last_mob.gravity()
             # OR
-            Entity(EntityTarget.LAST_MOB).enable_gravity()
+            Entity(EntityTarget.LAST_MOB).gravity()
         """
         return EntityAction(
             action=EntityActionType.GRAVITY,
@@ -2204,19 +2159,19 @@ class Entity:
         )
 
     def heal(
-        self, health: typing.Optional[Numeric] = None,
-        *, target: typing.Optional[EntityTarget] = None
+            self, amount: typing.Optional[Numeric] = None,
+            *, target: typing.Optional[EntityTarget] = None
     ):
         """Restores the mob's health fully or by an amount.
 
         Parameters
         ----------
-        health : Optional[:attr:`~.Numeric`], optional
+        amount : Optional[:attr:`~.Numeric`], optional
             Amount to heal. Default is ``None``.
 
-            .. note::
+        .. note::
 
-                1 health = 0.5 hearts
+            1 health = 0.5 hearts
 
 
         target : Optional[:class:`~.EntityTarget`], optional
@@ -2232,12 +2187,12 @@ class Entity:
         --------
         ::
 
-            last_mob.heal(6)
+            last_mob.heal(amount):
             # OR
-            Entity(EntityTarget.LAST_MOB).heal(6)  # Heals 3 hearts (+3 added)
+            Entity(EntityTarget.LAST_MOB).heal(amount)  # TODO: Example
         """
         args = Arguments([
-            p_check(health, typing.Optional[Numeric], "health") if health is not None else None
+            p_check(amount, typing.Optional[Numeric], "amount") if amount is not None else None
         ])
         return EntityAction(
             action=EntityActionType.HEAL,
@@ -2275,25 +2230,20 @@ class Entity:
             append_to_reader=True
         )
 
-    def set_horse_appearance(
-        self,
-        *, horse_color: typing.Optional[HorseColor]=None,
-        horse_variant: typing.Optional[HorseVariant]=None,
-        target: typing.Optional[EntityTarget] = None
+    def horse_appearance(
+            self,
+            *, horse_color="Don't Change", horse_variant="Don't Change",
+            target: typing.Optional[EntityTarget] = None
     ):
         """Sets the appearance (the variant) of a horse.
 
         Parameters
         ----------
-        horse_color : Optional[:class:`~.HorseColor`]
-            The new color of the horse, or ``None`` to keep unchanged. Defaults to ``None``.
+        horse_color :
+            White, Creamy, Chestnut, Brown, Black, Gray, Dark Brown, Don't Change
 
-        horse_variant : Optional[:class:`~.HorseVariant`]
-            The new variant of the horse, or ``None`` to keep unchanged. Defaults to ``None``.
-
-            .. warning::
-
-                For no variant, specify :attr:`~.HorseVariant.NONE`, not ``None`` (``None`` is to keep unchanged).
+        horse_variant :
+            None, White, Whitefield, White Dots, Black Dots, Don't Change
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -2308,17 +2258,17 @@ class Entity:
         --------
         ::
 
-            last_mob.set_horse_appearance()
+            last_mob.horse_appearance():
             # OR
-            Entity(EntityTarget.LAST_MOB).set_horse_appearance()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).horse_appearance()  # TODO: Example
         """
         args = Arguments([], tags=[
             Tag(
-                "Horse Color", option=HorseColor(horse_color) if horse_color else "Don't Change",
+                "Horse Color", option=horse_color,  # default is Don't Change
                 action=EntityActionType.HORSE_APPEARANCE, block=BlockType.IF_GAME
             ),
             Tag(
-                "Horse Variant", option=HorseVariant(horse_variant) if horse_variant else "Don't Change",
+                "Horse Variant", option=horse_variant,  # default is Don't Change
                 action=EntityActionType.HORSE_APPEARANCE, block=BlockType.IF_GAME
             )
         ])
@@ -2329,24 +2279,21 @@ class Entity:
             append_to_reader=True
         )
 
-    def set_jump_strength(
-        self, strength: Numeric,
-        *, target: typing.Optional[EntityTarget] = None
+    def jump_strength(
+            self, num: Numeric,
+            *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the jump strength of a horse.
-
         .. workswith:: Horse, Donkey, Mule, Llama, Trader Llama, Skeleton Horse, Zombie Horse
 
         Parameters
         ----------
-        strength : :attr:`~.Numeric`
-            The new jump strength.
+        num : :attr:`~.Numeric`
+            Strength.
 
-            .. note::
+        .. note::
 
-                - A jump strength of 0 will prevent jumping.
-                - Must be between 0 and 2, otherwise a ValueError is raised (if a constant is specified, i.e., not
-                a variable).
+            Min = 0 Max = 2
 
 
         target : Optional[:class:`~.EntityTarget`], optional
@@ -2358,24 +2305,21 @@ class Entity:
         :class:`EntityAction`
             The generated EntityAction instance.
 
-        Raises
-        ------
-        :exc:`ValueError`
-            If `strength` is not between 0 and 2.
+        Notes
+        -----
+        A jump strength of 0 will prevent jumping.
+
 
         Examples
         --------
         ::
 
-            last_mob.set_jump_strength(2)
+            last_mob.jump_strength(num):
             # OR
-            Entity(EntityTarget.LAST_MOB).set_jump_strength(2)  # last spawned mob, if horse, now has jump strength of 2
+            Entity(EntityTarget.LAST_MOB).jump_strength(num)  # TODO: Example
         """
-        if isinstance(strength, (int, float, DFNumber)) and not 0 <= strength <= 2:
-            raise ValueError("Invalid jump strength (must be between 0 and 2).")
-
         args = Arguments([
-            p_check(strength, Numeric, "strength")
+            p_check(num, Numeric, "num")
         ])
         return EntityAction(
             action=EntityActionType.JUMP_STRENGTH,
@@ -2385,10 +2329,9 @@ class Entity:
         )
 
     def launch_fwd(
-        self, power: Numeric,
-        *, yaw_only: bool = False
-        *, launch_axis="Pitch and Yaw",
-        target: typing.Optional[EntityTarget] = None
+            self, power: Numeric,
+            *, launch_axis="Pitch and Yaw",
+            target: typing.Optional[EntityTarget] = None
     ):
         """Launches the entity a certain amount forward or backward.
 
@@ -2397,13 +2340,8 @@ class Entity:
         power : :attr:`~.Numeric`
             Launch power.
 
-            .. note::
-
-                A positive launch power is forward, and a negative one is backward.
-
-        yaw_only : :class:`bool`, optional
-            If ``True``, only yaw is considered on launch axis. If ``False``, pitch is also considered. Defaults
-            to ``False``.
+        launch_axis :
+            Pitch and Yaw, Yaw Only
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -2414,20 +2352,24 @@ class Entity:
         :class:`EntityAction`
             The generated EntityAction instance.
 
+        Notes
+        -----
+        A positive launch power is forward, and a negative one is backward.
+
+
         Examples
         --------
         ::
 
-            last_mob.launch_fwd(5)
+            last_mob.launch_fwd(power):
             # OR
-            Entity(EntityTarget.LAST_MOB).launch_fwd(5)  # launches last spawned mob forward with a power of 5
-            # -5 for backwards with same power
+            Entity(EntityTarget.LAST_MOB).launch_fwd(power)  # TODO: Example
         """
         args = Arguments([
             p_check(power, Numeric, "power")
         ], tags=[
             Tag(
-                "Launch Axis", option="Yaw Only" if launch_axis else "Pitch and Yaw",  # default is Pitch and Yaw
+                "Launch Axis", option=launch_axis,  # default is Pitch and Yaw
                 action=EntityActionType.LAUNCH_FWD, block=BlockType.IF_GAME
             )
         ])
@@ -2438,7 +2380,7 @@ class Entity:
             append_to_reader=True
         )
 
-    def launch_proj(  # TODO: Finish entity actions
+    def launch_proj(
             self, projectile: BlockParam, loc: typing.Optional[Locatable] = None,
             name: typing.Optional[Textable] = None, speed: typing.Optional[Numeric] = None,
             inaccuracy: typing.Optional[Numeric] = None, particle: typing.Optional[ParticleParam] = None,
@@ -2491,7 +2433,7 @@ class Entity:
         --------
         ::
 
-            last_mob.launch_proj(projectile, loc, name, speed, inaccuracy, particle)
+            last_mob.launch_proj(projectile, loc, name, speed, inaccuracy, particle):
             # OR
             Entity(EntityTarget.LAST_MOB).launch_proj(projectile, loc, name, speed, inaccuracy, particle)  # TODO: Example
         """
@@ -2546,7 +2488,7 @@ class Entity:
         --------
         ::
 
-            last_mob.launch_toward(loc, power)
+            last_mob.launch_toward(loc, power):
             # OR
             Entity(EntityTarget.LAST_MOB).launch_toward(loc, power)  # TODO: Example
         """
@@ -2570,7 +2512,7 @@ class Entity:
             self, power: Numeric,
             *, target: typing.Optional[EntityTarget] = None
     ):
-        """Launches the entity a certain health up or down. A positive health is up, and a negative health is down.
+        """Launches the entity a certain amount up or down. A positive amount is up, and a negative amount is down.
 
         Parameters
         ----------
@@ -2590,7 +2532,7 @@ class Entity:
         --------
         ::
 
-            last_mob.launch_up(power)
+            last_mob.launch_up(power):
             # OR
             Entity(EntityTarget.LAST_MOB).launch_up(power)  # TODO: Example
         """
@@ -2634,7 +2576,7 @@ class Entity:
         --------
         ::
 
-            last_mob.mob_disguise(spawn_egg, name)
+            last_mob.mob_disguise(spawn_egg, name):
             # OR
             Entity(EntityTarget.LAST_MOB).mob_disguise(spawn_egg, name)  # TODO: Example
         """
@@ -2674,7 +2616,7 @@ class Entity:
         --------
         ::
 
-            last_mob.mooshroom_variant()
+            last_mob.mooshroom_variant():
             # OR
             Entity(EntityTarget.LAST_MOB).mooshroom_variant()  # TODO: Example
         """
@@ -2726,7 +2668,7 @@ class Entity:
         --------
         ::
 
-            last_mob.move_to(loc, speed)
+            last_mob.move_to(loc, speed):
             # OR
             Entity(EntityTarget.LAST_MOB).move_to(loc, speed)  # TODO: Example
         """
@@ -2802,7 +2744,7 @@ class Entity:
             append_to_reader=True
         )
 
-    def disable_gravity(self, *, target: typing.Optional[EntityTarget] = None):
+    def no_gravity(self, *, target: typing.Optional[EntityTarget] = None):
         """Disables gravity for the entity.
 
         .. rank:: Overlord
@@ -2823,9 +2765,9 @@ class Entity:
         --------
         ::
 
-            last_mob.disable_gravity()
+            last_mob.no_gravity()
             # OR
-            Entity(EntityTarget.LAST_MOB).disable_gravity()
+            Entity(EntityTarget.LAST_MOB).no_gravity()
         """
         return EntityAction(
             action=EntityActionType.NO_GRAVITY,
@@ -2893,7 +2835,7 @@ class Entity:
         --------
         ::
 
-            last_mob.player_disguise(name, text_2)
+            last_mob.player_disguise(name, text_2):
             # OR
             Entity(EntityTarget.LAST_MOB).player_disguise(name, text_2)  # TODO: Example
         """
@@ -2967,7 +2909,7 @@ class Entity:
         --------
         ::
 
-            last_mob.projectile_item(item)
+            last_mob.projectile_item(item):
             # OR
             Entity(EntityTarget.LAST_MOB).projectile_item(item)  # TODO: Example
         """
@@ -3039,7 +2981,7 @@ class Entity:
         --------
         ::
 
-            last_mob.remove_effect(potions)
+            last_mob.remove_effect(potions):
             # OR
             Entity(EntityTarget.LAST_MOB).remove_effect(potions)  # TODO: Example
         """
@@ -3085,7 +3027,7 @@ class Entity:
         --------
         ::
 
-            last_mob.ride_entity(name)
+            last_mob.ride_entity(name):
             # OR
             Entity(EntityTarget.LAST_MOB).ride_entity(name)  # TODO: Example
         """
@@ -3124,7 +3066,7 @@ class Entity:
         --------
         ::
 
-            last_mob.send_animation()
+            last_mob.send_animation():
             # OR
             Entity(EntityTarget.LAST_MOB).send_animation()  # TODO: Example
         """
@@ -3171,7 +3113,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_age_or_size(size)
+            last_mob.set_age_or_size(size):
             # OR
             Entity(EntityTarget.LAST_MOB).set_age_or_size(size)  # TODO: Example
         """
@@ -3210,7 +3152,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_age_locked()
+            last_mob.set_age_locked():
             # OR
             Entity(EntityTarget.LAST_MOB).set_age_locked()  # TODO: Example
         """
@@ -3281,7 +3223,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_cat_type()
+            last_mob.set_cat_type():
             # OR
             Entity(EntityTarget.LAST_MOB).set_cat_type()  # TODO: Example
         """
@@ -3324,7 +3266,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_color()
+            last_mob.set_color():
             # OR
             Entity(EntityTarget.LAST_MOB).set_color()  # TODO: Example
         """
@@ -3365,7 +3307,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_fall_distance(distance)
+            last_mob.set_fall_distance(distance):
             # OR
             Entity(EntityTarget.LAST_MOB).set_fall_distance(distance)  # TODO: Example
         """
@@ -3408,7 +3350,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_fire_ticks(duration)
+            last_mob.set_fire_ticks(duration):
             # OR
             Entity(EntityTarget.LAST_MOB).set_fire_ticks(duration)  # TODO: Example
         """
@@ -3447,7 +3389,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_fox_type()
+            last_mob.set_fox_type():
             # OR
             Entity(EntityTarget.LAST_MOB).set_fox_type()  # TODO: Example
         """
@@ -3492,7 +3434,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_hand_item(item)
+            last_mob.set_hand_item(item):
             # OR
             Entity(EntityTarget.LAST_MOB).set_hand_item(item)  # TODO: Example
         """
@@ -3544,7 +3486,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_health(health)
+            last_mob.set_health(health):
             # OR
             Entity(EntityTarget.LAST_MOB).set_health(health)  # TODO: Example
         """
@@ -3587,7 +3529,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_horse_armor(item)
+            last_mob.set_horse_armor(item):
             # OR
             Entity(EntityTarget.LAST_MOB).set_horse_armor(item)  # TODO: Example
         """
@@ -3627,7 +3569,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_horse_chest()
+            last_mob.set_horse_chest():
             # OR
             Entity(EntityTarget.LAST_MOB).set_horse_chest()  # TODO: Example
         """
@@ -3669,7 +3611,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_invulnerable()
+            last_mob.set_invulnerable():
             # OR
             Entity(EntityTarget.LAST_MOB).set_invulnerable()  # TODO: Example
         """
@@ -3716,7 +3658,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_item_owner(text)
+            last_mob.set_item_owner(text):
             # OR
             Entity(EntityTarget.LAST_MOB).set_item_owner(text)  # TODO: Example
         """
@@ -3735,7 +3677,7 @@ class Entity:
             *, heal_mob_to_max_health: bool = False,
             target: typing.Optional[EntityTarget] = None
     ):
-        """Sets the maximum health of health that the mob can have.
+        """Sets the maximum amount of health that the mob can have.
 
         Parameters
         ----------
@@ -3758,7 +3700,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_max_health(health)
+            last_mob.set_max_health(health):
             # OR
             Entity(EntityTarget.LAST_MOB).set_max_health(health)  # TODO: Example
         """
@@ -3802,7 +3744,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_mob_sitting()
+            last_mob.set_mob_sitting():
             # OR
             Entity(EntityTarget.LAST_MOB).set_mob_sitting()  # TODO: Example
         """
@@ -3847,7 +3789,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_name(name)
+            last_mob.set_name(name):
             # OR
             Entity(EntityTarget.LAST_MOB).set_name(name)  # TODO: Example
         """
@@ -3894,7 +3836,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_panda_genes()
+            last_mob.set_panda_genes():
             # OR
             Entity(EntityTarget.LAST_MOB).set_panda_genes()  # TODO: Example
         """
@@ -3940,7 +3882,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_parrot_variant()
+            last_mob.set_parrot_variant():
             # OR
             Entity(EntityTarget.LAST_MOB).set_parrot_variant()  # TODO: Example
         """
@@ -3981,7 +3923,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_pickup_delay(ticks)
+            last_mob.set_pickup_delay(ticks):
             # OR
             Entity(EntityTarget.LAST_MOB).set_pickup_delay(ticks)  # TODO: Example
         """
@@ -3995,12 +3937,9 @@ class Entity:
             append_to_reader=True
         )
 
-    def set_pose(
-            self, rotation: typing.Optional[Numeric] = None, rotation: typing.Optional[Numeric] = None,
-            rotation: typing.Optional[Numeric] = None,
-            *, armor_stand_part="Head",
-            target: typing.Optional[EntityTarget] = None
-    ):
+    def set_pose(self, x_rot: typing.Optional[Numeric] = None, y_rot: typing.Optional[Numeric] = None,
+                 z_rot: typing.Optional[Numeric] = None, *, armor_stand_part="Head",
+                 target: typing.Optional[EntityTarget] = None):
         """Sets the three-dimensional rotation of an armor stand part.
 
         .. rank:: Mythic
@@ -4008,13 +3947,13 @@ class Entity:
 
         Parameters
         ----------
-        rotation : Optional[:attr:`~.Numeric`], optional
+        x_rot : Optional[:attr:`~.Numeric`], optional
             X Rotation. Default is ``None``.
 
-        rotation : Optional[:attr:`~.Numeric`], optional
+        y_rot : Optional[:attr:`~.Numeric`], optional
             Y Rotation. Default is ``None``.
 
-        rotation : Optional[:attr:`~.Numeric`], optional
+        z_rot : Optional[:attr:`~.Numeric`], optional
             Z Rotation. Default is ``None``.
 
         .. note::
@@ -4038,14 +3977,14 @@ class Entity:
         --------
         ::
 
-            last_mob.set_pose(rotation, rotation, rotation)
+            last_mob.set_pose(rotation, rotation, rotation):
             # OR
             Entity(EntityTarget.LAST_MOB).set_pose(rotation, rotation, rotation)  # TODO: Example
         """
         args = Arguments([
-            p_check(rotation, typing.Optional[Numeric], "rotation") if rotation is not None else None,
-            p_check(rotation, typing.Optional[Numeric], "rotation") if rotation is not None else None,
-            p_check(rotation, typing.Optional[Numeric], "rotation") if rotation is not None else None
+            p_check(x_rot, typing.Optional[Numeric], "x_rot") if x_rot is not None else None,
+            p_check(y_rot, typing.Optional[Numeric], "y_rot") if y_rot is not None else None,
+            p_check(z_rot, typing.Optional[Numeric], "z_rot") if z_rot is not None else None
         ], tags=[
             Tag(
                 "Armor Stand Part", option=armor_stand_part,  # default is Head
@@ -4084,7 +4023,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_rabbit_type()
+            last_mob.set_rabbit_type():
             # OR
             Entity(EntityTarget.LAST_MOB).set_rabbit_type()  # TODO: Example
         """
@@ -4132,7 +4071,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_saddle(item)
+            last_mob.set_saddle(item):
             # OR
             Entity(EntityTarget.LAST_MOB).set_saddle(item)  # TODO: Example
         """
@@ -4171,7 +4110,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_sheep_sheared()
+            last_mob.set_sheep_sheared():
             # OR
             Entity(EntityTarget.LAST_MOB).set_sheep_sheared()  # TODO: Example
         """
@@ -4214,7 +4153,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_slime_ai()
+            last_mob.set_slime_ai():
             # OR
             Entity(EntityTarget.LAST_MOB).set_slime_ai()  # TODO: Example
         """
@@ -4258,7 +4197,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_target(name)
+            last_mob.set_target(name):
             # OR
             Entity(EntityTarget.LAST_MOB).set_target(name)  # TODO: Example
         """
@@ -4303,7 +4242,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_trop_fish_type()
+            last_mob.set_trop_fish_type():
             # OR
             Entity(EntityTarget.LAST_MOB).set_trop_fish_type()  # TODO: Example
         """
@@ -4353,7 +4292,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_villager_prof()
+            last_mob.set_villager_prof():
             # OR
             Entity(EntityTarget.LAST_MOB).set_villager_prof()  # TODO: Example
         """
@@ -4395,7 +4334,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_villager_type()
+            last_mob.set_villager_type():
             # OR
             Entity(EntityTarget.LAST_MOB).set_villager_type()  # TODO: Example
         """
@@ -4437,7 +4376,7 @@ class Entity:
         --------
         ::
 
-            last_mob.set_wolf_angry()
+            last_mob.set_wolf_angry():
             # OR
             Entity(EntityTarget.LAST_MOB).set_wolf_angry()  # TODO: Example
         """
@@ -4598,7 +4537,7 @@ class Entity:
         --------
         ::
 
-            last_mob.snowman_pumpkin()
+            last_mob.snowman_pumpkin():
             # OR
             Entity(EntityTarget.LAST_MOB).snowman_pumpkin()  # TODO: Example
         """
@@ -4645,7 +4584,7 @@ class Entity:
         --------
         ::
 
-            last_mob.tame(name)
+            last_mob.tame(name):
             # OR
             Entity(EntityTarget.LAST_MOB).tame(name)  # TODO: Example
         """
@@ -4687,7 +4626,7 @@ class Entity:
         --------
         ::
 
-            last_mob.teleport(loc)
+            last_mob.teleport(loc):
             # OR
             Entity(EntityTarget.LAST_MOB).teleport(loc)  # TODO: Example
         """
@@ -4736,7 +4675,7 @@ class Entity:
         --------
         ::
 
-            last_mob.tp_sequence(locs, ticks)
+            last_mob.tp_sequence(locs, ticks):
             # OR
             Entity(EntityTarget.LAST_MOB).tp_sequence(locs, ticks)  # TODO: Example
         """

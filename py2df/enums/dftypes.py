@@ -275,7 +275,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
     """
 
     EVENT_DAMAGE = auto()
-    """The health of damage dealt in this event.
+    """The amount of damage dealt in this event.
 
     Returns
     -------
@@ -473,7 +473,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
     """
 
     PLAYER_COUNT = auto()
-    """The health of players playing on the plot.
+    """The amount of players playing on the plot.
 
     Returns
     -------
@@ -518,7 +518,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
     """
 
     SELECTION_SIZE = auto()
-    """The health of targets in the current selection.
+    """The amount of targets in the current selection.
 
     Returns
     -------
@@ -545,7 +545,7 @@ class GameValueType(AutoSnakeToCapitalizedWordsEnum):
     """
 
     SERVER_TPS = auto()
-    """The health of game Ticks Per Second the server is currently able to handle.
+    """The amount of game Ticks Per Second the server is currently able to handle.
 
     Returns
     -------

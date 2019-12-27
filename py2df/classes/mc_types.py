@@ -37,8 +37,8 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
     material : :class:`Material`
         Instance of the Materials enum; represents what this item actually is.
 
-    health : :class:`int`
-        The health of items in this item stack, between 1 and 64. By default, 1.
+    amount : :class:`int`
+        The amount of items in this item stack, between 1 and 64. By default, 1.
 
     name : Optional[Union[:class:`str`, :class:`DFText`]]
         An optional custom name to be given to this item, as a `:class:`str`` or :class:`DFText`. Default: None
@@ -50,7 +50,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         A list of :class:`~py2df.classes.dataclass.Enchantment` instances.
 
     damage : :class:`int`
-        The damage of this item (i.e., health of uses so far). Defaults to 0 (not used).
+        The damage of this item (i.e., amount of uses so far). Defaults to 0 (not used).
 
     unbreakable : :class:`bool`
         Whether or not this item is unbreakable. Defaults to False.
@@ -81,7 +81,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
         .. describe:: a == b, a != b
 
-            Checks if every attribute except :attr:`health` is equal between the two items.
+            Checks if every attribute except :attr:`amount` is equal between the two items.
 
         .. describe:: a > b, a < b, a >= b, a <= b
 
@@ -95,7 +95,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
 
             .. note::
 
-                The resulting item is a copy of the one that comes first**, with its 'health' set to the result
+                The resulting item is a copy of the one that comes first**, with its 'amount' set to the result
                 of the operation.
 
             .. warning::
@@ -117,8 +117,8 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         material : :class:`~py2df.enums.materials.Material`
             Tells what kind of item this is.
     
-        health : :class:`int`
-            The health there is in this Item stack. (From 1 to 64 - any number outside those bounds will error!)
+        amount : :class:`int`
+            The amount there is in this Item stack. (From 1 to 64 - any number outside those bounds will error!)
     
         name : :class:`str`
             The item's name.
@@ -131,7 +131,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
     
         damage : :class:`int`
             How broken this item is (0 = not broken at all; the higher, the closer to breaking it is). The max
-            health this attribute can have depends on the item's durability, for which there are many lists online.
+            amount this attribute can have depends on the item's durability, for which there are many lists online.
     
         unbreakable : :class:`bool`
             If True, this item cannot lose durability, and remains at damage = 0.
@@ -177,7 +177,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
             Instance of the Materials enum; represents what this item actually is.
 
         amount : :class:`int`
-            The health of items in this item stack, between 1 and 64. By default, 1.
+            The amount of items in this item stack, between 1 and 64. By default, 1.
 
         name : Optional[Union[:class:`str`, :class:`DFText`]]
             An optional custom name to be given to this item, as a `:class:`str`` or :class:`DFText`. Default: None
@@ -189,7 +189,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
             A list of :class:`~py2df.classes.dataclass.Enchantment` instances.
 
         damage : :class:`int`
-            The damage of this item (i.e., health of uses so far). Defaults to 0 (not used).
+            The damage of this item (i.e., amount of uses so far). Defaults to 0 (not used).
 
         unbreakable : :class:`bool`
             Whether or not this item is unbreakable. Defaults to False.
@@ -574,7 +574,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         return f"minecraft:{self.material.value}"
 
     def __eq__(self, other: "Item"):
-        attrs_to_compare = set(self.__class__.__slots__) - {"_amount", }  # compare all except health
+        attrs_to_compare = set(self.__class__.__slots__) - {"_amount", }  # compare all except amount
 
         return type(self) == type(other) and all(
             getattr(self, attr) == getattr(other, attr) for attr in attrs_to_compare
