@@ -281,6 +281,124 @@ class GameActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
     # endregion:player_action_tags
 
     # region:entity_action_tags
+
+@unique
+class HorseColor(TagType):
+    WHITE = auto()
+    CREAMY = auto()
+    CHESTNUT = auto()
+    BROWN = auto()
+    BLACK = auto()
+    GRAY = auto()
+    DARK_BROWN = auto()
+
+
+@unique
+class HorseVariant(TagType):
+    NONE = auto()
+    WHITE = auto()
+    WHITEFIELD = auto()
+    WHITE_DOTS = auto()
+    BLACK_DOTS = auto()
+
+
+@unique
+class EffectParticleMode(TagType):
+    SHOWN = auto()
+    BEACON = auto()
+    HIDDEN = auto()
+
+
+@unique
+class MooshroomVariant(TagType):
+    RED = auto()
+    BROWN = auto()
+
+
+@unique
+class EntityAnimation(TagType):
+    """Tag of :meth:`~.Entity.send_animation`."""
+    SWING_RIGHT_ARM = auto()
+    SWING_LEFT_ARM = auto()
+    HURT_ANIMATION = auto()
+    CRIT_PARTICLES = auto()
+    ENCHANTED_HIT_PARTICLES = auto()
+
+
+@unique
+class CatType(TagType):
+    """Tag of :meth:`~.Entity.set_cat_type`."""
+    TABBY = auto()
+    BLACK = auto()
+    RED_AKA_GARFIELD = "Red (Garfield)"
+    SIAMESE = auto()
+    BRITISH_SHORTHAIR = auto()
+    CALICO = auto()
+    PERSIAN = auto()
+    RAGDOLL = auto()
+    WHITE = auto()
+    JELLIE = auto()
+    ALL_BLACK = auto()
+
+
+@unique
+class FoxType(TagType):
+    """Tag of :meth:`~.Entity.set_fox_type`."""
+    RED = auto()
+    SNOW = auto()
+
+
+@unique
+class PandaGene(TagType):
+    """Tag of :meth:`~.Entity.set_panda_genes`."""
+    LAZY = auto()
+    WORRIED = auto()
+    PLAYFUL = auto()
+    BROWN = auto()
+    WEAK = auto()
+    AGGRESSIVE = auto()
+
+
+@unique
+class ParrotVariant(TagType):
+    """Tag of :meth:`~.Entity.set_parrot_variant`."""
+    RED = auto()
+    BLUE = auto()
+    GREEN = auto()
+    CYAN = auto()
+    GRAY = auto()
+
+
+@unique
+class ArmorStandPart(TagType):
+    """Tag of :meth:`~.Entity.set_armorstand_pose`."""
+    HEAD = auto()
+    BODY = auto()
+    LEFT_ARM = auto()
+    RIGHT_ARM = auto()
+    LEFT_LEG = auto()
+    RIGHT_LEG = auto()
+
+
+class EntityColor(TagType):
+    """Tag of :meth:`~.Entity.set_color`."""
+    WHITE = auto()
+    ORANGE = auto()
+    MAGENTA = auto()
+    LIGHT_BLUE = auto()
+    YELLOW = auto()
+    LIME = auto()
+    PINK = auto()
+    GRAY = auto()
+    LIGHT_GRAY = auto()
+    CYAN = auto()
+    PURPLE = auto()
+    BLUE = auto()
+    BROWN = auto()
+    GREEN = auto()
+    RED = auto()
+    BLACK = auto()
+
     # endregion:entity_action_tags
 
     # region:control_tags

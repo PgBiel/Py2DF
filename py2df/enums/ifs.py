@@ -122,7 +122,7 @@ class IfVVarType(TagType):
 
 
 @unique
-class PlayerHand(TagType):
+class Hand(TagType):
     MAIN_HAND = auto()
     OFF_HAND = auto()
 
