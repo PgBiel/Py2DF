@@ -6,41 +6,46 @@ from .enums import GVAL_TEXTABLE, GVAL_NUMERIC, GVAL_LOCATABLE, GVAL_LISTABLE, G
     Material
 from .classes.abc import Itemable
 from .classes.mc_types import DFNumber, DFText, DFLocation, DFPotion, Item, DFCustomSpawnEgg, DFParticle, DFSound
-from .classes.variable import DFVariable, DFGameValue
+from .classes.variable import (
+    DFVariable, DFGameValue, NumberVar, TextVar, ListVar, LocationVar, PotionVar, ParticleVar,
+    SoundVar, ItemVar
+)
 from .utils import flatten
 
 
 class ParamTypes:
     """Custom type annotations for parameters in humanized methods."""
-    Numeric = typing.Union[int, float, DFNumber, DFGameValue, DFVariable]
-    """Union[:class:`int`, :class:`float`, :class:`~.DFNumber`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The
-possible types of a numeric parameter."""
+    Numeric = typing.Union[int, float, DFNumber, DFGameValue, DFVariable, NumberVar]
+    """Union[:class:`int`, :class:`float`, :class:`~.DFNumber`, :class:`~.DFGameValue`, :class:`~.DFVariable`, \
+:class:`~.NumberVar`] : The possible types of a numeric parameter."""
 
-    Textable = typing.Union[str, DFText, DFGameValue, DFVariable]
-    """Union[:class:`str`, :class:`~.DFText`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of a \
-text parameter."""
+    Textable = typing.Union[str, DFText, DFGameValue, DFVariable, TextVar]
+    """Union[:class:`str`, :class:`~.DFText`, :class:`~.DFGameValue`, :class:`~.DFVariable`, :class:`~.TextVar`] : The \
+possible types of a text parameter."""
 
-    Listable = typing.Union[DFGameValue, DFVariable]
-    """Union[:class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of a List (in DiamondFire) \
+    Listable = typing.Union[DFGameValue, DFVariable, ListVar]
+    """Union[:class:`~.DFGameValue`, :class:`~.DFVariable`, :class:`~.ListVar`] : The possible types of a List (in \
+DiamondFire) parameter."""
+
+    Locatable = typing.Union[DFLocation, DFGameValue, DFVariable, LocationVar]
+    """Union[:class:`~.DFLocation`, :class:`~.DFGameValue`, :class:`~.DFVariable`, :class:`~.LocationVar`] : The \
+possible types of a Location parameter."""
+
+    Potionable = typing.Union[DFPotion, DFVariable, PotionVar]  # there is no Game Value representing a potion effect.
+    """Union[:class:`~.DFPotion`, :class:`~.DFVariable`, :class:`~.PotionVar`] : The possible types of a Potion Effect \
 parameter."""
 
-    Locatable = typing.Union[DFLocation, DFGameValue, DFVariable]
-    """Union[:class:`~.DFLocation`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types of a Location \
-parameter."""
+    ParticleParam = typing.Union[DFParticle, ParticleType, DFVariable, ParticleVar]  # no particle game value
+    """Union[:class:`~.DFParticle`, :class:`~.ParticleType`, :class:`~.DFVariable`, :class:`~.ParticleVar`] : The \
+possible types of a Particle parameter."""
 
-    Potionable = typing.Union[DFPotion, DFVariable]  # there is no Game Value representing a potion effect.
-    """Union[:class:`~.DFPotion`, :class:`~.DFVariable`] : The possible types of a Potion Effect parameter."""
+    SoundParam = typing.Union[DFSound, SoundType, DFVariable, SoundVar]  # no sound game value
+    """Union[:class:`~.DFSound`, :class:`~.SoundType`, :class:`~.DFVariable`, :class:`~.SoundVar`] : The possible \
+types of a Sound param."""
 
-    ParticleParam = typing.Union[DFParticle, ParticleType, DFVariable]  # no particle game value
-    """Union[:class:`~.DFParticle`, :class:`~.ParticleType`, :class:`~.DFVariable`] : The possible types of a Particle \
-parameter."""
-
-    SoundParam = typing.Union[DFSound, SoundType, DFVariable]  # no sound game value
-    """Union[:class:`~.DFSound`, :class:`~.SoundType`, :class:`~.DFVariable`] : The possible types of a Sound param."""
-
-    ItemParam = typing.Union[Item, Material, DFGameValue, DFVariable]
-    """Union[:class:`~.Item`, :class:`~.Material`, :class:`~.DFGameValue`, :class:`~.DFVariable`] : The possible types \
-of an Item parameter."""
+    ItemParam = typing.Union[Item, Material, DFGameValue, DFVariable, ItemVar]
+    """Union[:class:`~.Item`, :class:`~.Material`, :class:`~.DFGameValue`, :class:`~.DFVariable`, :class:`~.ItemVar`] \
+: The possible types of an Item parameter."""
 
     SpawnEggable = typing.Union[DFCustomSpawnEgg, ItemParam]
     """Union[:class:`~.DFCustomSpawnEgg`, :attr:`ItemParam`] : The possible types of a Spawn Egg parameter."""
