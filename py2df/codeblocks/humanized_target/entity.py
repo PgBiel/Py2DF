@@ -56,12 +56,12 @@ class Entity:
     # region:entityactions
 
     def set_armor_stand_tags(
-            self,
-            *, is_visible: typing.Optional[bool] = None, is_marker: typing.Optional[bool] = None,
-            allow_item_taking_or_adding: typing.Optional[bool] = None,
-            has_physics_or_updates: typing.Optional[bool] = None, is_small: typing.Optional[bool] = None,
-            has_arms: typing.Optional[bool] = None, has_base_plate: typing.Optional[bool] = None,
-            target: typing.Optional[EntityTarget] = None
+        self,
+        *, is_visible: typing.Optional[bool] = None, is_marker: typing.Optional[bool] = None,
+        allow_item_taking_or_adding: typing.Optional[bool] = None,
+        has_physics_or_updates: typing.Optional[bool] = None, is_small: typing.Optional[bool] = None,
+        has_arms: typing.Optional[bool] = None, has_base_plate: typing.Optional[bool] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Changes the settings of an armor stand, such as visibility.
 
@@ -178,8 +178,8 @@ class Entity:
         )
 
     def disguise_as_block(
-            self, block_type: BlockParam, name: typing.Optional[Textable] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, block_type: BlockParam, name: typing.Optional[Textable] = None,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Disguises the entity as a block.
 
@@ -231,8 +231,8 @@ class Entity:
         )
 
     def set_creeper_charged(
-            self, is_charged: bool = True,
-            *, target: typing.Optional[EntityTarget] = None
+        self, is_charged: bool = True,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a creeper has the charged effect.
 
@@ -273,8 +273,8 @@ class Entity:
         )
 
     def set_creeper_ignited(
-            self, is_ignited: bool = True,
-            *, target: typing.Optional[EntityTarget] = None
+        self, is_ignited: bool = True,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a creeper is currently ignited. (getting ready to explode)
 
@@ -314,8 +314,8 @@ class Entity:
         )
 
     def set_creeper_max_fuse(
-            self, ticks: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, ticks: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the starting amount of fuse ticks of a creeper.
 
@@ -352,8 +352,8 @@ class Entity:
         )
 
     def set_creeper_radius(
-            self, radius: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, radius: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the explosion radius of a creeper.
 
@@ -403,8 +403,8 @@ class Entity:
         )
 
     def damage(
-            self, damage: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, damage: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Damages the mob.
 
@@ -565,8 +565,8 @@ class Entity:
         )
 
     def set_end_crystal_target(
-            self, loc: typing.Optional[Locatable] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, loc: typing.Optional[Locatable] = None,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets an end crystal's beam target.
 
@@ -639,10 +639,10 @@ class Entity:
         )
 
     def give_effect(
-            self, *potions: typing.Union[Potionable, Listable],
-            effect_particle_mode: EffectParticleMode = EffectParticleMode.SHOWN,
-            overwrite_existing_effect: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, *potions: typing.Union[Potionable, Listable],
+        effect_particle_mode: EffectParticleMode = EffectParticleMode.SHOWN,
+        overwrite_existing_effect: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Gives the mob one or more potion effects.
 
@@ -731,8 +731,8 @@ class Entity:
         )
 
     def heal(
-            self, amount: typing.Optional[Numeric] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, amount: typing.Optional[Numeric] = None,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Restores the mob's health fully or by an amount.
 
@@ -804,10 +804,10 @@ class Entity:
         )
 
     def set_horse_appearance(
-            self,
-            *, horse_color: typing.Optional[HorseColor] = None,
-            horse_variant: typing.Optional[HorseVariant] = None,
-            target: typing.Optional[EntityTarget] = None
+        self,
+        *, horse_color: typing.Optional[HorseColor] = None,
+        horse_variant: typing.Optional[HorseVariant] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the appearance (the variant) of a horse.
 
@@ -861,8 +861,8 @@ class Entity:
         )
 
     def set_jump_strength(
-            self, strength: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, strength: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the jump strength of a horse.
 
@@ -916,9 +916,9 @@ class Entity:
         )
 
     def launch_fwd(
-            self, power: Numeric,
-            *, yaw_only: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, power: Numeric,
+        *, yaw_only: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Launches the entity a certain amount forward or backward.
 
@@ -969,10 +969,10 @@ class Entity:
         )
 
     def launch_projectile(
-            self, projectile: BlockParam, *, loc: typing.Optional[Locatable] = None,
-            name: typing.Optional[Textable] = None, speed: typing.Optional[Numeric] = None,
-            inaccuracy: typing.Optional[Numeric] = None, particle: typing.Optional[ParticleParam] = None,
-            target: typing.Optional[EntityTarget] = None
+        self, projectile: BlockParam, *, loc: typing.Optional[Locatable] = None,
+        name: typing.Optional[Textable] = None, speed: typing.Optional[Numeric] = None,
+        inaccuracy: typing.Optional[Numeric] = None, particle: typing.Optional[ParticleParam] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Launches a projectile from the mob.
 
@@ -1051,9 +1051,9 @@ class Entity:
         )
 
     def launch_toward(
-            self, loc: Locatable, power: typing.Optional[Numeric] = None,
-            *, ignore_distance: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, loc: Locatable, power: typing.Optional[Numeric] = None,
+        *, ignore_distance: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Launches the entity toward a certain location.
 
@@ -1109,8 +1109,8 @@ class Entity:
         )
 
     def launch_up(
-            self, power: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, power: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Launches the entity a certain amount up or down. A positive amount is up, and a negative amount is down.
 
@@ -1147,8 +1147,8 @@ class Entity:
         )
 
     def disguise_as_mob(
-            self, spawn_egg: SpawnEggable, name: typing.Optional[Textable] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, spawn_egg: SpawnEggable, name: typing.Optional[Textable] = None,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Disguises the entity as a mob.
 
@@ -1194,8 +1194,8 @@ class Entity:
         )
 
     def set_mooshroom_variant(
-            self, mooshroom_variant: MooshroomVariant = MooshroomVariant.RED,
-            target: typing.Optional[EntityTarget] = None
+        self, mooshroom_variant: MooshroomVariant = MooshroomVariant.RED,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the skin type of a mooshroom.
 
@@ -1238,8 +1238,8 @@ class Entity:
         )
 
     def move_to(
-            self, loc: Locatable, speed: typing.Optional[Numeric] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, loc: Locatable, speed: typing.Optional[Numeric] = None,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Instructs the mob's AI to always pathfind to a certain location at a certain speed.
 
@@ -1411,8 +1411,8 @@ class Entity:
         )
 
     def disguise_as_player(
-            self, name: Textable, *, skin: typing.Optional[Textable] = None,
-            target: typing.Optional[EntityTarget] = None
+        self, name: Textable, *, skin: typing.Optional[Textable] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Disguises the entity as a player.
 
@@ -1488,8 +1488,8 @@ class Entity:
         )
 
     def set_projectile_item(
-            self, item: ItemParam,
-            *, target: typing.Optional[EntityTarget] = None
+        self, item: ItemParam,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the item the projectile displays as.
 
@@ -1561,8 +1561,8 @@ class Entity:
         )
 
     def remove_effect(
-            self, *potions: typing.Union[Potionable, Listable],
-            target: typing.Optional[EntityTarget] = None
+        self, *potions: typing.Union[Potionable, Listable],
+        target: typing.Optional[EntityTarget] = None
     ):
         """Removes one or more potion effects from the mob.
 
@@ -1607,8 +1607,8 @@ class Entity:
         )
 
     def ride_entity(
-            self, name: Textable,
-            *, target: typing.Optional[EntityTarget] = None
+        self, name: Textable,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Mounts the target entity on top of another player or entity.
 
@@ -1653,8 +1653,8 @@ class Entity:
         )
 
     def send_animation(
-            self, animation_type: EntityAnimation,
-            target: typing.Optional[EntityTarget] = None
+        self, animation_type: EntityAnimation,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Makes the mob perform an animation.
 
@@ -1695,8 +1695,8 @@ class Entity:
         )
 
     def set_age_or_size(
-            self, age_or_size: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, age_or_size: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the age or size of the mob.
 
@@ -1738,8 +1738,8 @@ class Entity:
         )
 
     def set_is_age_locked(
-            self, is_locked: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, is_locked: bool = True,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a mob should age.
 
@@ -1808,8 +1808,8 @@ class Entity:
     #     )
 
     def set_cat_type(
-            self, skin_type: CatType,
-            *, target: typing.Optional[EntityTarget] = None
+        self, skin_type: CatType,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the skin type of a cat.
 
@@ -1850,8 +1850,8 @@ class Entity:
         )
 
     def set_color(
-            self, color: EntityColor,
-            target: typing.Optional[EntityTarget] = None
+        self, color: EntityColor,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the color of a mob.
 
@@ -1893,8 +1893,8 @@ class Entity:
         )
 
     def set_fall_distance(
-            self, distance: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, distance: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the entity's fall distance, affecting fall damage upon landing.
 
@@ -1931,8 +1931,8 @@ class Entity:
         )
 
     def set_fire_ticks(
-            self, duration: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, duration: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the entity on fire for a certain number of ticks.
 
@@ -1974,8 +1974,8 @@ class Entity:
         )
 
     def set_fox_type(
-            self, fox_type: FoxType,
-            target: typing.Optional[EntityTarget] = None
+        self, fox_type: FoxType,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the fur type of a fox.
 
@@ -2015,9 +2015,9 @@ class Entity:
         )
 
     def set_hand_item(
-            self, item: typing.Optional[ItemParam] = None,
-            *, hand_slot: Hand = Hand.MAIN_HAND,
-            target: typing.Optional[EntityTarget] = None
+        self, item: typing.Optional[ItemParam] = None,
+        *, hand_slot: Hand = Hand.MAIN_HAND,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the item in the mob's main hand or off hand.
 
@@ -2065,9 +2065,9 @@ class Entity:
         )
 
     def set_health(
-            self, health: Numeric,
-            *, absorption: bool = False, combined: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, health: Numeric,
+        *, absorption: bool = False, combined: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the mob's health or absorption hearts.
 
@@ -2140,8 +2140,8 @@ class Entity:
         )
 
     def set_horse_armor(
-            self, item: typing.Optional[ItemParam] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, item: typing.Optional[ItemParam] = None,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the armor of a horse.
 
@@ -2179,8 +2179,8 @@ class Entity:
         )
 
     def set_horse_chest(
-            self, has_chest: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, has_chest: bool = True,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a horse has a chest equipped.
 
@@ -2223,8 +2223,8 @@ class Entity:
         )
 
     def set_invulnerable(
-            self, invulnerable: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, invulnerable: bool = True,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether an entity is invulnerable to damage.
 
@@ -2264,8 +2264,8 @@ class Entity:
         )
 
     def set_item_owner(
-            self, uuid: typing.Optional[Textable] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, uuid: typing.Optional[Textable] = None,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets an item's owner.
 
@@ -2310,9 +2310,9 @@ class Entity:
         )
 
     def set_max_health(
-            self, health: Numeric,
-            *, heal_fully: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, health: Numeric,
+        *, heal_fully: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the maximum amount of health that the mob can have.
 
@@ -2357,8 +2357,8 @@ class Entity:
         )
 
     def set_mob_sitting(
-            self, is_sitting: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, is_sitting: bool = True,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a tamed mob is sitting.
 
@@ -2398,9 +2398,9 @@ class Entity:
         )
 
     def set_name(
-            self, name: Textable,
-            *, hide_name_tag: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, name: Textable,
+        *, hide_name_tag: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Changes the name of the entity.
 
@@ -2447,9 +2447,9 @@ class Entity:
         )
 
     def set_panda_genes(
-            self,
-            *, main_gene: typing.Optional[PandaGene] = None, hidden_gene: typing.Optional[PandaGene] = None,
-            target: typing.Optional[EntityTarget] = None
+        self,
+        *, main_gene: typing.Optional[PandaGene] = None, hidden_gene: typing.Optional[PandaGene] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the genes (traits) of a panda.
 
@@ -2497,8 +2497,8 @@ class Entity:
         )
 
     def set_parrot_variant(
-            self, parrot_variant: ParrotVariant,
-            *, target: typing.Optional[EntityTarget] = None
+        self, parrot_variant: ParrotVariant,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the skin variant of a parrot.
 
@@ -2539,8 +2539,8 @@ class Entity:
         )
 
     def set_pickup_delay(
-            self, delay: Numeric,
-            *, target: typing.Optional[EntityTarget] = None
+        self, delay: Numeric,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets an item's pickup delay.
 
@@ -2578,10 +2578,10 @@ class Entity:
         )
 
     def set_armorstand_pose(
-            self, x_rot: typing.Optional[Numeric] = None, y_rot: typing.Optional[Numeric] = None,
-            z_rot: typing.Optional[Numeric] = None,
-            *, part: ArmorStandPart = ArmorStandPart.HEAD,
-            target: typing.Optional[EntityTarget] = None
+        self, x_rot: typing.Optional[Numeric] = None, y_rot: typing.Optional[Numeric] = None,
+        z_rot: typing.Optional[Numeric] = None,
+        *, part: ArmorStandPart = ArmorStandPart.HEAD,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the three-dimensional rotation of an armor stand part.
 
@@ -2649,8 +2649,8 @@ class Entity:
         )
 
     def set_rabbit_type(
-            self, skin_type: RabbitType,
-            *, target: typing.Optional[EntityTarget] = None
+        self, skin_type: RabbitType,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the skin type of a rabbit.
 
@@ -2691,8 +2691,8 @@ class Entity:
         )
 
     def set_saddle(
-            self, item: typing.Optional[ItemParam],
-            *, target: typing.Optional[EntityTarget] = None
+        self, item: typing.Optional[ItemParam],
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the saddle or carpet item of a mob.
 
@@ -2740,8 +2740,8 @@ class Entity:
         )
 
     def set_sheep_sheared(
-            self, is_sheared: bool = True,
-            *, target: typing.Optional[EntityTarget] = None
+        self, is_sheared: bool = True,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a sheep is currently sheared.
 
@@ -2782,8 +2782,8 @@ class Entity:
         )
 
     def set_slime_ai(
-            self, enable_ai: bool = True,
-            *, target: typing.Optional[EntityTarget] = None
+        self, enable_ai: bool = True,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Allows a slime's AI to be enabled and disabled, but unlike the disable AI action, the slime can still be moved.
 
@@ -2827,8 +2827,8 @@ class Entity:
         )
 
     def set_target(
-            self, name: Textable,
-            *, target: typing.Optional[EntityTarget] = None
+        self, name: Textable,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Instructs the mob's AI to target a specific mob or player.
 
@@ -2869,10 +2869,10 @@ class Entity:
         )
 
     def set_tropical_fish_type(
-            self,
-            *, pattern_color: typing.Optional[EntityColor] = None, body_color: typing.Optional[EntityColor] = None,
-            pattern: typing.Optional[TropicalFishPattern] = None,
-            target: typing.Optional[EntityTarget] = None
+        self,
+        *, pattern_color: typing.Optional[EntityColor] = None, body_color: typing.Optional[EntityColor] = None,
+        pattern: typing.Optional[TropicalFishPattern] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the appearance of a tropical fish.
 
@@ -2927,8 +2927,8 @@ class Entity:
         )
 
     def set_villager_profession(
-            self, profession: typing.Optional[VillagerProfession] = VillagerProfession.NONE,
-            *, target: typing.Optional[EntityTarget] = None
+        self, profession: typing.Optional[VillagerProfession] = VillagerProfession.NONE,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets a villager's profession.
 
@@ -2970,8 +2970,8 @@ class Entity:
         )
 
     def set_villager_biome(
-            self, biome: VillagerBiome,
-            *, target: typing.Optional[EntityTarget] = None
+        self, biome: VillagerBiome,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the biome type of a villager.
 
@@ -3012,8 +3012,8 @@ class Entity:
         )
 
     def set_wolf_angry(
-            self, is_angry: bool = True,
-            *, target: typing.Optional[EntityTarget] = None
+        self, is_angry: bool = True,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a wolf is angry.
 
@@ -3172,8 +3172,8 @@ class Entity:
         )
 
     def snowman_pumpkin(
-            self, has_pumpkin: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, has_pumpkin: bool = True,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a snowman is wearing a pumpkin.
 
@@ -3214,8 +3214,8 @@ class Entity:
         )
 
     def tame(
-            self, name: typing.Optional[Textable],
-            *, target: typing.Optional[EntityTarget] = None
+        self, name: typing.Optional[Textable],
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Tames the mob (if possible).
 
@@ -3259,9 +3259,9 @@ class Entity:
         )
 
     def teleport(
-            self, loc: Locatable,
-            *, keep_current_rotation: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, loc: Locatable,
+        *, keep_current_rotation: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Teleports the entity to a specified location.
 
@@ -3308,8 +3308,8 @@ class Entity:
         )
 
     def teleport_sequence(
-            self, *locs: typing.Union[Locatable, Listable], delay: typing.Optional[Numeric] = None,
-            target: typing.Optional[EntityTarget] = None
+        self, *locs: typing.Union[Locatable, Listable], delay: typing.Optional[Numeric] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Teleports the entity to multiple locations, with a delay between each teleport.
 
@@ -3524,9 +3524,9 @@ class Entity:
         )
 
     def is_near(
-            self, center: Locatable, range: typing.Optional[Numeric] = None,
-            *, ignore_y_axis: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, center: Locatable, range: typing.Optional[Numeric] = None,
+        *, ignore_y_axis: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Checks if an entity is within a certain distance of a location.
 
@@ -3579,8 +3579,8 @@ class Entity:
         )
 
     def is_type(
-            self, *entity_types: typing.Union[SpawnEggable, ItemParam, Textable],
-            target: typing.Optional[EntityTarget] = None
+        self, *entity_types: typing.Union[SpawnEggable, ItemParam, Textable],
+        target: typing.Optional[EntityTarget] = None
     ):
         """Checks if an entity is of a certain type.
 
@@ -3628,8 +3628,8 @@ class Entity:
         )
 
     def standing_on(
-            self, *block_types_or_locs: typing.Union[BlockParam, Locatable],
-            target: typing.Optional[EntityTarget] = None
+        self, *block_types_or_locs: typing.Union[BlockParam, Locatable],
+        target: typing.Optional[EntityTarget] = None
     ):
         """Checks if an entity is standing on a block of a certain type or at a certain location.
 
@@ -3699,8 +3699,8 @@ given location ...
         )
 
     def name_equals(
-            self, *names: Textable,
-            target: typing.Optional[EntityTarget] = None
+        self, *names: Textable,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Checks if an entity's name is equal to the text given/any of the texts given.
 
