@@ -101,7 +101,7 @@ class Player:
         Warnings
         --------
         Any :class:`~.DFVariable` instances are assumed to refer to block type. In order to specify that it refers
-        to the location the entity should be standing on, use :class:`~.LocVar`.
+        to the location the entity should be standing on, use :class:`~.LocationVar`.
 
         Examples
         --------
@@ -568,7 +568,7 @@ location, at most 10 blocks away ...
         ::
 
             loc_1 = DFLocation(1, 2, 3)
-            loc_2 = LocVar("my var")
+            loc_2 = LocationVar("my var")
             with p_default.is_near(loc_1, loc_2, range=10):
             # OR
             with Player(PlayerTarget.DEFAULT).is_near(loc_1, loc_2, range=10):
@@ -4820,7 +4820,7 @@ class Entity:
         ::
 
             loc_1 = DFLocation(1, 2, 3)
-            loc_2 = LocVar("my var")
+            loc_2 = LocationVar("my var")
             loc_3 = DFLocation(4, 5, 6)
             last_entity.tp_sequence(loc_1, loc_2, loc_3, delay=120)
             # OR
@@ -5138,7 +5138,7 @@ class Entity:
         Warnings
         --------
         Any :class:`~.DFVariable` instances are assumed to refer to block type. In order to specify that it refers
-        to the location the entity should be standing on, use :class:`~.LocVar`.
+        to the location the entity should be standing on, use :class:`~.LocationVar`.
 
         Examples
         --------

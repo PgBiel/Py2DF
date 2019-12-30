@@ -22,7 +22,9 @@ if typing.TYPE_CHECKING:
     from .. import typings as _tp
     from ..codeblocks.ifs import IfVariable, IfVariable as _IfVariable
     from ..codeblocks.utilityblock import SetVar  # lazy import in Var init
-    from ..typings import Param, Numeric, Locatable, Textable, Listable, ItemParam
+    from ..typings import (
+        Param, Numeric, Locatable, Textable, Listable, ItemParam, ParticleParam, SoundParam, Potionable
+    )
 
 
 _VarOpEl = typing.Union["Numeric", "_Var", "Locatable", "VarOp"]
@@ -1346,6 +1348,144 @@ target={repr(str(self.target) if self.target else self.target)}>"
         return hash((self.__class__.__name__, self.gval_type, str(self.target)))
 
 
+var_docs = """Represents a DiamondFire {0} variable. **Note that all variables with same 'name' attribute represent the 
+same var.**
+
+Parameters
+----------\u200b
+name : :class:`str`
+    The name of this variable. This uniquely identifies it, along with its scope.
+
+init_value : Optional[Union[:attr:`~.{1}`, :class:`VarOp`, Iterable[:attr:`~.{1}`]]], optional
+    An optional initial value for this variable. Defaults to ``None`` (i.e., doesn't set a value).
+
+    .. note::
+
+        If any value is specified, **this creates a Set Var block**. As such, **this behaves identically to**
+        :meth:`set` (therefore, see its documentation).
+
+scope : :class:`~.VariableScope`, optional
+    The scope of this variable. This can also be set through the kwargs ``unsaved``, ``saved`` and ``local`` .
+    Defaults to :attr:`~.VariableScope.UNSAVED`.
+
+unsaved : :class:`bool`, optional
+    If ``True``, the variable's scope is set to :attr:`~.VariableScope.UNSAVED` - i.e., the value does not persist
+    between successive plot uses (when the amount of players reaches 0, the variable is reset).
+
+
+.. container:: comparisons
+
+    .. describe:: a == b, a != b
+
+        Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
+
+        1. **Is used to compare the variables with an If Var.** Note that equaling to an iterable means checking \
+if the variable is equal to at least one of its elements. Example usage::
+
+            with var_a == var_b:
+                # code that is only executed in DiamondFire if 'var_a' and 'var_b' are equal in value.
+
+            with var_c != var_d:
+                # code that is only executed in DiamondFire if 'var_c' and 'var_d' are different in value.
+
+            with var_e == (var_f, var_g, var_i):
+                # code that is only executed in DiamondFire if 'var_e' is equal to one of 'var_f', 'var_g' or \
+'var_i'.
+
+        2. **Is used to compare, IN PYTHON, the variables' names and scopes** (by calling :func:`bool` on the \
+generated IfVariable block). Example usage::
+
+            if var_a == var_b:
+                # code that is only read, IN PYTHON, if 'var_a' and 'var_b' have the same 'name' and 'scope' attrs.
+
+            if var_c != var_d:
+                # code that is only read, IN PYTHON, if 'var_c' and 'var_b' have a different 'name' or 'scope' attr.
+
+    .. describe:: a > b, a >= b, a < b, a <= b
+
+        Returns the equivalent :class:`~.IfVariable` block for the given comparison. **Its only usage is as
+        a Codeblock** (in a `with`).
+        For example::
+
+            with var_a > var_b:
+                # code that is only executed in DiamondFire if 'var_a' is bigger than 'var_b' in value.
+
+            with var_c < var_d:
+                # code that is only executed in DiamondFire if 'var_c' is less than 'var_d' in value.
+
+        .. note::
+
+            Those comparisons are not usable in Python if's; if a :func:`bool` is attempted on the resulting
+            IfVariable block, it will always return True. This mechanism is only implemented for ``==`` and ``!=``.
+
+        .. warning::
+
+            Assuming that one of them is a DFVariable, the other has to be a valid :attr:`~.Numeric` parameter.
+            Otherwise, a TypeError may be raised (if the given type does not support operations with DFVariable,
+            which is likely).
+
+.. container:: operations
+
+    .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
+
+        Creates a :class:`VarOp` instance representing this operation between different variables/variables
+        and values/etc.
+        It is meant to be given as the parameter for :meth:`set`, which will then place the appropriate
+        Set Variable type.
+
+        `a` is the :class:`DFVariable`, while `b`, in this case, is the :attr:`~.Numeric` to realize this
+        operation with.
+
+        .. note::
+
+            If the operation is addition or subtraction, `b` can also be a :attr:`~.Locatable` parameter (represent
+            a location), besides Numeric.
+
+        .. warning::
+
+            **You cannot mix operations.** For example, ``a + b - c * d ** e`` will raise. Stick to only one
+            at once, and have one :meth:`set` call for each kind. (There is only one Set Var for each kind.)
+            (However, operations with multiple variables, up to 27, work: ``a + b + c + ... + z``)
+
+            If there is an attempt to mix operations, a :exc:`TypeError` is raised.
+
+            Similarly, if there is an attempt to have an operation with more than 26 variables (chest size is
+            up to 27 items, while 1 slot is the variable being set), then a :exc:`~.LimitReachedError` is raised
+            instead.
+
+    .. describe:: a += b, a -= b, a *= b, a **= b. a /= b, a //= b, a %= b
+
+        Same behavior as ``a.set(a ? b)``, where ``?`` is the given operation (`b` must be :attr:`~.Numeric`).
+
+        .. note::
+
+            If the operation given is either ``+=`` or ``-=``, then it will place the respective
+            ``+=`` and ``-=`` Set Var blocks instead of ``a.set(a +/- b)``. This is because those are
+            the only ones that have a SetVar equivalent.
+
+    .. describe:: str(a)
+
+        Returns this variable as a string in the form ``%var(name)``, where `name` is the variable's name.
+        When used in a string, DiamondFire replaces it with the variable's value.
+
+    .. describe:: hash(a)
+
+        Returns an unique hash identifying this variable by name and scope.
+
+
+Attributes
+----------\u200b
+name : :class:`str`
+    The name of this variable. This uniquely identifies it, along with its scope.
+
+scope : :class:`~.VariableScope`
+    The scope of this variable (:attr:`~.UNSAVED`, :attr:`~.SAVED` or :attr:`~.LOCAL`).
+
+check_type : :attr:`~.{1}` object
+    The acceptable parameter type for this variable (in this class's case, {0} parameter).
+"""
+
+
 class _Var(DFType, VarOperable):
     """Represents a DiamondFire variable. **Note that all variables with same 'name' attribute represent the same
     var.**
@@ -1479,11 +1619,15 @@ generated IfVariable block). Example usage::
 
     scope : :class:`~.VariableScope`
         The scope of this variable (:attr:`~.UNSAVED`, :attr:`~.SAVED` or :attr:`~.LOCAL`).
+
+    check_type : :attr:`~.Param`
+        The acceptable parameter type for this variable (in this class's case, any parameter).
     """
     __slots__ = ("name", "scope")
 
     name: str
     scope: VariableScope
+    check_type: "Param"
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["Param"] = None,
@@ -1491,6 +1635,9 @@ generated IfVariable block). Example usage::
         saved: bool = False, local: bool = False
     ):
         _heavy_imports()
+
+        if not hasattr(self, "check_type") or not self.check_type:
+            self.check_type = Param
 
         self.name: str = str(name)
 
@@ -1533,6 +1680,10 @@ generated IfVariable block). Example usage::
             | Iterable[:attr:`~.Param`] | Set Var: Create List (:attr:`~.CREATE_LIST`)                           |
             +---------------------------+------------------------------------------------------------------------+
 
+            .. warning::
+                If using a typed class (such as TextVar or the likes), then the parameter type must correspond to
+                that of the typed class's type.
+
 
         Returns
         -------
@@ -1547,21 +1698,31 @@ generated IfVariable block). Example usage::
                 SetVarType.SET_TO_ADDITION, SetVarType.SET_TO_SUBTRACTION
             ) else _tp.Numeric
 
+            if (
+                self.has_check_type
+                and (
+                    tp_to_check == typing.Union[_tp.Numeric, _tp.Locatable]
+                        and self.check_type not in (Numeric, Locatable)
+                    or tp_to_check == _tp.Numeric and self.check_type != tp_to_check
+                )
+            ):
+                raise
+
             args = Arguments(
                 [self] + [_tp.p_check(o, tp_to_check, "value") for o in value.vars],
                 tags=value.tags or []
             )
 
-        elif _tp.p_bool_check(value, _tp.Param):  # a parameter was given
-            args = Arguments([self] + [_tp.p_check(value, _tp.Param, "value")])
+        elif _tp.p_bool_check(value, self.check_type):  # a parameter was given
+            args = Arguments([self] + [_tp.p_check(value, self.check_type, "value")])
 
         elif isinstance(value, collections.Iterable):  # an iterable of parameters was given
             setv_type = SetVarType.CREATE_LIST
-            args = Arguments([self] + [_tp.p_check(o, _tp.Param, "value") for o in value])
+            args = Arguments([self] + [_tp.p_check(o, self.check_type, "value") for o in value])
 
         else:
-            _tp.p_check(value, _tp.Param, "value")  # this will error
-            raise TypeError
+            _tp.p_check(value, self.check_type, "value")  # this will error
+            raise TypeError  # prevent execution in case the above fails to raise; this shouldn't ever be needed
 
         return _SetVar(
             action=setv_type,
@@ -1583,6 +1744,10 @@ generated IfVariable block). Example usage::
                 scope=self.scope.value
             )
         )
+
+    @property
+    def has_check_type(self) -> bool:
+        return self.check_type and self.check_type != Param
 
     @classmethod
     def from_json_data(cls, data: dict) -> "_Var":
@@ -1699,142 +1864,140 @@ generated IfVariable block). Example usage::
 
 
 class DFVariable(_Var):
-    """Represents a DiamondFire variable. **Note that all variables with same 'name' attribute represent the same
-    var.**
-
-    Parameters
-    ----------\u200b
-    name : :class:`str`
-        The name of this variable. This uniquely identifies it, along with its scope.
-
-    init_value : Optional[Union[:attr:`~.Param`, :class:`VarOp`, Iterable[:attr:`~.Param`]]], optional
-        An optional initial value for this variable. Defaults to ``None`` (i.e., doesn't set a value).
-
-        .. note::
-
-            If any value is specified, **this creates a Set Var block**. As such, **this behaves identically to**
-            :meth:`set` (therefore, see its documentation).
-
-    scope : :class:`~.VariableScope`, optional
-        The scope of this variable. This can also be set through the kwargs ``unsaved``, ``saved`` and ``local`` .
-        Defaults to :attr:`~.VariableScope.UNSAVED`.
-
-    unsaved : :class:`bool`, optional
-        If ``True``, the variable's scope is set to :attr:`~.VariableScope.UNSAVED` - i.e., the value does not persist
-        between successive plot uses (when the amount of players reaches 0, the variable is reset).
-
-
-    .. container:: comparisons
-
-        .. describe:: a == b, a != b
-
-            Returns the equivalent :class:`~.IfVariable` block for equals/not equals. Has two uses:
-
-            1. **Is used to compare the variables with an If Var.** Note that equaling to an iterable means checking \
-if the variable is equal to at least one of its elements. Example usage::
-
-                with var_a == var_b:
-                    # code that is only executed in DiamondFire if 'var_a' and 'var_b' are equal in value.
-
-                with var_c != var_d:
-                    # code that is only executed in DiamondFire if 'var_c' and 'var_d' are different in value.
-
-                with var_e == (var_f, var_g, var_i):
-                    # code that is only executed in DiamondFire if 'var_e' is equal to one of 'var_f', 'var_g' or \
-'var_i'.
-
-            2. **Is used to compare, IN PYTHON, the variables' names and scopes** (by calling :func:`bool` on the \
-generated IfVariable block). Example usage::
-
-                if var_a == var_b:
-                    # code that is only read, IN PYTHON, if 'var_a' and 'var_b' have the same 'name' and 'scope' attrs.
-
-                if var_c != var_d:
-                    # code that is only read, IN PYTHON, if 'var_c' and 'var_b' have a different 'name' or 'scope' attr.
-
-        .. describe:: a > b, a >= b, a < b, a <= b
-
-            Returns the equivalent :class:`~.IfVariable` block for the given comparison. **Its only usage is as
-            a Codeblock** (in a `with`).
-            For example::
-
-                with var_a > var_b:
-                    # code that is only executed in DiamondFire if 'var_a' is bigger than 'var_b' in value.
-
-                with var_c < var_d:
-                    # code that is only executed in DiamondFire if 'var_c' is less than 'var_d' in value.
-
-            .. note::
-
-                Those comparisons are not usable in Python if's; if a :func:`bool` is attempted on the resulting
-                IfVariable block, it will always return True. This mechanism is only implemented for ``==`` and ``!=``.
-
-            .. warning::
-
-                Assuming that one of them is a DFVariable, the other has to be a valid :attr:`~.Numeric` parameter.
-                Otherwise, a TypeError may be raised (if the given type does not support operations with DFVariable,
-                which is likely).
-
-    .. container:: operations
-
-        .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
-
-            Creates a :class:`VarOp` instance representing this operation between different variables/variables
-            and values/etc.
-            It is meant to be given as the parameter for :meth:`set`, which will then place the appropriate
-            Set Variable type.
-
-            `a` is the :class:`DFVariable`, while `b`, in this case, is the :attr:`~.Numeric` to realize this
-            operation with.
-
-            .. note::
-
-                If the operation is addition or subtraction, `b` can also be a :attr:`~.Locatable` parameter (represent
-                a location), besides Numeric.
-
-            .. warning::
-
-                **You cannot mix operations.** For example, ``a + b - c * d ** e`` will raise. Stick to only one
-                at once, and have one :meth:`set` call for each kind. (There is only one Set Var for each kind.)
-                (However, operations with multiple variables, up to 27, work: ``a + b + c + ... + z``)
-
-                If there is an attempt to mix operations, a :exc:`TypeError` is raised.
-
-                Similarly, if there is an attempt to have an operation with more than 26 variables (chest size is
-                up to 27 items, while 1 slot is the variable being set), then a :exc:`~.LimitReachedError` is raised
-                instead.
-
-        .. describe:: a += b, a -= b, a *= b, a **= b. a /= b, a //= b, a %= b
-
-            Same behavior as ``a.set(a ? b)``, where ``?`` is the given operation (`b` must be :attr:`~.Numeric`).
-
-            .. note::
-
-                If the operation given is either ``+=`` or ``-=``, then it will place the respective
-                ``+=`` and ``-=`` Set Var blocks instead of ``a.set(a +/- b)``. This is because those are
-                the only ones that have a SetVar equivalent.
-
-        .. describe:: str(a)
-
-            Returns this variable as a string in the form ``%var(name)``, where `name` is the variable's name.
-            When used in a string, DiamondFire replaces it with the variable's value.
-
-        .. describe:: hash(a)
-
-            Returns an unique hash identifying this variable by name and scope.
-
-
-    Attributes
-    ----------\u200b
-    name : :class:`str`
-        The name of this variable. This uniquely identifies it, along with its scope.
-
-    scope : :class:`~.VariableScope`
-        The scope of this variable (:attr:`~.UNSAVED`, :attr:`~.SAVED` or :attr:`~.LOCAL`).
-    """
+    __doc__ = _Var.__doc__
     pass
 
 
-remove_u200b_from_doc(_Var, DFVariable, VarOp, DFGameValue, VarOperable)
+class NumberVar(_Var):
+    __doc__ = var_docs.format("number", "Numeric")
 
+    def __init__(
+        self, name: typing.Union[str, DFText], init_value: typing.Optional["Numeric"] = None,
+        *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
+        saved: bool = False, local: bool = False
+    ):
+        _heavy_imports()
+        self.check_type = _tp.Numeric
+        super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
+
+    def set(self, value: typing.Union["Numeric", VarOp, typing.Iterable["Numeric"]]) -> "SetVar":
+        return super().set(value)
+
+
+class TextVar(_Var):
+    __doc__ = var_docs.format("text", "Textable")
+
+    def __init__(
+        self, name: typing.Union[str, DFText], init_value: typing.Optional["Textable"] = None,
+        *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
+        saved: bool = False, local: bool = False
+    ):
+        _heavy_imports()
+        self.check_type = _tp.Textable
+        super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
+
+    def set(self, value: typing.Union["Textable", VarOp, typing.Iterable["Textable"]]) -> "SetVar":
+        return super().set(value)
+
+
+class ItemVar(_Var):
+    __doc__ = var_docs.format("item", "ItemParam")
+
+    def __init__(
+        self, name: typing.Union[str, DFText], init_value: typing.Optional["ItemParam"] = None,
+        *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
+        saved: bool = False, local: bool = False
+    ):
+        _heavy_imports()
+        self.check_type = _tp.ItemParam
+        super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
+
+    def set(self, value: typing.Union["ItemParam", VarOp, typing.Iterable["ItemParam"]]) -> "SetVar":
+        return super().set(value)
+
+
+class PotionVar(_Var):
+    __doc__ = var_docs.format("potion", "Potionable")
+
+    def __init__(
+        self, name: typing.Union[str, DFText], init_value: typing.Optional["Potionable"] = None,
+        *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
+        saved: bool = False, local: bool = False
+    ):
+        _heavy_imports()
+        self.check_type = _tp.Potionable
+        super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
+
+    def set(self, value: typing.Union["Potionable", VarOp, typing.Iterable["Potionable"]]) -> "SetVar":
+        return super().set(value)
+
+
+class LocationVar(_Var):
+    __doc__ = var_docs.format("location", "Locatable")
+
+    def __init__(
+        self, name: typing.Union[str, DFText], init_value: typing.Optional["Locatable"] = None,
+        *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
+        saved: bool = False, local: bool = False
+    ):
+        _heavy_imports()
+        self.check_type = _tp.Locatable
+        super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
+
+    def set(self, value: typing.Union["Locatable", VarOp, typing.Iterable["Locatable"]]) -> "SetVar":
+        return super().set(value)
+
+
+class ListVar(_Var):
+    __doc__ = var_docs.format("list", "Listable")
+
+    def __init__(
+        self, name: typing.Union[str, DFText], init_value: typing.Optional["Listable"] = None,
+        *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
+        saved: bool = False, local: bool = False
+    ):
+        _heavy_imports()
+        self.check_type = _tp.Listable
+        super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
+
+    def set(self, value: typing.Union["Listable", VarOp, typing.Iterable["Listable"]]) -> "SetVar":
+            return super().set(value)
+
+
+class ParticleVar(_Var):
+    __doc__ = var_docs.format("particle", "ParticleParam")
+
+    def __init__(
+        self, name: typing.Union[str, DFText], init_value: typing.Optional["ParticleParam"] = None,
+        *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
+        saved: bool = False, local: bool = False
+    ):
+        _heavy_imports()
+        self.check_type = _tp.ParticleParam
+        super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
+
+    def set(self, value: typing.Union["ParticleParam", VarOp, typing.Iterable["ParticleParam"]]) -> "SetVar":
+        return super().set(value)
+
+
+class SoundVar(_Var):
+    __doc__ = var_docs.format("sound", "SoundParam")
+
+    def __init__(
+        self, name: typing.Union[str, DFText], init_value: typing.Optional["SoundParam"] = None,
+        *, scope: VariableScope = DEFAULT_VAL, unsaved: bool = True,
+        saved: bool = False, local: bool = False
+    ):
+        _heavy_imports()
+        self.check_type = _tp.SoundParam
+        super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
+
+    def set(self, value: typing.Union["SoundParam", VarOp, typing.Iterable["SoundParam"]]) -> "SetVar":
+        return super().set(value)
+
+
+remove_u200b_from_doc(
+    _Var, DFVariable, VarOp, DFGameValue, VarOperable,
+    NumberVar, TextVar, ItemVar, PotionVar, LocationVar, ListVar, ParticleVar, SoundVar
+)
 

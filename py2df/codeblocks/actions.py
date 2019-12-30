@@ -415,7 +415,7 @@ class GameAction(ActionBlock, JSONData):
         ::
 
             loc_1 = DFLocation(1, 2, 3)
-            loc_2 = LocVar("my var")
+            loc_2 = LocationVar("my var")
             loc_3 = DFVariable("other var")  # some locations
             GameAction.break_block(loc_1, loc_2, loc_3)  # breaks those blocks
         """
@@ -928,7 +928,7 @@ second cooldown."
 
             particle = DFParticle(ParticleType.SWEEP_ATTACK)  # particle
             loc_1 = DFLocation(1, 2, 3)
-            loc_2 = LocVar("my var")
+            loc_2 = LocationVar("my var")
             loc_3 = DFVariable("other var")
             GameAction.create_particle_path(particle, loc_1, loc_2, loc_3)  # particle goes through loc_1, _2 and _3
         """
@@ -2660,7 +2660,7 @@ whose values DF expects to be formatted in one of the following ways:
         ::
 
             loc_1 = DFLocation(1, 2, 3)  # one location
-            loc_2 = LocVar("my var")  # another location
+            loc_2 = LocationVar("my var")  # another location
             loc_3 = DFVariable("my var")  # yet another!
             GameAction.tick_block(loc_1, loc_2, loc_3, ticks=20)  # tick those 3 blocks with 20 ticks
         """
