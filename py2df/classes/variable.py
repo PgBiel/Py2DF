@@ -922,10 +922,13 @@ Stone ...
     # region:var_ops
 
     def __add__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
+        check_type = self.check_type \
+            if hasattr(self, "check_type") and self.check_type in (_tp.Numeric, _tp.Locatable) \
+            else typing.Union[_tp.Numeric, _tp.Locatable]
 
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
-            other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
-        ):
+            other, check_type, error_on_gameval=True
+        ) or not _tp.p_bool_check(self, check_type, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(SetVarType.SET_TO_ADDITION, self, other)
@@ -934,17 +937,25 @@ Stone ...
         return self.__add__(other)
 
     def __sub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
+        check_type = self.check_type \
+            if hasattr(self, "check_type") and self.check_type in (_tp.Numeric, _tp.Locatable) \
+            else typing.Union[_tp.Numeric, _tp.Locatable]
+
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
-            other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
-        ):
+            other, check_type, error_on_gameval=True
+        ) or not _tp.p_bool_check(self, check_type, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(SetVarType.SET_TO_SUBTRACTION, self, other)
 
     def __rsub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
+        check_type = self.check_type \
+            if hasattr(self, "check_type") and self.check_type in (_tp.Numeric, _tp.Locatable) \
+            else typing.Union[_tp.Numeric, _tp.Locatable]
+
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
-            other, typing.Union[_tp.Numeric, _tp.Locatable], error_on_gameval=True
-        ):
+            other, check_type, error_on_gameval=True
+        ) or not _tp.p_bool_check(self, check_type, error_on_gameval=True):
             return NotImplemented
 
         res = VarOp(SetVarType.SET_TO_SUBTRACTION, self)
@@ -956,7 +967,7 @@ Stone ...
     def __mul__(self, other: typing.Union["Numeric", VarOp, "_Var"]):
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(SetVarType.SET_TO_PRODUCT, self, other)
@@ -980,7 +991,7 @@ Stone ...
 
         if not isinstance(power, DFVariable) and not _tp.p_bool_check(
             power, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(SetVarType.SET_TO_POWER, self, power)
@@ -1001,7 +1012,7 @@ Stone ...
 
         if not isinstance(other, DFVariable) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(SetVarType.SET_TO_POWER, other, self)
@@ -1022,7 +1033,7 @@ Stone ...
 
         if not isinstance(other, DFVariable) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(SetVarType.SET_TO_MOD, self, other)
@@ -1043,7 +1054,7 @@ Stone ...
 
         if not isinstance(other, DFVariable) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(SetVarType.SET_TO_MOD, other, self)  # notice the change in order.
@@ -1051,7 +1062,7 @@ Stone ...
     def __truediv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(
@@ -1063,7 +1074,7 @@ Stone ...
     def __rtruediv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(
@@ -1075,7 +1086,7 @@ Stone ...
     def __floordiv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(
@@ -1089,7 +1100,7 @@ Stone ...
     def __rfloordiv__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> VarOp:
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
-        ):
+        ) or not _tp.p_bool_check(self, _tp.Numeric, error_on_gameval=True):
             return NotImplemented
 
         return VarOp(
@@ -1797,6 +1808,10 @@ generated IfVariable block). Example usage::
         return f"%var({self.name})"
 
     def __iadd__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> "_Var":
+        if _tp.p_bool_check(self, _tp.Locatable) and not _tp.p_bool_check(self, _tp.Numeric):
+            self.set(self.__add__(other))  # += is not compatible with locations
+            return self
+
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -1805,9 +1820,10 @@ generated IfVariable block). Example usage::
         _SetVar(
             action=SetVarType.ADD,
             args=Arguments(
-                [_tp.p_check(self, _tp.Numeric)] + (
-                    [_tp.p_check(o, _tp.Numeric) for o in other.vars] if isinstance(other, VarOp) else [
-                        _tp.p_check(other, _tp.Numeric)
+                [_tp.p_check(self, _tp.Numeric, "self")] + (
+                    [_tp.p_check(o, _tp.Numeric, f"other[{i}]") for i, o in enumerate(other.vars)]
+                    if isinstance(other, VarOp) else [
+                        _tp.p_check(other, _tp.Numeric, "other")
                     ]
                 )
             ),
@@ -1817,6 +1833,10 @@ generated IfVariable block). Example usage::
         return self
 
     def __isub__(self, other: typing.Union["Numeric", VarOp, "_Var"]) -> "_Var":
+        if _tp.p_bool_check(self, _tp.Locatable) and not _tp.p_bool_check(self, _tp.Numeric):
+            self.set(self.__sub__(other))  # -= is not compatible with locations
+            return self
+
         if not isinstance(other, (DFVariable, VarOp)) and not _tp.p_bool_check(
             other, _tp.Numeric, error_on_gameval=True
         ):
@@ -1825,7 +1845,7 @@ generated IfVariable block). Example usage::
         _SetVar(
             action=SetVarType.SUBTRACT,
             args=Arguments(
-                [_tp.p_check(self, _tp.Numeric)] + (
+                [_tp.p_check(self, _tp.Numeric, "self")] + (
                     [_tp.p_check(o, _tp.Numeric) for o in other.vars] if isinstance(other, VarOp) else [
                         _tp.p_check(other, _tp.Numeric)
                     ]
