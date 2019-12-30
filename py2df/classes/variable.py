@@ -80,8 +80,12 @@ Iterable[:attr:`~.Numeric`, :attr:`~.Locatable`, :class:`VarOp`]]
             The variables can only be a Locatable (i.e., a Location) alongside with Numeric if the operation in
             question is **addition** (+) or **subtraction** (-); otherwise, it can only be a param of Numeric type.
 
-    tags : Iterable[:class:`~.Tag`]
+    tags : Iterable[:class:`~.Tag`], optional
         All tags used in this operation's set var block (if any). At the moment, this is only used for division.
+        Defaults to empty tuple (no tags).
+
+    check_type : Optional[Union[:attr:`~.Numeric` object, :attr:`~.Locatable` object]], optional
+        The type of this variable, if valid. Defaults to ``None`` (Numeric is checked for instead).
 
     Warnings
     --------
@@ -130,16 +134,18 @@ Iterable[:attr:`~.Numeric`, :attr:`~.Locatable`, :class:`VarOp`]]
 
     def __init__(
         self, setv_type: SetVarType, *vars: typing.Union[_VarOpEl, typing.Iterable[_VarOpEl]],
-        tags: typing.Iterable[Tag] = tuple()
+        tags: typing.Iterable[Tag] = tuple(), check_type: typing.Optional[typing.Any] = None
     ):
         _heavy_imports()
         self.setv_type = SetVarType(setv_type)
 
         self.tags = list(tags)
 
-        valid_types = typing.Union[_tp.Numeric, _tp.Locatable] if setv_type in (
-            SetVarType.SET_TO_ADDITION, SetVarType.SET_TO_SUBTRACTION
-        ) else _tp.Numeric
+        valid_types = check_type if check_type and check_type in (_tp.Numeric, _tp.Locatable) else (
+            typing.Union[_tp.Numeric, _tp.Locatable] if setv_type in (
+                SetVarType.SET_TO_ADDITION, SetVarType.SET_TO_SUBTRACTION
+            ) else _tp.Numeric
+        )
 
         if any(map(lambda v_op: v_op.setv_type != setv_type, filter(lambda o: isinstance(o, VarOp), vars))):
             raise TypeError(
@@ -147,7 +153,11 @@ Iterable[:attr:`~.Numeric`, :attr:`~.Locatable`, :class:`VarOp`]]
                 "should be evaluated in its own .set()."
             )  # different kind of operation found.
 
-        self.vars = deque(_tp.p_check(o, valid_types) for o in flatten(vars, except_iterables=[str], max_depth=2))
+        self.vars = deque(
+            _tp.p_check(
+                o, valid_types, f"vars[{i}]"
+            ) for i, o in enumerate(flatten(vars, except_iterables=[str], max_depth=2))
+        )
 
     @typing.overload
     def _add_var(
@@ -237,7 +247,7 @@ Iterable[:attr:`~.Numeric`, :attr:`~.Locatable`, :class:`VarOp`]]
                     )
                 )
             )
-            or not is_rsub and (  # or it isn't and we are trying to mix types...
+            or not is_rsub and (  # or it isn't and we are trying to mix operation types...
                 op != own_type
                 or (
                     isinstance(var, VarOp)
@@ -931,7 +941,7 @@ Stone ...
         ) or not _tp.p_bool_check(self, check_type, error_on_gameval=True):
             return NotImplemented
 
-        return VarOp(SetVarType.SET_TO_ADDITION, self, other)
+        return VarOp(SetVarType.SET_TO_ADDITION, self, other, check_type=check_type)
 
     def __radd__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
         return self.__add__(other)
@@ -946,7 +956,7 @@ Stone ...
         ) or not _tp.p_bool_check(self, check_type, error_on_gameval=True):
             return NotImplemented
 
-        return VarOp(SetVarType.SET_TO_SUBTRACTION, self, other)
+        return VarOp(SetVarType.SET_TO_SUBTRACTION, self, other, check_type=check_type)
 
     def __rsub__(self, other: typing.Union["Numeric", "Locatable", VarOp, "_Var"]):
         check_type = self.check_type \
@@ -958,7 +968,7 @@ Stone ...
         ) or not _tp.p_bool_check(self, check_type, error_on_gameval=True):
             return NotImplemented
 
-        res = VarOp(SetVarType.SET_TO_SUBTRACTION, self)
+        res = VarOp(SetVarType.SET_TO_SUBTRACTION, self, check_type=check_type)
         res._add_var(
             other, SetVarType.SET_TO_SUBTRACTION, append_left=True, is_rsub=True, allow_other_iters=False,
             error_incompatible=True, modify_self=True
@@ -1997,7 +2007,7 @@ class ListVar(_Var):
         super().__init__(name, init_value, scope=scope, unsaved=unsaved, saved=saved, local=local)
 
     def set(self, value: typing.Union["Listable", VarOp, typing.Iterable["Listable"]]) -> "SetVar":
-            return super().set(value)
+        return super().set(value)
 
 
 class ParticleVar(_Var):
