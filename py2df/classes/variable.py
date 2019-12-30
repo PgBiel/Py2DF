@@ -1348,7 +1348,7 @@ target={repr(str(self.target) if self.target else self.target)}>"
         return hash((self.__class__.__name__, self.gval_type, str(self.target)))
 
 
-var_docs = """Represents a DiamondFire {0} variable. **Note that all variables with same 'name' attribute represent the 
+_var_docs = """Represents a DiamondFire {0} variable. **Note that all variables with same 'name' attribute represent the 
 same var.**
 
 Parameters
@@ -1399,34 +1399,33 @@ generated IfVariable block). Example usage::
                 # code that is only read, IN PYTHON, if 'var_a' and 'var_b' have the same 'name' and 'scope' attrs.
 
             if var_c != var_d:
-                # code that is only read, IN PYTHON, if 'var_c' and 'var_b' have a different 'name' or 'scope' attr.
-
-    .. describe:: a > b, a >= b, a < b, a <= b
-
-        Returns the equivalent :class:`~.IfVariable` block for the given comparison. **Its only usage is as
-        a Codeblock** (in a `with`).
-        For example::
-
-            with var_a > var_b:
-                # code that is only executed in DiamondFire if 'var_a' is bigger than 'var_b' in value.
-
-            with var_c < var_d:
-                # code that is only executed in DiamondFire if 'var_c' is less than 'var_d' in value.
-
-        .. note::
-
-            Those comparisons are not usable in Python if's; if a :func:`bool` is attempted on the resulting
-            IfVariable block, it will always return True. This mechanism is only implemented for ``==`` and ``!=``.
-
-        .. warning::
-
-            Assuming that one of them is a DFVariable, the other has to be a valid :attr:`~.Numeric` parameter.
-            Otherwise, a TypeError may be raised (if the given type does not support operations with DFVariable,
-            which is likely).
+                # code that is only read, IN PYTHON, if 'var_c' and 'var_b' have a different 'name' or 'scope' attr.{2}
 
 .. container:: operations
 
-    .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
+{3}    .. describe:: str(a)
+
+        Returns this variable as a string in the form ``%var(name)``, where `name` is the variable's name.
+        When used in a string, DiamondFire replaces it with the variable's value.
+
+    .. describe:: hash(a)
+
+        Returns an unique hash identifying this variable by name and scope.
+
+
+Attributes
+----------\u200b
+name : :class:`str`
+    The name of this variable. This uniquely identifies it, along with its scope.
+
+scope : :class:`~.VariableScope`
+    The scope of this variable (:attr:`~.UNSAVED`, :attr:`~.SAVED` or :attr:`~.LOCAL`).
+
+check_type : :attr:`~.{1}` object
+    The acceptable parameter type for this variable (in this class's case, {0} parameter).
+"""
+
+_var_num_op_docs = """    .. describe:: a + b, a - b, a * b, a ** b, a / b, a // b, a % b
 
         Creates a :class:`VarOp` instance representing this operation between different variables/variables
         and values/etc.
@@ -1453,7 +1452,7 @@ generated IfVariable block). Example usage::
             up to 27 items, while 1 slot is the variable being set), then a :exc:`~.LimitReachedError` is raised
             instead.
 
-    .. describe:: a += b, a -= b, a *= b, a **= b. a /= b, a //= b, a %= b
+    .. describe:: a += b, a -= b, a *= b, a **= b, a /= b, a //= b, a %= b
 
         Same behavior as ``a.set(a ? b)``, where ``?`` is the given operation (`b` must be :attr:`~.Numeric`).
 
@@ -1463,27 +1462,32 @@ generated IfVariable block). Example usage::
             ``+=`` and ``-=`` Set Var blocks instead of ``a.set(a +/- b)``. This is because those are
             the only ones that have a SetVar equivalent.
 
-    .. describe:: str(a)
-
-        Returns this variable as a string in the form ``%var(name)``, where `name` is the variable's name.
-        When used in a string, DiamondFire replaces it with the variable's value.
-
-    .. describe:: hash(a)
-
-        Returns an unique hash identifying this variable by name and scope.
-
-
-Attributes
-----------\u200b
-name : :class:`str`
-    The name of this variable. This uniquely identifies it, along with its scope.
-
-scope : :class:`~.VariableScope`
-    The scope of this variable (:attr:`~.UNSAVED`, :attr:`~.SAVED` or :attr:`~.LOCAL`).
-
-check_type : :attr:`~.{1}` object
-    The acceptable parameter type for this variable (in this class's case, {0} parameter).
 """
+
+_var_num_comp_docs = """
+
+    .. describe:: a > b, a >= b, a < b, a <= b
+
+        Returns the equivalent :class:`~.IfVariable` block for the given comparison. **Its only usage is as
+        a Codeblock** (in a `with`).
+        For example::
+
+            with var_a > var_b:
+                # code that is only executed in DiamondFire if 'var_a' is bigger than 'var_b' in value.
+
+            with var_c < var_d:
+                # code that is only executed in DiamondFire if 'var_c' is less than 'var_d' in value.
+
+        .. note::
+
+            Those comparisons are not usable in Python if's; if a :func:`bool` is attempted on the resulting
+            IfVariable block, it will always return True. This mechanism is only implemented for ``==`` and ``!=``.
+
+        .. warning::
+
+            Assuming that one of them is a DFVariable, the other has to be a valid :attr:`~.Numeric` parameter.
+            Otherwise, a TypeError may be raised (if the given type does not support operations with DFVariable,
+            which is likely)."""
 
 
 class _Var(DFType, VarOperable):
@@ -1592,7 +1596,7 @@ generated IfVariable block). Example usage::
                 up to 27 items, while 1 slot is the variable being set), then a :exc:`~.LimitReachedError` is raised
                 instead.
 
-        .. describe:: a += b, a -= b, a *= b, a **= b. a /= b, a //= b, a %= b
+        .. describe:: a += b, a -= b, a *= b, a **= b, a /= b, a //= b, a %= b
 
             Same behavior as ``a.set(a ? b)``, where ``?`` is the given operation (`b` must be :attr:`~.Numeric`).
 
@@ -1869,7 +1873,7 @@ class DFVariable(_Var):
 
 
 class NumberVar(_Var):
-    __doc__ = var_docs.format("number", "Numeric")
+    __doc__ = _var_docs.format("number", "Numeric", _var_num_comp_docs, _var_num_op_docs)
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["Numeric"] = None,
@@ -1885,7 +1889,7 @@ class NumberVar(_Var):
 
 
 class TextVar(_Var):
-    __doc__ = var_docs.format("text", "Textable")
+    __doc__ = _var_docs.format("text", "Textable", "", "")
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["Textable"] = None,
@@ -1901,7 +1905,7 @@ class TextVar(_Var):
 
 
 class ItemVar(_Var):
-    __doc__ = var_docs.format("item", "ItemParam")
+    __doc__ = _var_docs.format("item", "ItemParam", "", "")
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["ItemParam"] = None,
@@ -1917,7 +1921,7 @@ class ItemVar(_Var):
 
 
 class PotionVar(_Var):
-    __doc__ = var_docs.format("potion", "Potionable")
+    __doc__ = _var_docs.format("potion", "Potionable", "", "")
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["Potionable"] = None,
@@ -1933,7 +1937,19 @@ class PotionVar(_Var):
 
 
 class LocationVar(_Var):
-    __doc__ = var_docs.format("location", "Locatable")
+    __doc__ = _var_docs.format(
+        "location", "Locatable", "",
+        re.sub(
+            (
+                r"(?:"
+                r"(?<=describe:: )|(?<=a [^a-zA-Z0-9] b, )|(?<=a [^a-zA-Z0-9]{2} b, )"
+                r"|(?<=a [^a-zA-Z0-9]= b, )|(?<=a [^a-zA-Z0-9]{2}= b, )"
+                r")"
+                r"a [^+\-\n=a-zA-Z0-9]+?=? b(?:, )?"
+            ),
+            "", _var_num_op_docs
+        ).replace(", \n", "\n")
+    )
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["Locatable"] = None,
@@ -1949,7 +1965,7 @@ class LocationVar(_Var):
 
 
 class ListVar(_Var):
-    __doc__ = var_docs.format("list", "Listable")
+    __doc__ = _var_docs.format("list", "Listable", "", "")
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["Listable"] = None,
@@ -1965,7 +1981,7 @@ class ListVar(_Var):
 
 
 class ParticleVar(_Var):
-    __doc__ = var_docs.format("particle", "ParticleParam")
+    __doc__ = _var_docs.format("particle", "ParticleParam", "", "")
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["ParticleParam"] = None,
@@ -1981,7 +1997,7 @@ class ParticleVar(_Var):
 
 
 class SoundVar(_Var):
-    __doc__ = var_docs.format("sound", "SoundParam")
+    __doc__ = _var_docs.format("sound", "SoundParam", "", "")
 
     def __init__(
         self, name: typing.Union[str, DFText], init_value: typing.Optional["SoundParam"] = None,
