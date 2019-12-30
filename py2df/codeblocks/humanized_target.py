@@ -8,7 +8,8 @@ from .ifs import IfPlayer, IfEntity
 from ..classes import Arguments, ItemCollection, Tag, DFNumber
 from ..enums import PlayerTarget, EntityTarget, PlayerActionType, EntityActionType, IfPlayerType, IfEntityType, \
     BlockType, Hand, IfPOpenInvType, EffectParticleMode, HorseVariant, HorseColor, MooshroomVariant, \
-    EntityAnimation, CatType, EntityColor, FoxType, PandaGene, ParrotVariant, ArmorStandPart
+    EntityAnimation, CatType, EntityColor, FoxType, PandaGene, ParrotVariant, ArmorStandPart, RabbitType, \
+    TropicalFishPattern, VillagerProfession, VillagerBiome
 from ..typings import Textable, Numeric, Locatable, ItemParam, Potionable, ParticleParam, p_check, SpawnEggable, \
     p_bool_check, Listable
 from ..utils import remove_u200b_from_doc, flatten
@@ -20,13 +21,16 @@ class Player:
     Parameters
     ----------\u200b
     target : Optional[:class:`~.PlayerTarget`], optional
-        The target that this instance represents (Default Player, Killer, Victim etc.) or None for default. Defaults
-        to ``None``
+        The target that this instance represents (Default Player, Killer, Victim etc.) or ``None`` for empty target
+        (equivalent to leaving the target line empty on DF - becomes the current selection, or the Default
+        Player). Defaults to ``None``.
 
     Attributes
     ----------\u200b
     target : Optional[:class:`~.PlayerTarget`]
-        The target that this instance represents (Default Player, Killer, Victim etc.) or None for default.
+        The target that this instance represents (Default Player, Killer, Victim etc.) or ``None`` for empty target
+        (equivalent to leaving the target line empty on DF - becomes the current selection, or the Default
+        Player).
     """
     __slots__ = ("target",)
     target: typing.Optional[PlayerTarget]
@@ -1501,13 +1505,15 @@ class Entity:
     Parameters
     ----------\u200b
     target : Optional[:class:`~.EntityTarget`], optional
-        The target that this instance represents (Default Entity, Last Mob, Victim etc.) or None for default. Defaults
-        to ``None``
+        The target that this instance represents (Default Entity, Last Mob, Victim etc.) or ``None`` for empty target
+        (equivalent to leaving the target line empty on DF - becomes the current selection, or the Default Entity).
+        Defaults to ``None``.
 
     Attributes
     ----------\u200b
     target : Optional[:class:`~.EntityTarget`]
-        The target that this instance represents (Default Entity, Last Mob, Victim etc.) or None for default.
+        The target that this instance represents (Default Entity, Last Mob, Victim etc.) or ``None`` for empty target
+        (equivalent to leaving the target line empty on DF - becomes the current selection, or the Default Entity).
     """
     __slots__ = ("target",)
     target: typing.Optional[EntityTarget]
@@ -1532,7 +1538,7 @@ class Entity:
 
     # region:entityactions
 
-    def armor_stand_tags(
+    def set_armor_stand_tags(
         self,
         *, is_visible: typing.Optional[bool] = None, is_marker: typing.Optional[bool] = None,
         allow_item_taking_or_adding: typing.Optional[bool] = None,
@@ -1591,9 +1597,9 @@ class Entity:
         --------
         ::
 
-            last_entity.armor_stand_tags(is_visible=True, has_physics_or_updates=False)  # selects last spawned entity
+            last_entity.set_armor_stand_tags(is_visible=True, has_physics_or_updates=False)  # selects last spawned entity
             # OR
-            Entity(EntityTarget.LAST_ENTITY).armor_stand_tags(is_visible=True, has_physics_or_updates=False)
+            Entity(EntityTarget.LAST_ENTITY).set_armor_stand_tags(is_visible=True, has_physics_or_updates=False)
             # Makes the armor stand visible and makes it not affected by physics or updates; other params unchanged
         """
         args = Arguments([], tags=[  # Set to True, Set to False, Don't Change
@@ -1654,7 +1660,7 @@ class Entity:
             append_to_reader=True
         )
 
-    def block_disguise(
+    def disguise_as_block(
         self, block_type: BlockParam, name: typing.Optional[Textable] = None,
         *, target: typing.Optional[EntityTarget] = None
     ):
@@ -1691,9 +1697,9 @@ class Entity:
         ::
 
             block_type = Material.GRASS_BLOCK  # disguise as a grass block
-            last_entity.block_disguise(block_type, "Some Block")
+            last_entity.disguise_as_block(block_type, "Some Block")
             # OR
-            Entity(EntityTarget.LAST_ENTITY).block_disguise(block_type, "Some Block)
+            Entity(EntityTarget.LAST_ENTITY).disguise_as_block(block_type, "Some Block")
             # last spawned entity is disguised as a grass block named "Some Block"
         """
         args = Arguments([
@@ -2623,7 +2629,7 @@ class Entity:
             append_to_reader=True
         )
 
-    def mob_disguise(
+    def disguise_as_mob(
         self, spawn_egg: SpawnEggable, name: typing.Optional[Textable] = None,
         *, target: typing.Optional[EntityTarget] = None
     ):
@@ -2654,10 +2660,10 @@ class Entity:
         ::
 
             mob = Material.ZOMBIE_SPAWN_EGG  # disguise as zombie
-            last_entity.mob_disguise(mob, "Zomb")
+            last_entity.disguise_as_mob(mob, "Zomb")
             # OR
-            Entity(EntityTarget.LAST_ENTITY).mob_disguise(mob, "Zomb")  # disguise the last spawned entity as a zombie
-                                                                        # named "Zomb"
+            Entity(EntityTarget.LAST_ENTITY).disguise_as_mob(mob, "Zomb")  # disguise the last spawned entity as a zombie
+                                                                           # named "Zomb"
         """
         args = Arguments([
             p_check(spawn_egg, SpawnEggable, "spawn_egg"),
@@ -3596,7 +3602,7 @@ class Entity:
 
             last_mob.set_health(15, combined = True)
             # OR
-            Entity(EntityTarget.LAST_MOB).set_health(15, combined = True)  # sets the last spawned mob's combined to 15
+            Entity(EntityTarget.LAST_MOB).set_health(15, combined=True)  # sets the last spawned mob's combined to 15
                                                                            # (7.5 hearts in total).
         """
         args = Arguments([
@@ -4054,10 +4060,10 @@ class Entity:
         )
 
     def set_armorstand_pose(
-            self, x_rot: typing.Optional[Numeric] = None, y_rot: typing.Optional[Numeric] = None,
-            z_rot: typing.Optional[Numeric] = None,
-            *, armor_stand_part: ArmorStandPart = ArmorStandPart.HEAD,
-            target: typing.Optional[EntityTarget] = None
+        self, x_rot: typing.Optional[Numeric] = None, y_rot: typing.Optional[Numeric] = None,
+        z_rot: typing.Optional[Numeric] = None,
+        *, part: ArmorStandPart = ArmorStandPart.HEAD,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the three-dimensional rotation of an armor stand part.
 
@@ -4125,16 +4131,15 @@ class Entity:
         )
 
     def set_rabbit_type(
-            self,
-            *, skin_type="Brown",
-            target: typing.Optional[EntityTarget] = None
+        self, skin_type: RabbitType,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the skin type of a rabbit.
 
         Parameters
         ----------
-        skin_type :
-            Brown, White, Black, Black and White, Gold, Salt and Pepper
+        skin_type : :class:`~.RabbitType`
+            The new skin type of the rabbit (see RabbitType docs for options).
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4149,13 +4154,14 @@ class Entity:
         --------
         ::
 
-            last_entity.set_rabbit_type()
+            last_mob.set_rabbit_type(RabbitType.BROWN)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_rabbit_type()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_rabbit_type(RabbitType.BROWN)
+            # if the last spawned mob is a rabbit, then its skin type is changed to Brown
         """
         args = Arguments([], tags=[
             Tag(
-                "Skin Type", option=skin_type,  # default is Brown
+                "Skin Type", option=RabbitType(skin_type),  # default is Brown
                 action=EntityActionType.SET_RABBIT_TYPE, block=BlockType.IF_GAME
             )
         ])
@@ -4167,16 +4173,19 @@ class Entity:
         )
 
     def set_saddle(
-            self, item: typing.Optional[ItemParam] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, item: typing.Optional[ItemParam],
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the saddle or carpet item of a mob.
+
         .. workswith:: Horses, Pigs, Llamas (Decor)
 
         Parameters
         ----------
         item : Optional[:attr:`~.ItemParam`], optional
-            Saddle item. Default is ``None``.
+            New saddle item, or ``None`` to remove it.
+
+            .. note:: Specifying no saddle item will remove the mob's saddle.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4189,17 +4198,18 @@ class Entity:
 
         Notes
         -----
-        - Specifying no saddle item will remove the mob's saddle.
-        - Pigs do not retain saddle metadata, only that they have a saddle.
+        Pigs do not retain saddle metadata, only that they have a saddle.
 
 
         Examples
         --------
         ::
 
-            last_entity.set_saddle(item)
+            saddle = Item(Material.SADDLE)  # the new saddle item. Specify None instead to remove it.
+            last_mob.set_saddle(saddle)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_saddle(item)  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_saddle(saddle)  # if the last spawned mob can have a saddle, its saddle item
+                                                              # is set to the specified one.
         """
         args = Arguments([
             p_check(item, typing.Optional[ItemParam], "item") if item is not None else None
@@ -4212,16 +4222,15 @@ class Entity:
         )
 
     def set_sheep_sheared(
-            self,
-            *, is_sheared: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, is_sheared: bool = True,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a sheep is currently sheared.
 
         Parameters
         ----------
         is_sheared : :class:`bool`, optional
-            Defaults to ``True``.
+            Whether or not the sheep should be sheared. Defaults to ``True``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4236,9 +4245,10 @@ class Entity:
         --------
         ::
 
-            last_entity.set_sheep_sheared()
+            last_mob.set_sheep_sheared(True)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_sheep_sheared()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_sheep_sheared(True)
+            # if the last spawned mob is a sheep, it will become sheared. (Specify False to set to not sheared)
         """
         args = Arguments([], tags=[
             Tag(
@@ -4254,17 +4264,17 @@ class Entity:
         )
 
     def set_slime_ai(
-            self,
-            *, do_ai: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, enable_ai: bool = True,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Allows a slime's AI to be enabled and disabled, but unlike the disable AI action, the slime can still be moved.
+
         .. workswith:: Slime, Magma Cube
 
         Parameters
         ----------
-        do_ai : :class:`bool`, optional
-            Defaults to ``True``.
+        enable_ai : :class:`bool`, optional
+            Whether or not the Slime/Magma Cube's AI should be enabled (True) or disabled (False). Defaults to ``True``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4279,13 +4289,15 @@ class Entity:
         --------
         ::
 
-            last_entity.set_slime_ai()
+            last_mob.set_slime_ai(False)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_slime_ai()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_slime_ai(False)
+            # if the last spawned mob is a Slime, then its AI is disabled, but it will still be able to be moved.
+            # Specify True to re-enable.
         """
         args = Arguments([], tags=[
             Tag(
-                "Do AI", option=bool(do_ai),  # default is True
+                "Do AI", option=bool(enable_ai),  # default is True
                 action=EntityActionType.SET_SLIME_AI, block=BlockType.IF_GAME
             )
         ])
@@ -4297,8 +4309,8 @@ class Entity:
         )
 
     def set_target(
-            self, name: Textable,
-            *, target: typing.Optional[EntityTarget] = None
+        self, name: Textable,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Instructs the mob's AI to target a specific mob or player.
 
@@ -4308,7 +4320,7 @@ class Entity:
         Parameters
         ----------
         name : :attr:`~.Textable`
-            Target name.
+            Target's name (either a player's or a mob's name).
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4323,9 +4335,10 @@ class Entity:
         --------
         ::
 
-            last_entity.set_target(name)
+            last_mob.set_target("John")
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_target(name)  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_target("John")
+            # the last spawned mob will now target the mob or player named John, if any.
         """
         args = Arguments([
             p_check(name, Textable, "name")
@@ -4337,23 +4350,24 @@ class Entity:
             append_to_reader=True
         )
 
-    def set_trop_fish_type(
-            self,
-            *, pattern_color="Don't Change", body_color="Don't Change", pattern="Don't Change",
-            target: typing.Optional[EntityTarget] = None
+    def set_tropical_fish_type(
+        self,
+        *, pattern_color: typing.Optional[EntityColor] = None, body_color: typing.Optional[EntityColor] = None,
+        pattern: typing.Optional[TropicalFishPattern] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets the appearance of a tropical fish.
 
         Parameters
         ----------
-        pattern_color :
-            White, Orange, Magenta, Light Blue, Yellow, Lime, Pink, Gray, Light Gray, Cyan, Purple, Blue, Brown, Green, Red, Black, Don't Change
+        pattern_color : Optional[:class:`~.EntityColor`], optional
+            The new color of the fish's pattern, or ``None`` to keep it unchanged. Defaults to ``None``.
 
-        body_color :
-            White, Orange, Magenta, Light Blue, Yellow, Lime, Pink, Gray, Light Gray, Cyan, Purple, Blue, Brown, Green, Red, Black, Don't Change
+        body_color : Optional[:class:`~.EntityColor`], optional
+            The new color of the fish's body, or ``None`` to keep it unchanged. Defaults to ``None``.
 
-        pattern :
-            Kob, Sunstreak, Snooper, Dasher, Brinely, Spotty, Flopper, Stripey, Glitter, Blockfish, Betty, Clayfish, Don't Change
+        pattern : Optional[:class:`~.TropicalFishPattern`], optional
+            The fish's new pattern, or ``None`` to keep it unchanged. Defaults to ``None``. (See TropicalFishPattern docs for options.)
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4368,21 +4382,22 @@ class Entity:
         --------
         ::
 
-            last_entity.set_trop_fish_type()
+            last_mob.set_tropical_fish_type(pattern_color=EntityColor.RED, body_color=EntityColor.BLACK, pattern=TropicalFishPattern.KOB)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_trop_fish_type()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_tropical_fish_type(pattern_color=EntityColor.RED, body_color=EntityColor.BLACK, pattern=TropicalFishPattern.KOB)
+            # if the last spawned mob is a tropical fish, then its characteristics are changed accordingly.
         """
         args = Arguments([], tags=[
             Tag(
-                "Pattern Color", option=pattern_color,  # default is Don't Change
+                "Pattern Color", option=EntityColor(pattern_color) if pattern_color is not None else "Don't Change",
                 action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.IF_GAME
             ),
             Tag(
-                "Body Color", option=body_color,  # default is Don't Change
+                "Body Color", option=EntityColor(body_color) if body_color is not None else "Don't Change",
                 action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.IF_GAME
             ),
             Tag(
-                "Pattern", option=pattern,  # default is Don't Change
+                "Pattern", option=TropicalFishPattern(pattern) if pattern is not None else "Don't Change",
                 action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.IF_GAME
             )
         ])
@@ -4393,17 +4408,17 @@ class Entity:
             append_to_reader=True
         )
 
-    def set_villager_prof(
-            self,
-            *, profession="None",
-            target: typing.Optional[EntityTarget] = None
+    def set_villager_profession(
+        self, profession: typing.Optional[VillagerProfession] = VillagerProfession.NONE,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets a villager's profession.
 
         Parameters
         ----------
-        profession :
-            None, Armorer, Butcher, Cartographer, Cleric, Farmer, Fisherman, Fletcher, Leatherworker, Librarian, Mason, Nitwit, Shepherd, Toolsmith, Weaponsmith
+        profession : Optional[:class:`~.VillagerProfession`], optional
+            The new villager's profession, or ``None`` / :attr:`~.VillagerProfession.NONE` for no profession.
+            Defaults to ``None``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4418,13 +4433,14 @@ class Entity:
         --------
         ::
 
-            last_entity.set_villager_prof()
+            last_mob.set_villager_profession(VillagerProfession.LIBRARIAN)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_villager_prof()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_villager_profession(VillagerProfession.LIBRARIAN)
+            # if the last spawned mob is a Villager, then its profession is set to Librarian.
         """
         args = Arguments([], tags=[
             Tag(
-                "Profession", option=profession,  # default is None
+                "Profession", option=VillagerProfession(profession) if profession is not None else "None",
                 action=EntityActionType.SET_VILLAGER_PROF, block=BlockType.IF_GAME
             )
         ])
@@ -4435,17 +4451,16 @@ class Entity:
             append_to_reader=True
         )
 
-    def set_villager_type(
-            self,
-            *, biome="Desert",
-            target: typing.Optional[EntityTarget] = None
+    def set_villager_biome(
+        self, biome: VillagerBiome,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets the biome type of a villager.
 
         Parameters
         ----------
-        biome :
-            Desert, Jungle, Plains, Savanna, Snow, Swamp, Taiga
+        biome : :class:`~.VillagerBiome`
+            The villager's new biome type (see VillagerBiome docs for options).
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4460,13 +4475,14 @@ class Entity:
         --------
         ::
 
-            last_entity.set_villager_type()
+            last_mob.set_villager_biome(VillagerBiome.DESERT)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_villager_type()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_villager_biome(VillagerBiome.DESERT)
+            # if the last spawned mob is a villager, then its biome type is set to Desert.
         """
         args = Arguments([], tags=[
             Tag(
-                "Biome", option=biome,  # default is Desert
+                "Biome", option=VillagerBiome(biome),  # default is Desert
                 action=EntityActionType.SET_VILLAGER_TYPE, block=BlockType.IF_GAME
             )
         ])
@@ -4478,16 +4494,15 @@ class Entity:
         )
 
     def set_wolf_angry(
-            self,
-            *, is_angry: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, is_angry: bool = True,
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a wolf is angry.
 
         Parameters
         ----------
         is_angry : :class:`bool`, optional
-            Defaults to ``True``.
+            Whether or not the wolf is angry. Defaults to ``True``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4502,9 +4517,9 @@ class Entity:
         --------
         ::
 
-            last_entity.set_wolf_angry()
+            last_mob.set_wolf_angry(True)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).set_wolf_angry()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).set_wolf_angry(True)  # if the last spawned mob is a wolf, then it will be angry
         """
         args = Arguments([], tags=[
             Tag(
@@ -4537,9 +4552,9 @@ class Entity:
         --------
         ::
 
-            last_entity.shear_sheep()
+            last_mob.shear_sheep()
             # OR
-            Entity(EntityTarget.LAST_ENTITY).shear_sheep()
+            Entity(EntityTarget.LAST_MOB).shear_sheep()  # if the last spawned mob is a sheep, then it will be sheared.
         """
         return EntityAction(
             action=EntityActionType.SHEAR_SHEEP,
@@ -4566,9 +4581,9 @@ class Entity:
         --------
         ::
 
-            last_entity.sheep_eat()
+            last_mob.sheep_eat()
             # OR
-            Entity(EntityTarget.LAST_ENTITY).sheep_eat()
+            Entity(EntityTarget.LAST_MOB).sheep_eat()  # if the last spawned mob is a sheep, then it will eat grass.
         """
         return EntityAction(
             action=EntityActionType.SHEEP_EAT,
@@ -4597,7 +4612,7 @@ class Entity:
 
             last_entity.show_name()
             # OR
-            Entity(EntityTarget.LAST_ENTITY).show_name()
+            Entity(EntityTarget.LAST_ENTITY).show_name()  # the last spawned entity's name tag is now shown.
         """
         return EntityAction(
             action=EntityActionType.SHOW_NAME,
@@ -4629,7 +4644,7 @@ class Entity:
 
             last_entity.silence()
             # OR
-            Entity(EntityTarget.LAST_ENTITY).silence()
+            Entity(EntityTarget.LAST_ENTITY).silence()  # the last spawned entity will be silenced (unable to make sounds).
         """
         return EntityAction(
             action=EntityActionType.SILENCE,
@@ -4639,16 +4654,15 @@ class Entity:
         )
 
     def snowman_pumpkin(
-            self,
-            *, has_pumpkin: bool = True,
-            target: typing.Optional[EntityTarget] = None
+        self, has_pumpkin: bool = True,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Sets whether a snowman is wearing a pumpkin.
 
         Parameters
         ----------
         has_pumpkin : :class:`bool`, optional
-            Defaults to ``True``.
+            Whether or not the snowman should wear a pumpkin. Defaults to ``True``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4663,9 +4677,10 @@ class Entity:
         --------
         ::
 
-            last_entity.snowman_pumpkin()
+            last_mob.snowman_pumpkin(False)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).snowman_pumpkin()  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).snowman_pumpkin(False)
+            # if the last spawned mob is a snowman, then it will no longer wear a pumpkin.
         """
         args = Arguments([], tags=[
             Tag(
@@ -4681,15 +4696,20 @@ class Entity:
         )
 
     def tame(
-            self, name: typing.Optional[Textable] = None,
-            *, target: typing.Optional[EntityTarget] = None
+        self, name: typing.Optional[Textable],
+        *, target: typing.Optional[EntityTarget] = None
     ):
         """Tames the mob (if possible).
 
         Parameters
         ----------
-        name : Optional[:attr:`~.Textable`], optional
-            Name of owner. Default is ``None``.
+        name : Optional[:attr:`~.Textable`]
+            Name of the mob's new owner, or ``None`` to untame.
+
+            .. note::
+
+                - Specifying no owner (``None``) will untame the mob.
+                - Can overwrite a previous owner.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4700,19 +4720,15 @@ class Entity:
         :class:`EntityAction`
             The generated EntityAction instance.
 
-        Notes
-        -----
-        - Specifying no owner will untame the mob.
-        - Can overwrite a previous owner.
-
 
         Examples
         --------
         ::
 
-            last_entity.tame(name)
+            last_mob.tame("John")
             # OR
-            Entity(EntityTarget.LAST_ENTITY).tame(name)  # TODO: Example
+            Entity(EntityTarget.LAST_MOB).tame("John")  # "John" will be the last spawned mob's new owner, if tameable.
+            # Specify None instead of "John" to untame.
         """
         args = Arguments([
             p_check(name, typing.Optional[Textable], "name") if name is not None else None
@@ -4725,19 +4741,19 @@ class Entity:
         )
 
     def teleport(
-            self, loc: Locatable,
-            *, keep_current_rotation: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, loc: Locatable,
+        *, keep_current_rotation: bool = False,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Teleports the entity to a specified location.
 
         Parameters
         ----------
         loc : :attr:`~.Locatable`
-            New position.
+            The entity's new position.
 
         keep_current_rotation : :class:`bool`, optional
-            Defaults to ``False``.
+            If ``True``, the entity will keep its current rotation. Defaults to ``False``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4752,9 +4768,11 @@ class Entity:
         --------
         ::
 
-            last_entity.teleport(loc)
+            loc = DFLocation(1, 2, 3)  # where to teleport the entity
+            last_entity.teleport(loc, keep_current_rotation=True)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).teleport(loc)  # TODO: Example
+            Entity(EntityTarget.LAST_ENTITY).teleport(loc, keep_current_rotation=True)
+            # teleports the last spawned entity to the given location, while keeping its current rotation.
         """
         args = Arguments([
             p_check(loc, Locatable, "loc")
@@ -4771,9 +4789,9 @@ class Entity:
             append_to_reader=True
         )
 
-    def tp_sequence(
-            self, *locs: typing.Union[Locatable, Listable], ticks: typing.Optional[Numeric] = None,
-            target: typing.Optional[EntityTarget] = None
+    def teleport_sequence(
+        self, *locs: typing.Union[Locatable, Listable], delay: typing.Optional[Numeric] = None,
+        target: typing.Optional[EntityTarget] = None
     ):
         """Teleports the entity to multiple locations, with a delay between each teleport.
 
@@ -4783,10 +4801,10 @@ class Entity:
         Parameters
         ----------
         locs : Union[:attr:`~.Locatable`, :attr:`~.Listable`]
-            Locations to teleport to.
+            Locations to teleport to, in order of teleportation.
 
-        ticks : Optional[:attr:`~.Numeric`], optional
-            Teleport delay (ticks, default = 60). Default is ``None``.
+        delay : Optional[:attr:`~.Numeric`], optional
+            Delay between each teleport (in ticks), or ``None`` for the default (60 ticks = 3s). Defaults to ``None``.
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -4801,13 +4819,18 @@ class Entity:
         --------
         ::
 
-            last_entity.tp_sequence(locs, ticks)
+            loc_1 = DFLocation(1, 2, 3)
+            loc_2 = LocVar("my var")
+            loc_3 = DFLocation(4, 5, 6)
+            last_entity.tp_sequence(loc_1, loc_2, loc_3, delay=120)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).tp_sequence(locs, ticks)  # TODO: Example
+            Entity(EntityTarget.LAST_ENTITY).tp_sequence(loc_1, loc_2, loc_3, delay=120)
+            # teleports the last spawned entity to loc_1 then loc_2 then loc_3, with a delay of 120 ticks (6 seconds)
+            # between each teleport.
         """
         args = Arguments([
             *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)],
-            p_check(ticks, typing.Optional[Numeric], "ticks") if ticks is not None else None
+            p_check(delay, typing.Optional[Numeric], "delay") if delay is not None else None
         ])
         return EntityAction(
             action=EntityActionType.TP_SEQUENCE,
@@ -4839,7 +4862,7 @@ class Entity:
 
             last_entity.undisguise()
             # OR
-            Entity(EntityTarget.LAST_ENTITY).undisguise()
+            Entity(EntityTarget.LAST_ENTITY).undisguise()  # the last spawned entity is undisguised.
         """
         return EntityAction(
             action=EntityActionType.UNDISGUISE,
@@ -4871,7 +4894,7 @@ class Entity:
 
             last_entity.unsilence()
             # OR
-            Entity(EntityTarget.LAST_ENTITY).unsilence()
+            Entity(EntityTarget.LAST_ENTITY).unsilence()  # the last spawned entity will be allowed to make sounds.
         """
         return EntityAction(
             action=EntityActionType.UNSILENCE,

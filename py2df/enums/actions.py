@@ -349,6 +349,34 @@ class FoxType(TagType):
 
 
 @unique
+class RabbitType(TagType):
+    """Tag of :meth:`~.Entity.set_rabbit_type`."""
+    BROWN = auto()
+    WHITE = auto()
+    BLACK = auto()
+    BLACK_AND_WHITE = "Black and White"
+    GOLD = auto()
+    SALT_AND_PEPPER = "Salt and Pepper"
+
+
+@unique
+class TropicalFishPattern(TagType):
+    """Tag of :meth:`~.Entity.set_tropical_fish_type`."""
+    KOB = auto()
+    SUNSTREAK = auto()
+    SNOOPER = auto()
+    DASHER = auto()
+    BRINELY = auto()
+    SPOTTY = auto()
+    FLOPPER = auto()
+    STRIPEY = auto()
+    GLITTER = auto()
+    BLOCKFISH = auto()
+    BETTY = auto()
+    CLAYFISH = auto()
+
+
+@unique
 class PandaGene(TagType):
     """Tag of :meth:`~.Entity.set_panda_genes`."""
     LAZY = auto()
@@ -370,6 +398,38 @@ class ParrotVariant(TagType):
 
 
 @unique
+class VillagerProfession(TagType):
+    """Tag of :meth:`~.Entity.set_villager_profession`."""
+    NONE = auto()
+    ARMORER = auto()
+    BUTCHER = auto()
+    CARTOGRAPHER = auto()
+    CLERIC = auto()
+    FARMER = auto()
+    FISHERMAN = auto()
+    FLETCHER = auto()
+    LEATHERWORKER = auto()
+    LIBRARIAN = auto()
+    MASON = auto()
+    NITWIT = auto()
+    SHEPHERD = auto()
+    TOOLSMITH = auto()
+    WEAPONSMITH = auto()
+
+
+@unique
+class VillagerBiome(TagType):
+    """Tag of :meth:`~.Entity.set_villager_biome`."""
+    DESERT = auto()
+    JUNGLE = auto()
+    PLAINS = auto()
+    SAVANNA = auto()
+    SNOW = auto()
+    SWAMP = auto()
+    TAIGA = auto()
+
+
+@unique
 class ArmorStandPart(TagType):
     """Tag of :meth:`~.Entity.set_armorstand_pose`."""
     HEAD = auto()
@@ -381,7 +441,7 @@ class ArmorStandPart(TagType):
 
 
 class EntityColor(TagType):
-    """Tag of :meth:`~.Entity.set_color`."""
+    """Tag of :meth:`~.Entity.set_color` and :meth:`~.Entity.set_tropical_fish_type`."""
     WHITE = auto()
     ORANGE = auto()
     MAGENTA = auto()

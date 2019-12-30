@@ -25,9 +25,9 @@ class PlayerAction(ActionBlock, JSONData):
     args : :class:`~py2df.classes.collections.Arguments`
         The arguments of this Player Action.
 
-    target : :class:`~py2df.enums.targets.PlayerTarget`, optional
-        The target of this Player Action. Defaults to :attr:`~py2df.enums.targets.PlayerTarget.DEFAULT` (Default
-        Player).
+    target : Optional[:class:`~.PlayerTarget`], optional
+        The target of this Player Action, or ``None`` for empty (current selection/default player). Defaults to
+        ``None``.
 
     append_to_reader : :class:`bool`, optional
         Whether or not this newly-created :class:`PlayerAction` should be already appended to the
@@ -53,8 +53,8 @@ class PlayerAction(ActionBlock, JSONData):
     data : ``None``
         (Player actions have no extra codeblock data.)
 
-    target : :class:`~py2df.enums.targets.PlayerTarget`
-        The target of this Player Action.
+    target : Optional[:class:`~.PlayerTarget`]
+        The target of this Player Action, or ``None`` for empty (current selection/default player).
     """
     __slots__ = ("args", "action", "target")
 
@@ -64,11 +64,11 @@ class PlayerAction(ActionBlock, JSONData):
     sub_action: None = None
     length: int = 2
     data: None = None
-    target: PlayerTarget
+    target: typing.Optional[PlayerTarget]
     
     def __init__(
         self, action: PlayerActionType, args: Arguments = Arguments(),
-        target: typing.Union[PlayerTarget, SelectionTarget] = PlayerTarget.DEFAULT,
+        target: typing.Optional[typing.Union[PlayerTarget, SelectionTarget]] = None,
         *, append_to_reader: bool = True
     ):
         """
@@ -82,9 +82,9 @@ class PlayerAction(ActionBlock, JSONData):
         args : :class:`~py2df.classes.collections.Arguments`
             The arguments of this Player Action.
         
-        target : :class:`~py2df.enums.targets.PlayerTarget`, optional
-            The target of this Player Action. Defaults to :attr:`~py2df.enums.targets.PlayerTarget.DEFAULT` (Default
-            Player).
+        target : Optional[:class:`~.PlayerTarget`], optional
+            The target of this Player Action, or ``None`` for empty (current selection/default player). Defaults to
+            ``None``.
         
         append_to_reader : :class:`bool`, optional
             Whether or not this newly-created :class:`PlayerAction` should be already appended to the
@@ -92,7 +92,9 @@ class PlayerAction(ActionBlock, JSONData):
         """
         self.action = PlayerActionType(action)
         self.args = args
-        self.target = PlayerTarget(target.value if SelectionTarget in (target, type(target)) else target)
+        self.target = PlayerTarget(
+            target.value if SelectionTarget in (target, type(target)) else target
+        ) if target is not None else None
         
         if append_to_reader:
             DFReader().append_codeblock(self)
@@ -110,7 +112,7 @@ class PlayerAction(ActionBlock, JSONData):
             block=PlayerAction.block.value,
             args=self.args.as_json_data(),
             action=self.action.value,
-            target=self.target.value
+            **(dict(target=self.target.value) if self.target else dict())
         )
 
 
@@ -125,8 +127,9 @@ class EntityAction(ActionBlock, JSONData):
     args : :class:`~py2df.classes.collections.Arguments`
         The arguments of this Entity Action.
 
-    target : :class:`~py2df.enums.targets.EntityTarget`, optional
-        The target of this Entity Action. Defaults to :attr:`~py2df.enums.targets.EntityTarget.LAST_MOB`.
+    target : Optional[:class:`~.EntityTarget`], optional
+        The target of this Entity Action, or ``None`` for empty (current selection/default entity). Defaults to
+        ``None``.
 
     append_to_reader : :class:`bool`, optional
         Whether or not this newly-created :class:`EntityAction` should be already appended to the
@@ -152,8 +155,8 @@ class EntityAction(ActionBlock, JSONData):
     data : ``None``
         (Entity actions have no extra codeblock data.)
 
-    target : :class:`~py2df.enums.targets.EntityTarget`
-        The target of this Entity Action.
+    target : Optional[:class:`~.EntityTarget`]
+        The target of this Entity Action, or ``None`` for empty (current selection/default entity).
     """
     __slots__ = ("args", "action", "target")
 
@@ -163,11 +166,11 @@ class EntityAction(ActionBlock, JSONData):
     sub_action: None = None
     length: int = 2
     data: None = None
-    target: EntityTarget
+    target: typing.Optional[EntityTarget]
 
     def __init__(
         self, action: EntityActionType, args: Arguments = Arguments(),
-        target: typing.Union[EntityTarget, SelectionTarget] = EntityTarget.LAST_MOB,
+        target: typing.Optional[typing.Union[EntityTarget, SelectionTarget]] = None,
         *, append_to_reader: bool = True
     ):
         """
@@ -181,8 +184,9 @@ class EntityAction(ActionBlock, JSONData):
         args : :class:`~py2df.classes.collections.Arguments`
             The arguments of this Entity Action.
 
-        target : :class:`~py2df.enums.targets.EntityTarget`, optional
-            The target of this Entity Action. Defaults to :attr:`~py2df.enums.targets.EntityTarget.LAST_MOB`.
+        target : Optional[:class:`~.EntityTarget`], optional
+            The target of this Entity Action, or ``None`` for empty (current selection/default entity). Defaults to
+            ``None``.
 
         append_to_reader : :class:`bool`, optional
             Whether or not this newly-created :class:`EntityAction` should be already appended to the
@@ -190,7 +194,9 @@ class EntityAction(ActionBlock, JSONData):
         """
         self.action = EntityActionType(action)
         self.args = args
-        self.target = EntityTarget(target.value if SelectionTarget in (target, type(target)) else target)
+        self.target = EntityTarget(
+            target.value if SelectionTarget in (target, type(target)) else target
+        ) if target is not None else None
 
         if append_to_reader:
             DFReader().append_codeblock(self)
@@ -208,7 +214,7 @@ class EntityAction(ActionBlock, JSONData):
             block=EntityAction.block.value,
             args=self.args.as_json_data(),
             action=self.action.value,
-            target=self.target.value
+            **(dict(target=self.target.value) if self.target else dict())
         )
 
 
