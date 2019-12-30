@@ -321,7 +321,7 @@ class GameAction(ActionBlock, JSONData):
         --------
         ::
 
-            GameAction.blocks_drops_off()
+            GameAction.block_drops_off()
         """
         return cls(
             action=GameActionType.BLOCK_DROPS_OFF,
@@ -342,7 +342,7 @@ class GameAction(ActionBlock, JSONData):
         --------
         ::
 
-            GameAction.blocks_drops_on()
+            GameAction.block_drops_on()
         """
         return cls(
             action=GameActionType.BLOCK_DROPS_ON,
@@ -351,7 +351,9 @@ class GameAction(ActionBlock, JSONData):
         )
 
     @classmethod
-    def bone_meal(cls, *locs: typing.Union[Locatable, Listable], amount: Numeric, show_particles: bool = True) -> "GameAction":
+    def bone_meal(
+        cls, *locs: typing.Union[Locatable, Listable], amount: Numeric, show_particles: bool = True
+    ) -> "GameAction":
         """Applies bone meal to a block.
 
         .. rank:: Noble
@@ -1201,7 +1203,10 @@ lands.
                     p_check(
                         block_type, typing.Union[Textable, ItemParam], "block_type"
                     ) if block_type is not None else None,
-                    *([p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+                    *([
+                        p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]")
+                        for i, text in enumerate(true_metadata)
+                    ])
                 ], tags=[
                     Tag(
                         "Reform on Impact", option=bool(reform_on_impact),
@@ -1778,7 +1783,10 @@ whose values DF expects to be formatted in one of the following ways:
                 ) if block_type is not None else None,
                 p_check(loc_1, Locatable, "loc_1"),
                 p_check(loc_2, Locatable, "loc_2"),
-                *([p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+                *([
+                    p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]")
+                    for i, text in enumerate(true_metadata)
+                ])
             ]),
             append_to_reader=True
         )
@@ -1845,7 +1853,10 @@ whose values DF expects to be formatted in one of the following ways:
             action=GameActionType.SET_BLOCK_DATA,
             args=Arguments([
                 p_check(loc, Locatable, "loc"),
-                *([p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]") for i, text in enumerate(true_metadata)])
+                *([
+                    p_check(text, typing.Union[Textable, Listable], f"metadata[{i}]")
+                    for i, text in enumerate(true_metadata)
+                ])
             ]),
             append_to_reader=True
         )

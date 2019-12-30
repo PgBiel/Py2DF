@@ -1,6 +1,6 @@
 import typing
 import collections
-from ..classes import DFVariable, DFText
+from ..classes import DFVariable, DFText, TextVar, NumberVar
 from ..typings import Material, ItemParam, Textable, Listable, p_bool_check
 
 BlockParam = typing.Union[
@@ -9,7 +9,7 @@ BlockParam = typing.Union[
 
 
 BlockMetadata = typing.Union[
-    typing.Dict[str, typing.Optional[typing.Union[str, int, bool, DFVariable]]],
+    typing.Dict[str, typing.Optional[typing.Union[str, int, bool, DFVariable, TextVar, NumberVar]]],
     typing.Iterable[Textable],
     Listable
 ]
