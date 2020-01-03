@@ -278,7 +278,43 @@ class GameActionType(ActionType, AutoSnakeToPascalCaseNameEnum):
 # region:tags
 
     # region:player_action_tags
-    # endregion:player_action_tags
+
+
+@unique
+class PARowPos(TagType):
+    """Tag for :meth:`~.Player.add_inv_row` and :meth:`~.Player.remove_inv_row`."""
+    TOP = "Top Row"
+    BOTTOM = "Bottom Row"
+
+
+@unique
+class PAClearInvMode(TagType):
+    """Tag for :meth:`~.Player.clear_inv`."""
+    ENTIRE_INVENTORY = auto()
+    UPPER_INVENTORY = auto()
+    HOTBAR = auto()
+    ARMOR = auto()
+
+
+@unique
+class AdvancementType(TagType):
+    """Tag for :meth:`~.Player.send_advancement`."""
+    ADVANCEMENT = auto()
+    GOAL = auto()
+    CHALLENGE = auto()
+
+
+@unique
+class PlayerAnimation(TagType):
+    """Tag of :meth:`~.Player.send_animation`."""
+    SWING_RIGHT_ARM = auto()
+    SWING_LEFT_ARM = auto()
+    HURT_ANIMATION = auto()
+    CRIT_PARTICLES = auto()
+    ENCHANTED_HIT_PARTICLES = auto()
+    WAKE_UP = auto()
+
+# endregion:player_action_tags
 
     # region:entity_action_tags
 
@@ -304,6 +340,7 @@ class HorseVariant(TagType):
 
 @unique
 class EffectParticleMode(TagType):
+    """Tag for :meth:`.Entity.give_effect` and :meth:`.Player.give_effect`."""
     SHOWN = auto()
     BEACON = auto()
     HIDDEN = auto()
@@ -459,13 +496,14 @@ class EntityColor(TagType):
     RED = auto()
     BLACK = auto()
 
-    # endregion:entity_action_tags
+# endregion:entity_action_tags
 
-    # region:control_tags
+# region:control_tags
+
 
 @unique
 class CWaitTag(TagType):
-    """For :func:`~py2df.codeblocks.actions.Control.wait`; the time unit to use when specifying the wait duration."""
+    """For :meth:`~py2df.codeblocks.actions.Control.wait`; the time unit to use when specifying the wait duration."""
     TICKS = auto()
     SECONDS = auto()
     MINUTES = auto()
@@ -473,6 +511,6 @@ class CWaitTag(TagType):
 
 TimeUnit = CWaitTag  # alias
 
-    # endregion:control_tags
+# endregion:control_tags
 
 # endregion:tags

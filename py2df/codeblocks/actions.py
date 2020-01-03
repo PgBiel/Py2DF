@@ -423,7 +423,9 @@ class GameAction(ActionBlock, JSONData):
         """
         return cls(
             action=GameActionType.BREAK_BLOCK,
-            args=Arguments([p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)]),
+            args=Arguments(
+                [p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)]
+            ),
             append_to_reader=True
         )
 
@@ -982,7 +984,7 @@ second cooldown."
         args = Arguments([
             p_check(particle, ParticleParam, "particle"),
             p_check(origin, Locatable, "origin"),
-            p_check(length, typing.Optional[Numeric], "length") if length is not None else None
+            p_check(length, Numeric, "length") if length is not None else None
         ])
         return cls(
             action=GameActionType.CREATE_PARTICLE_RAY,
@@ -1027,7 +1029,7 @@ second cooldown."
         args = Arguments([
             p_check(particle, ParticleParam, "particle"),
             p_check(center, Locatable, "center"),
-            p_check(diameter, typing.Optional[Numeric], "diameter") if diameter is not None else None
+            p_check(diameter, Numeric, "diameter") if diameter is not None else None
         ])
         return cls(
             action=GameActionType.CREATE_PARTICLE_SPHERE,

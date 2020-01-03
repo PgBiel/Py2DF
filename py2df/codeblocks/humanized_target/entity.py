@@ -125,49 +125,49 @@ class Entity:
                 option="Set to True" if is_visible else (
                     "Set to False" if is_visible is not None else "Don't Change"
                 ),  # default is Don't Change
-                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
+                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Is Marker (No Hitbox)",
                 option="Set to True" if is_marker else (
                     "Set to False" if is_marker is not None else "Don't Change"
                 ),  # default is Don't Change
-                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
+                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Allow Item Taking / Adding",
                 option="Set to True" if allow_item_taking_or_adding else (
                     "Set to False" if allow_item_taking_or_adding is not None else "Don't Change"
                 ),  # default is Don't Change
-                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
+                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Has Physics / Updates",
                 option="Set to True" if has_physics_or_updates else (
                     "Set to False" if has_physics_or_updates is not None else "Don't Change"
                 ),  # default is Don't Change
-                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
+                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Is Small",
                 option="Set to True" if is_small else (
                     "Set to False" if is_small is not None else "Don't Change"
                 ),  # default is Don't Change
-                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
+                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Has Arms",
                 option="Set to True" if has_arms else (
                     "Set to False" if has_arms is not None else "Don't Change"
                 ),  # default is Don't Change
-                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
+                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Has Base Plate",
                 option="Set to True" if has_base_plate else (
                     "Set to False" if has_base_plate is not None else "Don't Change"
                 ),  # default is Don't Change
-                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.IF_GAME
+                action=EntityActionType.ARMOR_STAND_TAGS, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -221,7 +221,7 @@ class Entity:
         """
         args = Arguments([
             p_check(block_type, typing.Union[ItemParam, Textable], "block_type"),
-            p_check(name, typing.Optional[Textable], "name") if name is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return EntityAction(
             action=EntityActionType.BLOCK_DISGUISE,
@@ -262,7 +262,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Is Charged", option=bool(is_charged),  # default is True
-                action=EntityActionType.CREEPER_CHARGED, block=BlockType.IF_GAME
+                action=EntityActionType.CREEPER_CHARGED, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -303,7 +303,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Is Ignited", option=bool(is_ignited),  # default is True
-                action=EntityActionType.CREEPER_IGNITED, block=BlockType.IF_GAME
+                action=EntityActionType.CREEPER_IGNITED, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -600,7 +600,7 @@ class Entity:
                                                                           # should it be an ender crystal.
         """
         args = Arguments([
-            p_check(loc, typing.Optional[Locatable], "loc") if loc is not None else None
+            p_check(loc, Locatable, "loc") if loc is not None else None
         ])
         return EntityAction(
             action=EntityActionType.END_CRYSTAL_TARGET,
@@ -684,11 +684,11 @@ class Entity:
         ], tags=[
             Tag(
                 "Effect Particle Mode", option=effect_particle_mode,  # default is Shown
-                action=EntityActionType.GIVE_EFFECT, block=BlockType.IF_GAME
+                action=EntityActionType.GIVE_EFFECT, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Overwrite Existing Effect", option=bool(overwrite_existing_effect),  # default is False
-                action=EntityActionType.GIVE_EFFECT, block=BlockType.IF_GAME
+                action=EntityActionType.GIVE_EFFECT, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -765,7 +765,7 @@ class Entity:
             # do not specify anything to heal entirely
         """
         args = Arguments([
-            p_check(amount, typing.Optional[Numeric], "amount") if amount is not None else None
+            p_check(amount, Numeric, "amount") if amount is not None else None
         ])
         return EntityAction(
             action=EntityActionType.HEAL,
@@ -846,11 +846,11 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Horse Color", option=HorseColor(horse_color) if horse_color else "Don't Change",
-                action=EntityActionType.HORSE_APPEARANCE, block=BlockType.IF_GAME
+                action=EntityActionType.HORSE_APPEARANCE, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Horse Variant", option=HorseVariant(horse_variant) if horse_variant else "Don't Change",
-                action=EntityActionType.HORSE_APPEARANCE, block=BlockType.IF_GAME
+                action=EntityActionType.HORSE_APPEARANCE, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -915,7 +915,7 @@ class Entity:
             append_to_reader=True
         )
 
-    def launch_fwd(
+    def launch_forward(
         self, power: Numeric,
         *, yaw_only: bool = False,
         target: typing.Optional[EntityTarget] = None
@@ -948,9 +948,9 @@ class Entity:
         --------
         ::
 
-            last_entity.launch_fwd(5)
+            last_entity.launch_forward(5)
             # OR
-            Entity(EntityTarget.LAST_ENTITY).launch_fwd(5)  # launches last spawned mob forward with a power of 5
+            Entity(EntityTarget.LAST_ENTITY).launch_forward(5)  # launches last spawned mob forward with a power of 5
             # -5 for backwards with same power
         """
         args = Arguments([
@@ -958,7 +958,7 @@ class Entity:
         ], tags=[
             Tag(
                 "Launch Axis", option="Yaw Only" if yaw_only else "Pitch and Yaw",  # default is Pitch and Yaw
-                action=EntityActionType.LAUNCH_FWD, block=BlockType.IF_GAME
+                action=EntityActionType.LAUNCH_FWD, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -1037,11 +1037,11 @@ class Entity:
 
         args = Arguments([
             p_check(projectile, typing.Union[ItemParam, Textable], "projectile"),
-            p_check(loc, typing.Optional[Locatable], "loc") if loc is not None else None,
-            p_check(name, typing.Optional[Textable], "name") if name is not None else None,
-            p_check(speed, typing.Optional[Numeric], "speed") if speed is not None else None,
-            p_check(inaccuracy, typing.Optional[Numeric], "inaccuracy") if inaccuracy is not None else None,
-            p_check(particle, typing.Optional[ParticleParam], "particle") if particle is not None else None
+            p_check(loc, Locatable, "loc") if loc is not None else None,
+            p_check(name, Textable, "name") if name is not None else None,
+            p_check(speed, Numeric, "speed") if speed is not None else None,
+            p_check(inaccuracy, Numeric, "inaccuracy") if inaccuracy is not None else None,
+            p_check(particle, ParticleParam, "particle") if particle is not None else None
         ])
         return EntityAction(
             action=EntityActionType.LAUNCH_PROJ,
@@ -1094,11 +1094,11 @@ class Entity:
         """
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(power, typing.Optional[Numeric], "power") if power is not None else None
+            p_check(power, Numeric, "power") if power is not None else None
         ], tags=[
             Tag(
                 "Ignore Distance", option=bool(ignore_distance),  # default is False
-                action=EntityActionType.LAUNCH_TOWARD, block=BlockType.IF_GAME
+                action=EntityActionType.LAUNCH_TOWARD, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -1184,7 +1184,7 @@ class Entity:
         """
         args = Arguments([
             p_check(spawn_egg, SpawnEggable, "spawn_egg"),
-            p_check(name, typing.Optional[Textable], "name") if name is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return EntityAction(
             action=EntityActionType.MOB_DISGUISE,
@@ -1227,7 +1227,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Mooshroom Variant", option=MooshroomVariant(mooshroom_variant),  # default is Red
-                action=EntityActionType.MOOSHROOM_VARIANT, block=BlockType.IF_GAME
+                action=EntityActionType.MOOSHROOM_VARIANT, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -1279,7 +1279,7 @@ class Entity:
         """
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(speed, typing.Optional[Numeric], "speed") if speed is not None else None
+            p_check(speed, Numeric, "speed") if speed is not None else None
         ])
         return EntityAction(
             action=EntityActionType.MOVE_TO,
@@ -1449,7 +1449,7 @@ class Entity:
         """
         args = Arguments([
             p_check(name, Textable, "name"),
-            p_check(skin, typing.Optional[Textable], "skin") if skin is not None else None
+            p_check(skin, Textable, "skin") if skin is not None else None
         ])
         return EntityAction(
             action=EntityActionType.PLAYER_DISGUISE,
@@ -1684,7 +1684,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Animation Type", option=EntityAnimation(animation_type),  # default is Swing Right Arm
-                action=EntityActionType.SEND_ANIMATION, block=BlockType.IF_GAME
+                action=EntityActionType.SEND_ANIMATION, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -1768,7 +1768,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Is Locked", option=bool(is_locked),  # default is True
-                action=EntityActionType.SET_AGE_LOCKED, block=BlockType.IF_GAME
+                action=EntityActionType.SET_AGE_LOCKED, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -1839,7 +1839,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Skin Type", option=CatType(skin_type),  # default is Tabby
-                action=EntityActionType.SET_CAT_TYPE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_CAT_TYPE, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -1882,7 +1882,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Color", option=EntityColor(color),  # default is White
-                action=EntityActionType.SET_COLOR, block=BlockType.IF_GAME
+                action=EntityActionType.SET_COLOR, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2004,7 +2004,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Fox Type", option=FoxType(fox_type),  # default is Red
-                action=EntityActionType.SET_FOX_TYPE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_FOX_TYPE, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2050,11 +2050,11 @@ class Entity:
                                                                                            # offhand to the given item.
         """
         args = Arguments([
-            p_check(item, typing.Optional[ItemParam], "item") if item is not None else None
+            p_check(item, ItemParam, "item") if item is not None else None
         ], tags=[
             Tag(
                 "Hand Slot", option=Hand(hand_slot),  # default is Main Hand
-                action=EntityActionType.SET_HAND_ITEM, block=BlockType.IF_GAME
+                action=EntityActionType.SET_HAND_ITEM, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2129,7 +2129,7 @@ class Entity:
                 "Heal Type", option="Combined Health" if combined else (
                     "Absorption Health" if absorption else "Regular Health"
                 ),  # default is Regular Health
-                action=EntityActionType.SET_HEALTH, block=BlockType.IF_GAME
+                action=EntityActionType.SET_HEALTH, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2169,7 +2169,7 @@ class Entity:
             Entity(EntityTarget.LAST_MOB).set_horse_armor(armor)  # last spawned mob, if horse, gets diamond horse armor
         """
         args = Arguments([
-            p_check(item, typing.Optional[ItemParam], "item") if item is not None else None
+            p_check(item, ItemParam, "item") if item is not None else None
         ])
         return EntityAction(
             action=EntityActionType.SET_HORSE_ARMOR,
@@ -2212,7 +2212,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Has Chest", option=bool(has_chest),  # default is True
-                action=EntityActionType.SET_HORSE_CHEST, block=BlockType.IF_GAME
+                action=EntityActionType.SET_HORSE_CHEST, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2253,7 +2253,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Invulnerable", option=bool(invulnerable),  # default is True
-                action=EntityActionType.SET_INVULNERABLE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_INVULNERABLE, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2300,7 +2300,7 @@ class Entity:
                                                                    # will be set to the player who owns that UUID.
         """
         args = Arguments([
-            p_check(uuid, typing.Optional[Textable], "uuid") if uuid is not None else None
+            p_check(uuid, Textable, "uuid") if uuid is not None else None
         ])
         return EntityAction(
             action=EntityActionType.SET_ITEM_OWNER,
@@ -2346,7 +2346,7 @@ class Entity:
         ], tags=[
             Tag(
                 "Heal Mob to Max Health", option=bool(heal_fully),  # default is False
-                action=EntityActionType.SET_MAX_HEALTH, block=BlockType.IF_GAME
+                action=EntityActionType.SET_MAX_HEALTH, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2387,7 +2387,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Is Sitting", option=bool(is_sitting),  # default is True
-                action=EntityActionType.SET_MOB_SITTING, block=BlockType.IF_GAME
+                action=EntityActionType.SET_MOB_SITTING, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2436,7 +2436,7 @@ class Entity:
         ], tags=[
             Tag(
                 "Hide Name Tag", option=bool(hide_name_tag),  # default is False
-                action=EntityActionType.SET_NAME, block=BlockType.IF_GAME
+                action=EntityActionType.SET_NAME, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2482,11 +2482,11 @@ class Entity:
             Tag(
                 "Hidden Gene", option=PandaGene(hidden_gene) if hidden_gene is not None else None,
                 # default is Don't Change
-                action=EntityActionType.SET_PANDA_GENES, block=BlockType.IF_GAME
+                action=EntityActionType.SET_PANDA_GENES, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Main Gene", option=PandaGene(main_gene) if main_gene is not None else None,  # default is Don't Change
-                action=EntityActionType.SET_PANDA_GENES, block=BlockType.IF_GAME
+                action=EntityActionType.SET_PANDA_GENES, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2528,7 +2528,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Parrot Variant", option=ParrotVariant(parrot_variant),  # default is Red
-                action=EntityActionType.SET_PARROT_VARIANT, block=BlockType.IF_GAME
+                action=EntityActionType.SET_PARROT_VARIANT, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2632,13 +2632,13 @@ class Entity:
             z_rot = DFNumber(z_rot % 360)
 
         args = Arguments([
-            p_check(x_rot, typing.Optional[Numeric], "x_rot") if x_rot is not None else None,
-            p_check(y_rot, typing.Optional[Numeric], "y_rot") if y_rot is not None else None,
-            p_check(z_rot, typing.Optional[Numeric], "z_rot") if z_rot is not None else None
+            p_check(x_rot, Numeric, "x_rot") if x_rot is not None else None,
+            p_check(y_rot, Numeric, "y_rot") if y_rot is not None else None,
+            p_check(z_rot, Numeric, "z_rot") if z_rot is not None else None
         ], tags=[
             Tag(
                 "Armor Stand Part", option=ArmorStandPart(part),  # default is Head
-                action=EntityActionType.SET_POSE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_POSE, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2680,7 +2680,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Skin Type", option=RabbitType(skin_type),  # default is Brown
-                action=EntityActionType.SET_RABBIT_TYPE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_RABBIT_TYPE, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2730,7 +2730,7 @@ class Entity:
                                                               # is set to the specified one.
         """
         args = Arguments([
-            p_check(item, typing.Optional[ItemParam], "item") if item is not None else None
+            p_check(item, ItemParam, "item") if item is not None else None
         ])
         return EntityAction(
             action=EntityActionType.SET_SADDLE,
@@ -2771,7 +2771,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Is Sheared", option=bool(is_sheared),  # default is True
-                action=EntityActionType.SET_SHEEP_SHEARED, block=BlockType.IF_GAME
+                action=EntityActionType.SET_SHEEP_SHEARED, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2816,7 +2816,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Do AI", option=bool(enable_ai),  # default is True
-                action=EntityActionType.SET_SLIME_AI, block=BlockType.IF_GAME
+                action=EntityActionType.SET_SLIME_AI, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2908,15 +2908,15 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Pattern Color", option=EntityColor(pattern_color) if pattern_color is not None else "Don't Change",
-                action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Body Color", option=EntityColor(body_color) if body_color is not None else "Don't Change",
-                action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.ENTITY_ACTION
             ),
             Tag(
                 "Pattern", option=TropicalFishPattern(pattern) if pattern is not None else "Don't Change",
-                action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_TROP_FISH_TYPE, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -2959,7 +2959,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Profession", option=VillagerProfession(profession) if profession is not None else "None",
-                action=EntityActionType.SET_VILLAGER_PROF, block=BlockType.IF_GAME
+                action=EntityActionType.SET_VILLAGER_PROF, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -3001,7 +3001,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Biome", option=VillagerBiome(biome),  # default is Desert
-                action=EntityActionType.SET_VILLAGER_TYPE, block=BlockType.IF_GAME
+                action=EntityActionType.SET_VILLAGER_TYPE, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -3042,7 +3042,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Is Angry", option=bool(is_angry),  # default is True
-                action=EntityActionType.SET_WOLF_ANGRY, block=BlockType.IF_GAME
+                action=EntityActionType.SET_WOLF_ANGRY, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -3203,7 +3203,7 @@ class Entity:
         args = Arguments([], tags=[
             Tag(
                 "Has Pumpkin", option=bool(has_pumpkin),  # default is True
-                action=EntityActionType.SNOWMAN_PUMPKIN, block=BlockType.IF_GAME
+                action=EntityActionType.SNOWMAN_PUMPKIN, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -3249,7 +3249,7 @@ class Entity:
             # Specify None instead of "John" to untame.
         """
         args = Arguments([
-            p_check(name, typing.Optional[Textable], "name") if name is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return EntityAction(
             action=EntityActionType.TAME,
@@ -3297,7 +3297,7 @@ class Entity:
         ], tags=[
             Tag(
                 "Keep Current Rotation", option=bool(keep_current_rotation),  # default is False
-                action=EntityActionType.TELEPORT, block=BlockType.IF_GAME
+                action=EntityActionType.TELEPORT, block=BlockType.ENTITY_ACTION
             )
         ])
         return EntityAction(
@@ -3348,7 +3348,7 @@ class Entity:
         """
         args = Arguments([
             *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)],
-            p_check(delay, typing.Optional[Numeric], "delay") if delay is not None else None
+            p_check(delay, Numeric, "delay") if delay is not None else None
         ])
         return EntityAction(
             action=EntityActionType.TP_SEQUENCE,
@@ -3567,7 +3567,7 @@ class Entity:
         ], tags=[
             Tag(
                 "Ignore Y-Axis", option=bool(ignore_y_axis),  # default is False
-                action=IfEntityType.IS_NEAR, block=BlockType.IF_GAME
+                action=IfEntityType.IS_NEAR, block=BlockType.IF_ENTITY
             )
         ])
         return IfEntity(

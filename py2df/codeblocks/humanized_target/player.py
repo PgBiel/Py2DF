@@ -2,14 +2,16 @@ import collections
 import itertools
 import typing
 
-from .._block_utils import _load_btype, BlockParam, _load_btypes, BlockMetadata
+from .._block_utils import _load_btype, BlockParam, _load_btypes, BlockMetadata, _load_metadata
 from ..actions import PlayerAction
 from ..ifs import IfPlayer, IfEntity
 from ...classes import Arguments, ItemCollection, Tag, DFNumber
-from ...enums import PlayerTarget, PlayerActionType, IfPlayerType, BlockType, Hand, IfPOpenInvType
+from ...enums import PlayerTarget, PlayerActionType, IfPlayerType, BlockType, Hand, IfPOpenInvType, PARowPos, \
+    PAClearInvMode, EffectParticleMode, AdvancementType, PlayerAnimation
 from ...typings import Textable, Numeric, Locatable, ItemParam, Potionable, ParticleParam, p_check, SpawnEggable, \
-    p_bool_check, Listable
+    p_bool_check, Listable, SoundParam
 from ...utils import remove_u200b_from_doc, flatten
+from ...constants import DEFAULT_VAL
 
 
 __all__ = ("Player",)
@@ -56,9 +58,9 @@ class Player:
     # region:playeractions
 
     def action_bar(
-            self, *texts: typing.Optional[typing.Union[Textable, Listable]],
-            text_value_merging="No Spaces",
-            target: typing.Optional[PlayerTarget] = None
+        self, *texts: typing.Optional[typing.Union[Textable, Listable]],
+        add_spaces: bool = False,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Sends a message on the action bar for the selected player.
 
@@ -67,11 +69,19 @@ class Player:
 
         Parameters
         ----------
-        texts : Optional[Union[:attr:`~.Textable`, :attr:`~.Listable`]], optional
-            Message to send. Default is ``None``.
+        texts : Union[:attr:`~.Textable`, :attr:`~.Listable`], optional
+            Action bar message to send (each text given is part of the total message, separated either by spaces,
+            if add_spaces is ``True``, or simply added together, if it is ``False``), or a list var with all the text
+            bits. Specify nothing to send an empty action bar message.
 
-        text_value_merging :
-            Add Spaces, No Spaces
+            .. note::
+
+                - Multiple text parts will be merged into one message.
+                - Numbers and locations given will be converted to text.
+
+        add_spaces : :class:`bool`, optional
+            If ``True``, the different text bits will be joined by a space between each. If ``False``, they will be
+            simply added together. Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -82,27 +92,22 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
-        Notes
-        -----
-        - Multiple text items will be merged into one message.
-        - Numbers and locations in the chest will be converted to text.
-
-
         Examples
         --------
         ::
 
-            p_default.action_bar(texts)
+            p_default.action_bar(Color.YELLOW + "• Points: " + Color.GREEN, TextVar("%default points"))
             # OR
-            Player(PlayerTarget.DEFAULT).action_bar(texts)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).action_bar(Color.YELLOW + "• Points: " + Color.GREEN, TextVar("%default points"))
+            # sends "• Points: %var(%default points)" to the default player's action bar.
         """
         args = Arguments([
-            p_check(text, typing.Optional[typing.Union[Textable, Listable]], f"texts[{i}]") for i, text in
+            p_check(text, typing.Union[Textable, Listable], f"texts[{i}]") for i, text in
             enumerate(texts)
         ], tags=[
             Tag(
-                "Text Value Merging", option=text_value_merging,  # default is No Spaces
-                action=PlayerActionType.ACTION_BAR, block=BlockType.IF_GAME
+                "Text Value Merging", option="Add Spaces" if add_spaces else "No Spaces",  # default is No Spaces
+                action=PlayerActionType.ACTION_BAR, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -113,12 +118,12 @@ class Player:
         )
 
     def add_inv_row(
-            self,
-            *items: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]],
-            new_row_position="Bottom Row",
-            target: typing.Optional[PlayerTarget] = None
+        self,
+        *items: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]],
+        new_row_position: PARowPos = PARowPos.BOTTOM,
+        target: typing.Optional[PlayerTarget] = None
     ):
-        """Adds a row to the bottom of the currently open inventory.
+        """Adds a row to the bottom or top of the currently open inventory.
 
         .. rank:: Emperor
 
@@ -133,8 +138,9 @@ class Player:
             - :attr:`~.Listable` for a variable list of items;
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
 
-        new_row_position :
-            Top Row, Bottom Row
+        new_row_position : :class:`~.PARowPos`, optional
+            The position of the new row (either :attr:`~.PARowPos.TOP` or :attr:`~.PARowPos.BOTTOM`). Defaults
+            to :attr:`~.PARowPos.BOTTOM`.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -148,10 +154,13 @@ class Player:
         Examples
         --------
         ::
-
-            p_default.add_inv_row(items)
+            
+            item_1 = Item(Material.STONE, name="My Item")
+            item_2 = ItemVar("my item var")
+            p_default.add_inv_row(item_1, item_2, new_row_position=PANewRosPos.TOP)
             # OR
-            Player(PlayerTarget.DEFAULT).add_inv_row(items)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).add_inv_row(item_1, item_2, new_row_position=PANewRosPos.TOP)
+            # adds a new row to the top of the default player's currently open inventory with the specified items.
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
 
@@ -159,8 +168,8 @@ class Player:
             p_check(item, typing.Union[ItemParam, Listable], "items") for item in item_list
         ], tags=[
             Tag(
-                "New Row Position", option=new_row_position,  # default is Bottom Row
-                action=PlayerActionType.ADD_INV_ROW, block=BlockType.IF_GAME
+                "New Row Position", option=PARowPos(new_row_position),  # default is Bottom Row
+                action=PlayerActionType.ADD_INV_ROW, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -199,9 +208,9 @@ class Player:
             append_to_reader=True
         )
 
-    def block_disguise(
-            self, block_type: BlockParam, name: typing.Optional[Textable] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+    def disguise_as_block(
+        self, block_type: BlockParam, name: typing.Optional[Textable] = None,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Disguises the player as a block.
 
@@ -220,7 +229,7 @@ class Player:
             - text (:attr:`~.Textable` - the material of the block to set as text).
 
         name : Optional[:attr:`~.Textable`], optional
-            Name of disguise. Default is ``None``.
+            Name of disguise. Default is ``None`` (no name).
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -235,13 +244,14 @@ class Player:
         --------
         ::
 
-            p_default.block_disguise(block_type, name)
+            p_default.block_disguise(Material.STONE, "Stone")
             # OR
-            Player(PlayerTarget.DEFAULT).block_disguise(block_type, name)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).block_disguise(Material.STONE, "Stone")
+            # disguises the default player as a stone block named "Stone"
         """
         args = Arguments([
             p_check(block_type, typing.Union[ItemParam, Textable], "block_type"),
-            p_check(name, typing.Optional[Textable], "name") if name is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.BLOCK_DISGUISE,
@@ -250,22 +260,23 @@ class Player:
             append_to_reader=True
         )
 
-    def break_animation(
-            self, *locs: typing.Union[Locatable, Listable], level: typing.Optional[Numeric] = None,
-            overwrite_previous_fracture: bool = True,
-            target: typing.Optional[PlayerTarget] = None
+    def send_break_animation(
+        self, *locs: typing.Union[Locatable, Listable], level: typing.Optional[Numeric] = None,
+        overwrite_previous_fracture: bool = True,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Makes the player see block fractures on the given blocks.
 
         Parameters
         ----------
         locs : Union[:attr:`~.Locatable`, :attr:`~.Listable`]
-            Block(s) to fracture.
+            Location(s) of the block(s) to fracture.
 
         level : Optional[:attr:`~.Numeric`], optional
-            Fracture level (1 to 10). Default is ``None``.
+            Fracture level (1 to 10), or ``None`` to clear the fracture effect. Default is ``None``.
 
         overwrite_previous_fracture : :class:`bool`, optional
+            If ``True``, any previous block fractures displayed on that/those block(s) will be replaced with this one.
             Defaults to ``True``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
@@ -276,28 +287,37 @@ class Player:
         -------
         :class:`PlayerAction`
             The generated PlayerAction instance.
+            
+        Raises
+        ------
+        :exc:`~.ValueError`
+            If the given fracture level (`level` arg) is not within the range 1-10.
 
         Notes
         -----
-        - Not specifying a fracture level will clear the block's fracture effect.
         - Fracture animations automatically disappear after 20 seconds.
-
 
         Examples
         --------
         ::
-
-            p_default.break_animation(locs, level)
+            
+            loc_1 = DFLocation(1, 2, 3)  # location of block
+            loc_2 = LocationVar("my var")  # as a variable
+            p_default.send_break_animation(loc_1, loc_2, level=5)
             # OR
-            Player(PlayerTarget.DEFAULT).break_animation(locs, level)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).send_break_animation(loc_1, loc_2, level=5)
+            # sends a level 5 block fracture on the two given locations to the default player.
         """
+        if isinstance(level, (int, float, DFNumber)) and not 1 <= float(level) <= 10:
+            raise ValueError("'level' arg must be between 1 and 10.")
+
         args = Arguments([
             *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)],
-            p_check(level, typing.Optional[Numeric], "level") if level is not None else None
+            p_check(level, Numeric, "level") if level is not None else None
         ], tags=[
             Tag(
                 "Overwrite Previous Fracture", option=bool(overwrite_previous_fracture),  # default is True
-                action=PlayerActionType.BREAK_ANIMATION, block=BlockType.IF_GAME
+                action=PlayerActionType.BREAK_ANIMATION, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -307,9 +327,9 @@ class Player:
             append_to_reader=True
         )
 
-    def chat_color(
-            self, text: Textable,
-            *, target: typing.Optional[PlayerTarget] = None
+    def set_chat_color(
+        self, text: Textable,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Sets the color of all future messages in chat for the player.
 
@@ -319,7 +339,8 @@ class Player:
         Parameters
         ----------
         text : :attr:`~.Textable`
-            New chat color.
+            The player's new chat color (usage of :class:`~.Color` is recommended). Note that this can contain a color
+            and a formatting modifier (e.g. bold, italics...) simultaneously.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -334,9 +355,9 @@ class Player:
         --------
         ::
 
-            p_default.chat_color(text)
+            p_default.set_chat_color(Color.RED)
             # OR
-            Player(PlayerTarget.DEFAULT).chat_color(text)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).set_chat_color(Color.RED)  # the default player's messages will now be red
         """
         args = Arguments([
             p_check(text, Textable, "text")
@@ -406,20 +427,22 @@ class Player:
             append_to_reader=True
         )
 
-    def clear_inv(
-            self,
-            *, clear_mode="Entire Inventory", clear_crafting_and_cursor: bool = True,
-            target: typing.Optional[PlayerTarget] = None
+    def clear_inventory(
+        self,
+        *, clear_mode: PAClearInvMode = PAClearInvMode.ENTIRE_INVENTORY, clear_crafting_and_cursor: bool = True,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Empties the player's inventory.
 
         Parameters
         ----------
-        clear_mode :
-            Entire Inventory, Upper Inventory, Hotbar, Armor
+        clear_mode : :class:`~.PAClearInvMode`, optional
+            How much of the inventory should be cleared (either :attr:`~.PAClearInvMode.ENTIRE_INVENTORY`,
+            :attr:`~.PAClearInvMode.UPPER_INVENTORY`, :attr:`~.PAClearInvMode.HOTBAR` or
+            :attr:`~.PAClearInvMode.ARMOR`). Defaults to :attr:`~.PAClearInvMode.ENTIRE_INVENTORY`.
 
         clear_crafting_and_cursor : :class:`bool`, optional
-            Defaults to ``True``.
+            If the crafting area and the cursor should be cleared as well. Defaults to ``True``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -434,18 +457,25 @@ class Player:
         --------
         ::
 
-            p_default.clear_inv()
+            p_default.clear_inventory()
             # OR
-            Player(PlayerTarget.DEFAULT).clear_inv()  # TODO: Example
+            Player(PlayerTarget.DEFAULT).clear_inventory()  # clears the whole inventory, including crafting area/cursor
+        
+        ::
+            
+            p_default.clear_inventory(clear_mode=PAClearInvMode.HOTBAR, clear_crafting_and_cursor=False)
+            # OR
+            Player(PlayerTarget.DEFAULT).clear_inventory(clear_mode=PAClearInvMode.HOTBAR, clear_crafting_and_cursor=False)
+            # clears just the player's hotbar, while keeping the player's cursor and crafting area, along with the rest of the inv, intact.
         """
         args = Arguments([], tags=[
             Tag(
-                "Clear Mode", option=clear_mode,  # default is Entire Inventory
-                action=PlayerActionType.CLEAR_INV, block=BlockType.IF_GAME
+                "Clear Mode", option=PAClearInvMode(clear_mode),  # default is Entire Inventory
+                action=PlayerActionType.CLEAR_INV, block=BlockType.PLAYER_ACTION
             ),
             Tag(
                 "Clear Crafting and Cursor", option=bool(clear_crafting_and_cursor),  # default is True
-                action=PlayerActionType.CLEAR_INV, block=BlockType.IF_GAME
+                action=PlayerActionType.CLEAR_INV, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -456,8 +486,8 @@ class Player:
         )
 
     def clear_item(
-            self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
-            target: typing.Optional[PlayerTarget] = None
+        self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Removes all of a certain item from the player.
 
@@ -483,10 +513,13 @@ class Player:
         Examples
         --------
         ::
-
-            p_default.clear_item(items)
+            
+            item_1 = Item(Material.STONE, name="Stone")
+            item_2 = ItemVar("my var")
+            p_default.clear_item(item_1, item_2)
             # OR
-            Player(PlayerTarget.DEFAULT).clear_item(items)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).clear_item(item_1, item_2)
+            # clears all instances of the given items from the default player's inventory.
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
 
@@ -500,7 +533,7 @@ class Player:
             append_to_reader=True
         )
 
-    def close_inv(self, *, target: typing.Optional[PlayerTarget] = None):
+    def close_inventory(self, *, target: typing.Optional[PlayerTarget] = None):
         """Closes the player's currently open inventory menu.
 
         .. rank:: Emperor
@@ -521,9 +554,9 @@ class Player:
         --------
         ::
 
-            p_default.close_inv()
+            p_default.close_inventory()
             # OR
-            Player(PlayerTarget.DEFAULT).close_inv()
+            Player(PlayerTarget.DEFAULT).close_inventory()
         """
         return PlayerAction(
             action=PlayerActionType.CLOSE_INV,
@@ -533,8 +566,8 @@ class Player:
         )
 
     def damage(
-            self, damage: Numeric,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, damage: Numeric,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Damages the player.
 
@@ -543,9 +576,9 @@ class Player:
         damage : :attr:`~.Numeric`
             Damage to inflict.
 
-        .. note::
+            .. note::
 
-            1 damage = 0.5 hearts
+                1 damage = 0.5 hearts
 
 
         target : Optional[:class:`~.PlayerTarget`], optional
@@ -561,9 +594,9 @@ class Player:
         --------
         ::
 
-            p_default.damage(damage)
+            p_default.damage(2)
             # OR
-            Player(PlayerTarget.DEFAULT).damage(damage)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).damage(2)  # deals 1 heart of damage to the default player
         """
         args = Arguments([
             p_check(damage, Numeric, "damage")
@@ -575,7 +608,7 @@ class Player:
             append_to_reader=True
         )
 
-    def death_drops(self, *, target: typing.Optional[PlayerTarget] = None):
+    def enable_death_drops(self, *, target: typing.Optional[PlayerTarget] = None):
         """When this code block is executed, the player will drop the contents of their inventory when they die.
 
         Parameters
@@ -593,9 +626,9 @@ class Player:
         --------
         ::
 
-            p_default.death_drops()
+            p_default.enable_death_drops()
             # OR
-            Player(PlayerTarget.DEFAULT).death_drops()
+            Player(PlayerTarget.DEFAULT).enable_death_drops()
         """
         return PlayerAction(
             action=PlayerActionType.DEATH_DROPS,
@@ -605,8 +638,8 @@ class Player:
         )
 
     def disable_blocks(
-            self, *block_types: typing.Optional[typing.Union[BlockParam, Listable]],
-            target: typing.Optional[PlayerTarget] = None
+        self, *block_types: typing.Optional[typing.Union[BlockParam, Listable]],
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Prevents the player from placing and breaking certain blocks. If no blocks are in the chest, all blocks will be disallowed.
 
@@ -638,9 +671,10 @@ class Player:
         --------
         ::
 
-            p_default.disable_blocks(block_types)
+            p_default.disable_blocks(Material.STONE, Material.GRASS_BLOCK)
             # OR
-            Player(PlayerTarget.DEFAULT).disable_blocks(block_types)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).disable_blocks(Material.STONE, Material.GRASS_BLOCK)
+            # disallows the player from interacting with stone blocks and grass blocks.
         """
         true_btypes = _load_btypes(block_types)
 
@@ -743,8 +777,8 @@ class Player:
         )
 
     def enable_blocks(
-            self, *block_types: typing.Optional[typing.Union[BlockParam, Listable]],
-            target: typing.Optional[PlayerTarget] = None
+        self, *block_types: typing.Optional[typing.Union[BlockParam, Listable]],
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Allows the player to place and break certain blocks. If no blocks are in the chest, all blocks will be enabled.
 
@@ -776,9 +810,10 @@ class Player:
         --------
         ::
 
-            p_default.enable_blocks(block_types)
+            p_default.enable_blocks(Material.STONE, Material.SAND)
             # OR
-            Player(PlayerTarget.DEFAULT).enable_blocks(block_types)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).enable_blocks(Material.STONE, Material.SAND)
+            # allows the default player to interact with stone and sand blocks.
         """
         true_btypes = _load_btypes(block_types)
 
@@ -851,12 +886,12 @@ class Player:
             append_to_reader=True
         )
 
-    def expand_inv(
-            self,
-            *items: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]],
-            target: typing.Optional[PlayerTarget] = None
+    def expand_inventory(
+        self,
+        *items: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]],
+        target: typing.Optional[PlayerTarget] = None
     ):
-        """If an inventory menu is open for the player, 'Expand Inventory Menu' adds 3 more rows using the contents of the chest.
+        """If an inventory menu is open for the player, 'Expand Inventory Menu' adds 3 more rows using the items given.
 
         .. rank:: Emperor
 
@@ -884,9 +919,13 @@ class Player:
         --------
         ::
 
-            p_default.expand_inv(items)
+            item_1 = Item(Material.DIAMOND_SWORD, name="My Item")
+            item_2 = ItemVar("my var")
+            item_3 = Item(Material.STONE, lore=["a", "b"])
+            p_default.expand_inventory(item_1, item_2, item_3)
             # OR
-            Player(PlayerTarget.DEFAULT).expand_inv(items)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).expand_inventory(item_1, item_2, item_3)
+            # Expands the default player's currently open inventory by adding 3 rows, while having the first one contain the given items.
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
 
@@ -900,7 +939,7 @@ class Player:
             append_to_reader=True
         )
 
-    def flight_speed(
+    def set_flight_speed(
             self, speed: Numeric,
             *, target: typing.Optional[PlayerTarget] = None
     ):
@@ -923,14 +962,22 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+        Raises
+        ------
+        :exc:`ValueError`
+            If the given speed is not between -1000 and 1000.
+
         Examples
         --------
         ::
 
-            p_default.flight_speed(speed)
+            p_default.set_flight_speed(500)
             # OR
-            Player(PlayerTarget.DEFAULT).flight_speed(speed)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).set_flight_speed(500)  # the default player's flight speed is now 5x faster.
         """
+        if isinstance(speed, (int, float, DFNumber)) and not -1000 <= float(speed) <= 1000:
+            raise ValueError("'speed' arg must be between -1000 and 1000.")
+
         args = Arguments([
             p_check(speed, Numeric, "speed")
         ])
@@ -942,16 +989,20 @@ class Player:
         )
 
     def force_flight(
-            self,
-            *, flight_mode="Start Flight",
-            target: typing.Optional[PlayerTarget] = None
+        self,
+        *, start: bool = DEFAULT_VAL, stop: bool = False,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Forces the player to start or stop flying.
 
         Parameters
         ----------
-        flight_mode :
-            Start Flight, Stop Flight
+        start : :class:`bool`, optional
+            If ``True``, the player will be forced to start flying. Defaults to ``True`` (note that setting
+            `stop` to ``True`` and not specifying this will set it to stop flying).
+
+        stop : :class:`bool`, optional
+            If ``True``, the player will be forced to stop flying. Defaults to ``False``).
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -962,18 +1013,32 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+        Raises
+        ------
+        :exc:`ValueError`
+            If both `start` and `stop` are given as the same boolean value (if both are truthy or both falsy).
+
         Examples
         --------
-        ::
+        Start flying::
 
             p_default.force_flight()
             # OR
-            Player(PlayerTarget.DEFAULT).force_flight()  # TODO: Example
+            Player(PlayerTarget.DEFAULT).force_flight()  # or specify start=True. Forces the default player to fly
+
+        Stop flying::
+
+            p_default.force_flight(stop=True)
+            # OR
+            Player(PlayerTarget.DEFAULT).force_flight(stop=True)  # Forces the default player to stop flying.
         """
+        if start != DEFAULT_VAL and bool(start) == bool(stop):
+            raise ValueError("Please specify either 'start' or 'stop' args as True, not both False or both True.")
+
         args = Arguments([], tags=[
             Tag(
-                "Flight Mode", option=flight_mode,  # default is Start Flight
-                action=PlayerActionType.FORCE_FLIGHT, block=BlockType.IF_GAME
+                "Flight Mode", option="Start Flight" if start or not stop else "Stop Flight",  # default is Start Flight
+                action=PlayerActionType.FORCE_FLIGHT, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -984,16 +1049,20 @@ class Player:
         )
 
     def force_glide(
-            self,
-            *, glide_mode="Start Gliding",
-            target: typing.Optional[PlayerTarget] = None
+        self,
+        *, start: bool = DEFAULT_VAL, stop: bool = False,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Forces the player to start or stop gliding.
 
         Parameters
         ----------
-        glide_mode :
-            Start Gliding, Stop Gliding
+        start : :class:`bool`, optional
+            If ``True``, the player will be forced to start gliding. Defaults to ``True`` (note that setting
+            `stop` to ``True`` and not specifying this will set it to stop gliding).
+
+        stop : :class:`bool`, optional
+            If ``True``, the player will be forced to stop gliding. Defaults to ``False``).
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1004,18 +1073,33 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+        Raises
+        ------
+        :exc:`ValueError`
+            If both `start` and `stop` are given as the same boolean value (if both are truthy or both falsy).
+
         Examples
         --------
-        ::
+        Start gliding::
 
             p_default.force_glide()
             # OR
-            Player(PlayerTarget.DEFAULT).force_glide()  # TODO: Example
+            Player(PlayerTarget.DEFAULT).force_glide()  # or specify start=True. Forces the default player to glide
+
+        Stop gliding::
+
+            p_default.force_glide(stop=True)
+            # OR
+            Player(PlayerTarget.DEFAULT).force_glide(stop=True)  # Forces the default player to stop gliding.
         """
+        if start != DEFAULT_VAL and bool(start) == bool(stop):
+            raise ValueError("Please specify either 'start' or 'stop' args as True, not both False or both True.")
+
         args = Arguments([], tags=[
             Tag(
-                "Glide Mode", option=glide_mode,  # default is Start Gliding
-                action=PlayerActionType.FORCE_GLIDE, block=BlockType.IF_GAME
+                "Glide Mode",
+                option="Start Gliding" if start or not stop else "Stop Gliding",  # default is Start Gliding
+                action=PlayerActionType.FORCE_GLIDE, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -1026,22 +1110,25 @@ class Player:
         )
 
     def give_effect(
-            self, *potions: typing.Union[Potionable, Listable],
-            effect_particle_mode="Shown", overwrite_existing_effect: bool = False,
-            target: typing.Optional[PlayerTarget] = None
+        self, *potions: typing.Union[Potionable, Listable],
+        effect_particle_mode: EffectParticleMode = EffectParticleMode.SHOWN,
+        overwrite_existing_effect: bool = False,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Gives the player one or more potion effects.
 
         Parameters
         ----------
         potions : Union[:attr:`~.Potionable`, :attr:`~.Listable`]
-            Potion effects.
+            Potion effect(s) to give, or a List variable with all the potion effects.
 
-        effect_particle_mode :
-            Shown, Beacon, Hidden
+        effect_particle_mode : :class:`~.EffectParticleMode`, optional
+            The mode applied to the effect particles (either :attr:`~.EffectParticleMode.SHOWN`,
+            :attr:`~.EffectParticleMode.BEACON` or :attr:`~.EffectParticleMode.HIDDEN`). Defaults to
+            :attr:`~.EffectParticleMode.SHOWN`.
 
         overwrite_existing_effect : :class:`bool`, optional
-            Defaults to ``False``.
+            If existing effects should be overridden by the given ones. Defaults to ``False`` (no).
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1056,20 +1143,23 @@ class Player:
         --------
         ::
 
-            p_default.give_effect(potions)
+            potion_1 = DFPotion(PotionEffect.ABSORPTION, amplifier=255, duration=(5, 0))  # Absorption 255, 5 min dur.
+            potion_2 = PotionVar("my var")  # potion variable
+            p_default.give_effect(potion_1, potion_2, effect_particle_mode=EffectParticleMode.BEACON)
             # OR
-            Player(PlayerTarget.DEFAULT).give_effect(potions)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).give_effect(potion_1, potion_2, effect_particle_mode=EffectParticleMode.BEACON)
+            # gives two potion effects with beacon-mode particles to the default player.
         """
         args = Arguments([
             p_check(potion, typing.Union[Potionable, Listable], f"potions[{i}]") for i, potion in enumerate(potions)
         ], tags=[
             Tag(
-                "Effect Particle Mode", option=effect_particle_mode,  # default is Shown
-                action=PlayerActionType.GIVE_EFFECT, block=BlockType.IF_GAME
+                "Effect Particle Mode", option=EffectParticleMode(effect_particle_mode),  # default is Shown
+                action=PlayerActionType.GIVE_EFFECT, block=BlockType.PLAYER_ACTION
             ),
             Tag(
                 "Overwrite Existing Effect", option=bool(overwrite_existing_effect),  # default is False
-                action=PlayerActionType.GIVE_EFFECT, block=BlockType.IF_GAME
+                action=PlayerActionType.GIVE_EFFECT, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -1080,11 +1170,11 @@ class Player:
         )
 
     def give_items(
-            self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
-            amount: typing.Optional[Numeric] = None,
-            target: typing.Optional[PlayerTarget] = None
+        self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
+        amount: typing.Optional[Numeric] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
-        """Gives the player all of the items in the chest.
+        """Gives the player all of the specified items.
 
         Parameters
         ----------
@@ -1097,7 +1187,11 @@ class Player:
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
 
         amount : Optional[:attr:`~.Numeric`], optional
-            Amount to give. Default is ``None``.
+            Amount of times to give those items, or ``None`` for the default (1 time). Default is ``None``.
+
+            .. note::
+
+                If an amount is specified, the items will be repeatedly given that many times.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1108,24 +1202,30 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
-        Notes
-        -----
-        If an amount is specified, the items will be repeatedly given that many times.
-
 
         Examples
         --------
-        ::
+        Give once::
 
-            p_default.give_items(items, amount)
+            item_1 = Item(Material.STONE)
+            item_2 = ItemVar("some item")
+            p_default.give_items(item_1, item_2)
             # OR
-            Player(PlayerTarget.DEFAULT).give_items(items, amount)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).give_items(item_1, item_2)  # gives the player the specified items.
+
+        Give twice or more::
+
+            item_1 = Item(Material.STONE)
+            item_2 = ItemVar("some item")
+            p_default.give_items(item_1, item_2, amount=2)
+            # OR
+            Player(PlayerTarget.DEFAULT).give_items(item_1, item_2, amount=2)  # gives the player the specified items twice.
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
 
         args = Arguments([
             *[p_check(item, typing.Union[ItemParam, Listable], "items") for item in item_list],
-            p_check(amount, typing.Optional[Numeric], "amount") if amount is not None else None
+            p_check(amount, Numeric, "amount") if amount is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.GIVE_ITEMS,
@@ -1134,9 +1234,9 @@ class Player:
             append_to_reader=True
         )
 
-    def give_rng_item(
-            self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
-            target: typing.Optional[PlayerTarget] = None
+    def give_random_item(
+        self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Gives the player a random item or stack of items from the chest.
 
@@ -1168,9 +1268,12 @@ class Player:
         --------
         ::
 
-            p_default.give_rng_item(items)
+            item_1 = Item(Material.STONE)
+            item_2 = ItemVar("some item var")
+            p_default.give_random_item(item_1, item_2)
             # OR
-            Player(PlayerTarget.DEFAULT).give_rng_item(items)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).give_random_item(item_1, item_2)
+            # randomly picks one of the given items to give to the default player.
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
 
@@ -1184,7 +1287,7 @@ class Player:
             append_to_reader=True
         )
 
-    def gm_adventure(self, *, target: typing.Optional[PlayerTarget] = None):
+    def set_gm_adventure(self, *, target: typing.Optional[PlayerTarget] = None):
         """Sets the player's gamemode to adventure mode.
 
         Parameters
@@ -1202,9 +1305,9 @@ class Player:
         --------
         ::
 
-            p_default.gm_adventure()
+            p_default.set_gm_adventure()
             # OR
-            Player(PlayerTarget.DEFAULT).gm_adventure()
+            Player(PlayerTarget.DEFAULT).set_gm_adventure()
         """
         return PlayerAction(
             action=PlayerActionType.GM_ADVENTURE,
@@ -1213,7 +1316,7 @@ class Player:
             append_to_reader=True
         )
 
-    def gm_creative(self, *, target: typing.Optional[PlayerTarget] = None):
+    def set_gm_creative(self, *, target: typing.Optional[PlayerTarget] = None):
         """Sets the player's gamemode to creative mode.
 
         Parameters
@@ -1237,9 +1340,9 @@ class Player:
         --------
         ::
 
-            p_default.gm_creative()
+            p_default.set_gm_creative()
             # OR
-            Player(PlayerTarget.DEFAULT).gm_creative()
+            Player(PlayerTarget.DEFAULT).set_gm_creative()
         """
         return PlayerAction(
             action=PlayerActionType.GM_CREATIVE,
@@ -1248,7 +1351,7 @@ class Player:
             append_to_reader=True
         )
 
-    def gm_survival(self, *, target: typing.Optional[PlayerTarget] = None):
+    def set_gm_survival(self, *, target: typing.Optional[PlayerTarget] = None):
         """Sets the player's gamemode to survival mode.
 
         Parameters
@@ -1266,9 +1369,9 @@ class Player:
         --------
         ::
 
-            p_default.gm_survival()
+            p_default.set_gm_survival()
             # OR
-            Player(PlayerTarget.DEFAULT).gm_survival()
+            Player(PlayerTarget.DEFAULT).set_gm_survival()
         """
         return PlayerAction(
             action=PlayerActionType.GM_SURVIVAL,
@@ -1278,8 +1381,8 @@ class Player:
         )
 
     def heal(
-            self, amount: typing.Optional[Numeric] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, amount: typing.Optional[Numeric] = None,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Restores the player's health fully or by an amount.
 
@@ -1288,9 +1391,9 @@ class Player:
         amount : Optional[:attr:`~.Numeric`], optional
             Amount to heal. Default is ``None``.
 
-        .. note::
+            .. note::
 
-            1 health = 0.5 hearts
+                1 health = 0.5 hearts
 
 
         target : Optional[:class:`~.PlayerTarget`], optional
@@ -1306,12 +1409,12 @@ class Player:
         --------
         ::
 
-            p_default.heal(amount)
+            p_default.heal(4)
             # OR
-            Player(PlayerTarget.DEFAULT).heal(amount)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).heal(4)  # heals the default player by 2 hearts
         """
         args = Arguments([
-            p_check(amount, typing.Optional[Numeric], "amount") if amount is not None else None
+            p_check(amount, Numeric, "amount") if amount is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.HEAL,
@@ -1352,7 +1455,7 @@ class Player:
             append_to_reader=True
         )
 
-    def keep_inv(self, *, target: typing.Optional[PlayerTarget] = None):
+    def enable_keep_inv(self, *, target: typing.Optional[PlayerTarget] = None):
         """When this code block is executed, the player will keep the contents of their inventory when they die.
 
         Parameters
@@ -1366,13 +1469,20 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+        Notes
+        -----
+        This is different from :meth:`enable_death_drops`: While that method guarantees that the player's items will
+        be dropped to the ground on death (which is the default behavior), this method simply guarantees that the
+        player's items will remain in their inventory even when they respawn (independently of whether or not they were
+        dropped to the ground).
+
         Examples
         --------
         ::
 
-            p_default.keep_inv()
+            p_default.enable_keep_inv()
             # OR
-            Player(PlayerTarget.DEFAULT).keep_inv()
+            Player(PlayerTarget.DEFAULT).enable_keep_inv()
         """
         return PlayerAction(
             action=PlayerActionType.KEEP_INV,
@@ -1413,10 +1523,10 @@ class Player:
             append_to_reader=True
         )
 
-    def launch_fwd(
-            self, power: Numeric,
-            *, launch_axis="Pitch and Yaw",
-            target: typing.Optional[PlayerTarget] = None
+    def launch_forward(
+        self, power: Numeric,
+        *, yaw_only: bool = False,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Launches the player a certain amount forward or backward.
 
@@ -1425,8 +1535,13 @@ class Player:
         power : :attr:`~.Numeric`
             Launch power.
 
-        launch_axis :
-            Pitch and Yaw, Yaw Only
+            .. note::
+
+                A positive launch power is forward, and a negative one is backward.
+
+        yaw_only : :class:`bool`, optional
+            If ``True``, only yaw is considered on launch axis. If ``False``, pitch is also considered. Defaults
+            to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1446,16 +1561,17 @@ class Player:
         --------
         ::
 
-            p_default.launch_fwd(power)
+            p_default.launch_forward(5)
             # OR
-            Player(PlayerTarget.DEFAULT).launch_fwd(power)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).launch_forward(5)  # launches last spawned mob forward with a power of 5
+            # -5 for backwards with same power
         """
         args = Arguments([
             p_check(power, Numeric, "power")
         ], tags=[
             Tag(
-                "Launch Axis", option=launch_axis,  # default is Pitch and Yaw
-                action=PlayerActionType.LAUNCH_FWD, block=BlockType.IF_GAME
+                "Launch Axis", option="Yaw Only" if yaw_only else "Pitch and Yaw",  # default is Pitch and Yaw
+                action=PlayerActionType.LAUNCH_FWD, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -1465,11 +1581,11 @@ class Player:
             append_to_reader=True
         )
 
-    def launch_proj(
-            self, projectile: BlockParam, loc: typing.Optional[Locatable] = None,
-            name: typing.Optional[Textable] = None, speed: typing.Optional[Numeric] = None,
-            inaccuracy: typing.Optional[Numeric] = None, particle: typing.Optional[ParticleParam] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+    def launch_projectile(
+        self, projectile: BlockParam, *, loc: typing.Optional[Locatable] = None,
+        name: typing.Optional[Textable] = None, speed: typing.Optional[Numeric] = None,
+        inaccuracy: typing.Optional[Numeric] = None, particle: typing.Optional[ParticleParam] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Launches a projectile from the player.
 
@@ -1485,19 +1601,25 @@ class Player:
             - text (:attr:`~.Textable` - the material of the block to set as text).
 
         loc : Optional[:attr:`~.Locatable`], optional
-            Launch point. Default is ``None``.
+            Launch point (where the projectile is launched from). Default is ``None`` (from the player in a predetermined
+            spot).
 
         name : Optional[:attr:`~.Textable`], optional
-            Projectile name. Default is ``None``.
+            Projectile name. Default is ``None`` (no name).
 
         speed : Optional[:attr:`~.Numeric`], optional
-            Speed. Default is ``None``.
+            The projectile's speed. Default is ``None`` (default speed).
+
+            .. note::
+
+                This has to be specified in order for `inaccuracy` to be given, or a :exc:`ValueError` is raised.
 
         inaccuracy : Optional[:attr:`~.Numeric`], optional
-            Inaccuracy (default = 1). Default is ``None``.
+            Inaccuracy (how much random momentum is applied on launch), or ``None`` for the default (1).
+            Default is ``None`` (1).
 
         particle : Optional[:attr:`~.ParticleParam`], optional
-            Launch trail. Default is ``None``.
+            A particle to be the projectile's launch trail. Default is ``None`` (no launch trail).
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1508,26 +1630,27 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
-        Notes
-        -----
-        Inaccuracy controls how much random momentum is applied on launch.
-
 
         Examples
         --------
         ::
 
-            p_default.launch_proj(projectile, loc, name, speed, inaccuracy, particle)
+            proj = Material.ARROW  # launch an arrow from the player
+            partc = ParticleType.BUBBLE  # bubble trail
+            p_default.launch_projectile(proj, name="My Arrow", speed=5, inaccuracy=2, particle=partc)
             # OR
-            Player(PlayerTarget.DEFAULT).launch_proj(projectile, loc, name, speed, inaccuracy, particle)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).launch_projectile(proj, name="My Arrow", speed=5, inaccuracy=2, particle=partc)
         """
+        if inaccuracy is not None and speed is None:
+            raise ValueError("Cannot specify 'inaccuracy' argument without specifying 'speed'.")
+
         args = Arguments([
             p_check(projectile, typing.Union[ItemParam, Textable], "projectile"),
-            p_check(loc, typing.Optional[Locatable], "loc") if loc is not None else None,
-            p_check(name, typing.Optional[Textable], "name") if name is not None else None,
-            p_check(speed, typing.Optional[Numeric], "speed") if speed is not None else None,
-            p_check(inaccuracy, typing.Optional[Numeric], "inaccuracy") if inaccuracy is not None else None,
-            p_check(particle, typing.Optional[ParticleParam], "particle") if particle is not None else None
+            p_check(loc, Locatable, "loc") if loc is not None else None,
+            p_check(name, Textable, "name") if name is not None else None,
+            p_check(speed, Numeric, "speed") if speed is not None else None,
+            p_check(inaccuracy, Numeric, "inaccuracy") if inaccuracy is not None else None,
+            p_check(particle, ParticleParam, "particle") if particle is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.LAUNCH_PROJ,
@@ -1537,9 +1660,9 @@ class Player:
         )
 
     def launch_toward(
-            self, loc: Locatable, power: typing.Optional[Numeric] = None,
-            *, ignore_distance: bool = False,
-            target: typing.Optional[PlayerTarget] = None
+        self, loc: Locatable, power: typing.Optional[Numeric] = None,
+        *, ignore_distance: bool = False,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Launches the player toward a certain location.
 
@@ -1549,10 +1672,15 @@ class Player:
             Launch destination.
 
         power : Optional[:attr:`~.Numeric`], optional
-            Launch power. Default is ``None``.
+            Launch power. Default is ``None`` (a default value is assigned for power).
+
+            .. note:;
+
+                A negative launch power will launch the entity away from the location.
 
         ignore_distance : :class:`bool`, optional
-            Defaults to ``False``.
+            If the distance between the player and the location should be ignored when calculating the strength of the
+            pull. Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1563,26 +1691,24 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
-        Notes
-        -----
-        A negative launch power will launch the player away from the location.
-
 
         Examples
         --------
         ::
 
-            p_default.launch_toward(loc, power)
+            loc = DFLocation(1, 2, 3)  # the location where to launch towards
+            p_default.launch_toward(loc, 10)
             # OR
-            Player(PlayerTarget.DEFAULT).launch_toward(loc, power)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).launch_toward(loc, 10)  # launch the default player towards location
+                                                                 # with a power of 10
         """
         args = Arguments([
             p_check(loc, Locatable, "loc"),
-            p_check(power, typing.Optional[Numeric], "power") if power is not None else None
+            p_check(power, Numeric, "power") if power is not None else None
         ], tags=[
             Tag(
                 "Ignore Distance", option=bool(ignore_distance),  # default is False
-                action=PlayerActionType.LAUNCH_TOWARD, block=BlockType.IF_GAME
+                action=PlayerActionType.LAUNCH_TOWARD, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -1593,8 +1719,8 @@ class Player:
         )
 
     def launch_up(
-            self, power: Numeric,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, power: Numeric,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Launches the player a certain amount up or down. A positive amount is up, and a negative amount is down.
 
@@ -1616,9 +1742,9 @@ class Player:
         --------
         ::
 
-            p_default.launch_up(power)
+            p_default.launch_up(10)
             # OR
-            Player(PlayerTarget.DEFAULT).launch_up(power)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).launch_up(10)  # Launches the player up with power 10 (use -10 for down).
         """
         args = Arguments([
             p_check(power, Numeric, "power")
@@ -1630,9 +1756,9 @@ class Player:
             append_to_reader=True
         )
 
-    def lightning_effect(
-            self, loc: Locatable,
-            *, target: typing.Optional[PlayerTarget] = None
+    def play_lightning_effect(
+        self, loc: Locatable,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Plays a thunderbolt effect to the player that is silent and deals no damage.
 
@@ -1654,9 +1780,11 @@ class Player:
         --------
         ::
 
-            p_default.lightning_effect(loc)
+            loc = DFLocation(1, 2, 3)  # location of the thunderbolt effect
+            p_default.play_lightning_effect(loc)
             # OR
-            Player(PlayerTarget.DEFAULT).lightning_effect(loc)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).play_lightning_effect(loc)
+            # plays a client-side thunderbolt effect for the default player.
         """
         args = Arguments([
             p_check(loc, Locatable, "loc")
@@ -1668,7 +1796,7 @@ class Player:
             append_to_reader=True
         )
 
-    def load_inv(self, *, target: typing.Optional[PlayerTarget] = None):
+    def load_saved_inv(self, *, target: typing.Optional[PlayerTarget] = None):
         """Loads the selected saved inventory.
 
         .. rank:: Noble
@@ -1695,9 +1823,9 @@ class Player:
         --------
         ::
 
-            p_default.load_inv()
+            p_default.load_saved_inv()
             # OR
-            Player(PlayerTarget.DEFAULT).load_inv()
+            Player(PlayerTarget.DEFAULT).load_saved_inv()
         """
         return PlayerAction(
             action=PlayerActionType.LOAD_INV,
@@ -1706,9 +1834,9 @@ class Player:
             append_to_reader=True
         )
 
-    def mob_disguise(
-            self, spawn_egg: SpawnEggable, name: typing.Optional[Textable] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+    def disguise_as_mob(
+        self, spawn_egg: SpawnEggable, name: typing.Optional[Textable] = None,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Disguises the player as a mob.
 
@@ -1718,10 +1846,10 @@ class Player:
         Parameters
         ----------
         spawn_egg : :attr:`~.SpawnEggable`
-            Mob disguise.
+            Mob to disguise as (a spawn egg).
 
         name : Optional[:attr:`~.Textable`], optional
-            Disguise name. Default is ``None``.
+            Disguise name (of the mob). Default is ``None`` (no name).
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1736,13 +1864,15 @@ class Player:
         --------
         ::
 
-            p_default.mob_disguise(spawn_egg, name)
+            mob = Material.ZOMBIE_SPAWN_EGG  # disguise as zombie
+            p_default.disguise_as_mob(mob, "Zomb")
             # OR
-            Player(PlayerTarget.DEFAULT).mob_disguise(spawn_egg, name)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).disguise_as_mob(mob, "Zomb")  # disguise the default player as a zombie
+                                                                       # named "Zomb"
         """
         args = Arguments([
             p_check(spawn_egg, SpawnEggable, "spawn_egg"),
-            p_check(name, typing.Optional[Textable], "name") if name is not None else None
+            p_check(name, Textable, "name") if name is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.MOB_DISGUISE,
@@ -1751,7 +1881,7 @@ class Player:
             append_to_reader=True
         )
 
-    def nat_regen(self, *, target: typing.Optional[PlayerTarget] = None):
+    def enable_nat_regen(self, *, target: typing.Optional[PlayerTarget] = None):
         """Allows the player's health to regenerate naturally.
 
         Parameters
@@ -1769,9 +1899,9 @@ class Player:
         --------
         ::
 
-            p_default.nat_regen()
+            p_default.enable_nat_regen()
             # OR
-            Player(PlayerTarget.DEFAULT).nat_regen()
+            Player(PlayerTarget.DEFAULT).enable_nat_regen()
         """
         return PlayerAction(
             action=PlayerActionType.NAT_REGEN,
@@ -1780,7 +1910,7 @@ class Player:
             append_to_reader=True
         )
 
-    def no_death_drops(self, *, target: typing.Optional[PlayerTarget] = None):
+    def disable_death_drops(self, *, target: typing.Optional[PlayerTarget] = None):
         """When this code block is executed, the player will no longer drop the contents of their inventory when they die.
 
         Parameters
@@ -1798,9 +1928,9 @@ class Player:
         --------
         ::
 
-            p_default.no_death_drops()
+            p_default.disable_death_drops()
             # OR
-            Player(PlayerTarget.DEFAULT).no_death_drops()
+            Player(PlayerTarget.DEFAULT).disable_death_drops()
         """
         return PlayerAction(
             action=PlayerActionType.NO_DEATH_DROPS,
@@ -1809,7 +1939,7 @@ class Player:
             append_to_reader=True
         )
 
-    def no_keep_inv(self, *, target: typing.Optional[PlayerTarget] = None):
+    def disable_keep_inv(self, *, target: typing.Optional[PlayerTarget] = None):
         """When this code block is executed, the player will no longer keep the contents of their inventory when they die.
 
         Parameters
@@ -1827,9 +1957,9 @@ class Player:
         --------
         ::
 
-            p_default.no_keep_inv()
+            p_default.disable_keep_inv()
             # OR
-            Player(PlayerTarget.DEFAULT).no_keep_inv()
+            Player(PlayerTarget.DEFAULT).disable_keep_inv()
         """
         return PlayerAction(
             action=PlayerActionType.NO_KEEP_INV,
@@ -1838,7 +1968,7 @@ class Player:
             append_to_reader=True
         )
 
-    def no_nat_regen(self, *, target: typing.Optional[PlayerTarget] = None):
+    def disable_nat_regen(self, *, target: typing.Optional[PlayerTarget] = None):
         """Prevents the player's health from regenerating naturally.
 
         Parameters
@@ -1856,9 +1986,9 @@ class Player:
         --------
         ::
 
-            p_default.no_nat_regen()
+            p_default.disable_nat_regen()
             # OR
-            Player(PlayerTarget.DEFAULT).no_nat_regen()
+            Player(PlayerTarget.DEFAULT).disable_nat_regen()
         """
         return PlayerAction(
             action=PlayerActionType.NO_NAT_REGEN,
@@ -1867,7 +1997,7 @@ class Player:
             append_to_reader=True
         )
 
-    def no_proj_coll(self, *, target: typing.Optional[PlayerTarget] = None):
+    def disable_proj_coll(self, *, target: typing.Optional[PlayerTarget] = None):
         """Prevents projectiles from hitting the player.
 
         Parameters
@@ -1885,9 +2015,9 @@ class Player:
         --------
         ::
 
-            p_default.no_proj_coll()
+            p_default.disable_proj_coll()
             # OR
-            Player(PlayerTarget.DEFAULT).no_proj_coll()
+            Player(PlayerTarget.DEFAULT).disable_proj_coll()
         """
         return PlayerAction(
             action=PlayerActionType.NO_PROJ_COLL,
@@ -1897,8 +2027,8 @@ class Player:
         )
 
     def open_block_inv(
-            self, loc: Locatable,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, loc: Locatable,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Opens a container inventory. Also works with crafting tables.
 
@@ -1908,7 +2038,7 @@ class Player:
         Parameters
         ----------
         loc : :attr:`~.Locatable`
-            Block to access.
+            Location of the block to be accessed.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1923,9 +2053,11 @@ class Player:
         --------
         ::
 
+            loc = DFLocation(1, 2, 3)  # location of the block with an inventory to be opened
             p_default.open_block_inv(loc)
             # OR
-            Player(PlayerTarget.DEFAULT).open_block_inv(loc)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).open_block_inv(loc)
+            # opens the inventory at the given location for the default player
         """
         args = Arguments([
             p_check(loc, Locatable, "loc")
@@ -1938,10 +2070,10 @@ class Player:
         )
 
     def open_book(
-            self, item: ItemParam,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, item: ItemParam,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
-        """Opens a written book menu.
+        """Opens a written book's menu.
 
         .. rank:: Emperor
 
@@ -1949,7 +2081,7 @@ class Player:
         Parameters
         ----------
         item : :attr:`~.ItemParam`
-            Book item.
+            Book item to be opened.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -1969,9 +2101,14 @@ class Player:
         --------
         ::
 
+            item = ItemVar("variable containing my written book")
             p_default.open_book(item)
             # OR
-            Player(PlayerTarget.DEFAULT).open_book(item)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).open_book(item)  # opens the specified book item for the default player to read.
+
+        Todo
+        ----
+        Add example using class WrittenBook (when it is made)
         """
         args = Arguments([
             p_check(item, ItemParam, "item")
@@ -1983,9 +2120,9 @@ class Player:
             append_to_reader=True
         )
 
-    def particle_effect(
-            self, particle: ParticleParam, loc: Locatable, num: typing.Optional[Numeric] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+    def play_particle_effect(
+        self, particle: ParticleParam, loc: Locatable, *, count: typing.Optional[Numeric] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Plays one or more of the particle to the player.
 
@@ -1997,8 +2134,8 @@ class Player:
         loc : :attr:`~.Locatable`
             Particle location.
 
-        num : Optional[:attr:`~.Numeric`], optional
-            Particle count. Default is ``None``.
+        count : Optional[:attr:`~.Numeric`], optional
+            Particle count, or ``None`` for a default value. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2013,14 +2150,17 @@ class Player:
         --------
         ::
 
-            p_default.particle_effect(particle, loc, num)
+            particle = DFParticle(ParticleType.CLOUD)  # the particle type
+            loc = DFLocation(1, 2, 3)  # where to play the particles
+            p_default.play_particle_effect(particle, loc, count=5)
             # OR
-            Player(PlayerTarget.DEFAULT).particle_effect(particle, loc, num)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).play_particle_effect(particle, loc, count=5)
+            # plays 5 of the cloud particle at the specified location for the default player.
         """
         args = Arguments([
             p_check(particle, ParticleParam, "particle"),
             p_check(loc, Locatable, "loc"),
-            p_check(num, typing.Optional[Numeric], "num") if num is not None else None
+            p_check(count, Numeric, "count") if count is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.PARTICLE_EFFECT,
@@ -2030,8 +2170,8 @@ class Player:
         )
 
     def perform_command(
-            self, text: Textable,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, text: Textable,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Makes the player execute a plot command.
 
@@ -2041,7 +2181,7 @@ class Player:
         Parameters
         ----------
         text : :attr:`~.Textable`
-            Plot command.
+            Plot command to be executed by the player, including the arguments.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2056,9 +2196,10 @@ class Player:
         --------
         ::
 
-            p_default.perform_command(text)
+            p_default.perform_command("some_command arg2 arg3 arg4 a b")
             # OR
-            Player(PlayerTarget.DEFAULT).perform_command(text)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).perform_command("some_command arg2 arg3 arg4 a b")
+            # equivalent to the default player sending "@some_command arg2 arg3 arg4 a b"; this forces them to do it.
         """
         args = Arguments([
             p_check(text, Textable, "text")
@@ -2070,19 +2211,23 @@ class Player:
             append_to_reader=True
         )
 
+    sudo_command = perform_command
+    """alias for :meth:`perform_command`"""
+
     def play_sound(
-            self, *sounds: typing.Union[SoundParam, Listable], loc: typing.Optional[Locatable] = None,
-            target: typing.Optional[PlayerTarget] = None
+        self, *sounds: typing.Union[SoundParam, Listable], loc: typing.Optional[Locatable] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Plays a sound effect for the player.
 
         Parameters
         ----------
         sounds : Union[:attr:`~.SoundParam`, :attr:`~.Listable`]
-            Sound to play.
+            Sound(s) to play for the player.
 
         loc : Optional[:attr:`~.Locatable`], optional
-            Playback location. Default is ``None``.
+            Playback location, if they should be played at a specific location, or ``None`` to play in no specific
+            location (i.e., at the player - no matter to where they move, they hear the sound). Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2097,13 +2242,13 @@ class Player:
         --------
         ::
 
-            p_default.play_sound(sounds, loc)
+            p_default.play_sound(sounds)
             # OR
-            Player(PlayerTarget.DEFAULT).play_sound(sounds, loc)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).play_sound(sounds)  # TODO: sound example
         """
         args = Arguments([
             *[p_check(sound, typing.Union[SoundParam, Listable], f"sounds[{i}]") for i, sound in enumerate(sounds)],
-            p_check(loc, typing.Optional[Locatable], "loc") if loc is not None else None
+            p_check(loc, Locatable, "loc") if loc is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.PLAY_SOUND,
@@ -2112,10 +2257,10 @@ class Player:
             append_to_reader=True
         )
 
-    def play_sound_seq(
-            self, *sounds: typing.Union[SoundParam, Listable], delay: typing.Optional[Numeric] = None,
-            loc: typing.Optional[Locatable] = None,
-            target: typing.Optional[PlayerTarget] = None
+    def play_sound_sequence(
+        self, *sounds: typing.Union[SoundParam, Listable], delay: typing.Optional[Numeric] = None,
+        loc: typing.Optional[Locatable] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Plays a sequence of sounds for the player, with a delay after each sound.
 
@@ -2125,10 +2270,10 @@ class Player:
             Sounds to play.
 
         delay : Optional[:attr:`~.Numeric`], optional
-            Sound delay (ticks, default = 60). Default is ``None``.
+            Sound delay (ticks), or ``None`` for the default (60 ticks = 3 seconds). Default is ``None``.
 
         loc : Optional[:attr:`~.Locatable`], optional
-            Playback location. Default is ``None``.
+            Playback location, or ``None`` for no specific location (at the player). Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2143,14 +2288,15 @@ class Player:
         --------
         ::
 
-            p_default.play_sound_seq(sounds, delay, loc)
+            loc = DFLocation(1, 2, 3)  # where to play the sounds.
+            p_default.play_sound_sequence(sounds, delay=40, loc=loc)
             # OR
-            Player(PlayerTarget.DEFAULT).play_sound_seq(sounds, delay, loc)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).play_sound_sequence(sounds, delay=40, loc=loc)  # TODO: sound Example
         """
         args = Arguments([
             *[p_check(sound, typing.Union[SoundParam, Listable], f"sounds[{i}]") for i, sound in enumerate(sounds)],
-            p_check(delay, typing.Optional[Numeric], "delay") if delay is not None else None,
-            p_check(loc, typing.Optional[Locatable], "loc") if loc is not None else None
+            p_check(delay, Numeric, "delay") if delay is not None else None,
+            p_check(loc, Locatable, "loc") if loc is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.PLAY_SOUND_SEQ,
@@ -2159,9 +2305,9 @@ class Player:
             append_to_reader=True
         )
 
-    def player_disguise(
-            self, name: Textable, text_2: typing.Optional[Textable] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+    def disguise_as_player(
+        self, name: Textable, *, skin: typing.Optional[Textable] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Disguises the player as another player.
 
@@ -2171,10 +2317,11 @@ class Player:
         Parameters
         ----------
         name : :attr:`~.Textable`
-            Disguise player name.
+            Name of the player to disguise as.
 
-        text_2 : Optional[:attr:`~.Textable`], optional
-            Disguise skin. Default is ``None``.
+        skin : Optional[:attr:`~.Textable`], optional
+            Name of the player whose skin should be used, or ``None`` for the skin of the player given in `name`.
+            Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2189,13 +2336,14 @@ class Player:
         --------
         ::
 
-            p_default.player_disguise(name, text_2)
+            p_default.disguise_as_player("John", skin="Notch")
             # OR
-            Player(PlayerTarget.DEFAULT).player_disguise(name, text_2)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).disguise_as_player("John", skin="Notch") # disguises as the Notch skin,
+                                                                                  # but named "John".
         """
         args = Arguments([
             p_check(name, Textable, "name"),
-            p_check(text_2, typing.Optional[Textable], "text_2") if text_2 is not None else None
+            p_check(skin, Textable, "skin") if skin is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.PLAYER_DISGUISE,
@@ -2204,7 +2352,7 @@ class Player:
             append_to_reader=True
         )
 
-    def proj_coll(self, *, target: typing.Optional[PlayerTarget] = None):
+    def enable_proj_coll(self, *, target: typing.Optional[PlayerTarget] = None):
         """Allows projectiles to hit the player.
 
         Parameters
@@ -2233,10 +2381,15 @@ class Player:
             append_to_reader=True
         )
 
+    try:  # py 3.8+
+        _One_to_Four = typing.Union[typing.Literal[1], typing.Literal[2], typing.Literal[3], typing.Literal[4]]
+    except AttributeError:  # up to py 3.7.x
+        _One_to_Four = typing.cast(typing.Any, int)
+
     def remove_boss_bar(
-            self,
-            *, bar_slot="All Bossbars",
-            target: typing.Optional[PlayerTarget] = None
+        self,
+        *, bar_slot: typing.Optional[_One_to_Four] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Removes the given boss bar from the player if there is one.
 
@@ -2245,7 +2398,9 @@ class Player:
 
         Parameters
         ----------
-        bar_slot :
+        bar_slot : Optional[:class:`int`], optional
+            The bossbar slot that should be cleared (either 1, 2, 3 or 4), or ``None`` to clear all. Defaults to
+            ``None``.
             All Bossbars, 1, 2, 3, 4
 
         target : Optional[:class:`~.PlayerTarget`], optional
@@ -2257,18 +2412,32 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+        Raises
+        ------
+        :exc:`ValueError`
+            If the bossbar slot given is not one of 1, 2, 3, 4.
+
         Examples
         --------
-        ::
+        Remove all bossbars::
 
             p_default.remove_boss_bar()
             # OR
-            Player(PlayerTarget.DEFAULT).remove_boss_bar()  # TODO: Example
+            Player(PlayerTarget.DEFAULT).remove_boss_bar()  # removes all visible bossbars for the default player
+
+        Remove a specific bossbar::
+
+            p_default.remove_boss_bar(bar_slot=3)
+            # OR
+            Player(PlayerTarget.DEFAULT).remove_boss_bar(bar_slot=3)  # removes the third bossbar for the default player
         """
+        if bar_slot is not None and bar_slot not in (1, 2, 3, 4):
+            raise ValueError("'bar_slot' arg must either be None or one of 1, 2, 3, 4.")
+
         args = Arguments([], tags=[
             Tag(
-                "Bar Slot", option=bar_slot,  # default is All Bossbars
-                action=PlayerActionType.REMOVE_BOSS_BAR, block=BlockType.IF_GAME
+                "Bar Slot", option=bar_slot if bar_slot is not None else "All Bossbars",  # default is All Bossbars
+                action=PlayerActionType.REMOVE_BOSS_BAR, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -2279,15 +2448,15 @@ class Player:
         )
 
     def remove_effect(
-            self, *potions: typing.Union[Potionable, Listable],
-            target: typing.Optional[PlayerTarget] = None
+        self, *potions: typing.Union[Potionable, Listable],
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Removes 1 or more potion effects from the player.
 
         Parameters
         ----------
         potions : Union[:attr:`~.Potionable`, :attr:`~.Listable`]
-            Potion effects.
+            Potion effect(s) to be removed, or a List variable containing them.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2307,9 +2476,12 @@ class Player:
         --------
         ::
 
-            p_default.remove_effect(potions)
+            potion_1 = DFPotion(PotionEffect.ABSORPTION, amplifier=5)
+            potion_2 = PotionVar("my var containing a potion")
+            p_default.remove_effect(potion_1, potion_2)
             # OR
-            Player(PlayerTarget.DEFAULT).remove_effect(potions)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).remove_effect(potion_1, potion_2)  # removes potion_1 and potion_2 effects
+                                                                            # from the default player.
         """
         args = Arguments([
             p_check(potion, typing.Union[Potionable, Listable], f"potions[{i}]") for i, potion in enumerate(potions)
@@ -2322,22 +2494,24 @@ class Player:
         )
 
     def remove_inv_row(
-            self, num: typing.Optional[Numeric] = None,
-            *, row_to_remove="Bottom Row",
-            target: typing.Optional[PlayerTarget] = None
+        self, amount: typing.Optional[Numeric] = None,
+        *, row_pos: PARowPos = PARowPos.BOTTOM,
+        target: typing.Optional[PlayerTarget] = None
     ):
-        """Removes the given number of rows from the bottom of the currently open inventory.
+        """Removes the given number of rows from the bottom or top of the currently open inventory.
 
         .. rank:: Emperor
 
 
         Parameters
         ----------
-        num : Optional[:attr:`~.Numeric`], optional
-            Rows to remove. Default is ``None``.
+        amount : Optional[:attr:`~.Numeric`], optional
+            Amount of rows to remove, counting from the bottom, or ``None`` for a predetermined amount.
+            Default is ``None``.
 
-        row_to_remove :
-            Top Row, Bottom Row
+        row_pos : :class:`~.PARowPos`, optional
+            The position from which `n` rows should be removed (for `n` = the number given in the `rows` arg) -
+            either :attr:`~.PARowPos.TOP` or :attr:`~.PARowPos.BOTTOM`. Defaults to :attr:`~.PARowPos.BOTTOM`.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2352,16 +2526,17 @@ class Player:
         --------
         ::
 
-            p_default.remove_inv_row(num)
+            p_default.remove_inv_row(3, row_pos=PARowPos.BOTTOM)
             # OR
-            Player(PlayerTarget.DEFAULT).remove_inv_row(num)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).remove_inv_row(3, row_pos=PARowPos.BOTTOM)
+            # removes the 3 bottom-most rows from the default player's currently open inventory.
         """
         args = Arguments([
-            p_check(num, typing.Optional[Numeric], "num") if num is not None else None
+            p_check(amount, Numeric, "amount") if amount is not None else None
         ], tags=[
             Tag(
-                "Row to Remove", option=row_to_remove,  # default is Bottom Row
-                action=PlayerActionType.REMOVE_INV_ROW, block=BlockType.IF_GAME
+                "Row to Remove", option=PARowPos(row_pos),  # default is Bottom Row
+                action=PlayerActionType.REMOVE_INV_ROW, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -2372,8 +2547,8 @@ class Player:
         )
 
     def remove_item(
-            self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
-            target: typing.Optional[PlayerTarget] = None
+        self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Removes certain items from the player.
 
@@ -2400,9 +2575,12 @@ class Player:
         --------
         ::
 
-            p_default.remove_item(items)
+            item_1 = Item(Material.STONE, name="My Item")
+            item_2 = ItemVar("some item var")
+            p_default.remove_item(item_1, item_2)
             # OR
-            Player(PlayerTarget.DEFAULT).remove_item(items)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).remove_item(item_1, item_2)
+            # removes the first instance of the given items from the default player's inventory.
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
 
@@ -2417,28 +2595,28 @@ class Player:
         )
 
     def replace_item(
-            self,
-            *items_1: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]],
-            item_2: ItemParam, amount: typing.Optional[Numeric] = None,
-            target: typing.Optional[PlayerTarget] = None
+        self,
+        *from_items: typing.Optional[typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable]],
+        to_item: ItemParam, amount: typing.Optional[Numeric] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Replaces the specified items with the given item in the player's inventory.
 
         Parameters
         ----------
-        items_1 : Optional[Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`], :attr:`Listable`]]], optional
-            Item(s) to replace. The items can be specified either as:
+        from_items : Optional[Optional[Union[:class:`~.ItemParam`, :class:`~.ItemCollection`, Iterable[:class:`~.ItemParam`], :attr:`Listable`]]], optional
+            Item(s) to be replaced. The items can be specified either as:
 
             - ``None`` for an empty slot;
             - :class:`~.Item` for one item;
             - :attr:`~.Listable` for a variable list of items;
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
 
-        item_2 : :attr:`~.ItemParam`
-            Item to replace with.
+        to_item : :attr:`~.ItemParam`
+            Item to replace any of `from_items` with.
 
         amount : Optional[:attr:`~.Numeric`], optional
-            Amount of items to replace. Default is ``None``.
+            Amount of `from_items` to replace, or ``None`` to replace all occurrences. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2452,17 +2630,20 @@ class Player:
         Examples
         --------
         ::
-
-            p_default.replace_item(items_1, item_2, amount)
+            
+            fr_item_1 = Item(Material.STONE, name="My Item")
+            fr_item_2 = ItemVar("some item var")
+            p_default.replace_item(fr_item_1, fr_item_2, to_item=Item(Material.DIAMOND_SWORD), amount=5)
             # OR
-            Player(PlayerTarget.DEFAULT).replace_item(items_1, item_2, amount)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).replace_item(fr_item_1, fr_item_2, to_item=Item(Material.DIAMOND_SWORD), amount=5)
+            # replaces up to 5 of either `fr_item_1` or `fr_item_2` with a diamond sword within the default player's inventory.
         """
-        item_list = flatten(*items_1, except_iterables=[str], max_depth=1)
+        item_list = flatten(*from_items, except_iterables=[str], max_depth=1)
 
         args = Arguments([
-            *[p_check(obj, typing.Union[ItemParam, Listable], "items_1") for obj in item_list],
-            p_check(item_2, ItemParam, "item_2"),
-            p_check(amount, typing.Optional[Numeric], "amount") if amount is not None else None
+            *[p_check(obj, typing.Union[ItemParam, Listable], "from_items") for obj in item_list],
+            p_check(to_item, ItemParam, "to_item"),
+            p_check(amount, Numeric, "amount") if amount is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.REPLACE_ITEM,
@@ -2471,18 +2652,19 @@ class Player:
             append_to_reader=True
         )
 
-    def replace_proj(
-            self, projectile: typing.Optional[BlockParam] = None, name: typing.Optional[Textable] = None,
-            particle: typing.Optional[ParticleParam] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+    def replace_bow_proj(
+        self, projectile: typing.Optional[BlockParam] = None, *, name: typing.Optional[Textable] = None,
+        particle: typing.Optional[ParticleParam] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Replaces the projectile fired in the Shoot Bow Event.
+
         .. workswith:: Player Shoot Bow Event
 
         Parameters
         ----------
         projectile : Optional[Union[:class:`Material`, :attr:`~.ItemParam`, :attr:`~.Textable`]], optional
-            The type of Projectile to launch.
+            The type of Projectile to launch instead of an arrow.
 
             The type can be specified either as:
 
@@ -2491,10 +2673,11 @@ class Player:
             - text (:attr:`~.Textable` - the material of the block to set as text).
 
         name : Optional[:attr:`~.Textable`], optional
-            Projectile name. Default is ``None``.
+            Optionally, a projectile name, or ``None`` for no name. Default is ``None``.
 
         particle : Optional[:attr:`~.ParticleParam`], optional
-            Launch trail. Default is ``None``.
+            Optionally, a particle to be the launch trail of the projectile, or ``None`` for no launch trail.
+            Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2508,15 +2691,18 @@ class Player:
         Examples
         --------
         ::
-
-            p_default.replace_proj(projectile, name, particle)
+            
+            new_proj = Material.SNOWBALL  # new projectile fired is a snowball
+            partc = DFParticle(ParticleType.CLOUD)  # cloud particle trail
+            p_default.replace_projectile(new_proj, name="Proj", particle=partc)
             # OR
-            Player(PlayerTarget.DEFAULT).replace_proj(projectile, name, particle)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).replace_projectile(new_proj, name="Proj", particle=partc)
+            # default player's bow will now shoot this, if within a Shoot Bow Event.
         """
         args = Arguments([
             p_check(projectile, typing.Union[ItemParam, Textable], "projectile") if projectile is not None else None,
-            p_check(name, typing.Optional[Textable], "name") if name is not None else None,
-            p_check(particle, typing.Optional[ParticleParam], "particle") if particle is not None else None
+            p_check(name, Textable, "name") if name is not None else None,
+            p_check(particle, ParticleParam, "particle") if particle is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.REPLACE_PROJ,
@@ -2558,8 +2744,8 @@ class Player:
         )
 
     def ride_entity(
-            self, name: Textable,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, name: Textable,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Mounts the player on top of another player or entity.
 
@@ -2569,7 +2755,7 @@ class Player:
         Parameters
         ----------
         name : :attr:`~.Textable`
-            Name of player or entity to ride.
+            Name of player or entity to be ridden.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2589,9 +2775,9 @@ class Player:
         --------
         ::
 
-            p_default.ride_entity(name)
+            p_default.ride_entity("Some Entity")
             # OR
-            Player(PlayerTarget.DEFAULT).ride_entity(name)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).ride_entity("Some Entity")  # The default player will now ride "Some Entity"
         """
         args = Arguments([
             p_check(name, Textable, "name")
@@ -2603,7 +2789,7 @@ class Player:
             append_to_reader=True
         )
 
-    def rm_arrows(self, *, target: typing.Optional[PlayerTarget] = None):
+    def remove_arrows(self, *, target: typing.Optional[PlayerTarget] = None):
         """Clears any arrows stuck  in the player's body.
 
         Parameters
@@ -2621,9 +2807,9 @@ class Player:
         --------
         ::
 
-            p_default.rm_arrows()
+            p_default.remove_arrows()
             # OR
-            Player(PlayerTarget.DEFAULT).rm_arrows()
+            Player(PlayerTarget.DEFAULT).remove_arrows()
         """
         return PlayerAction(
             action=PlayerActionType.RM_ARROWS,
@@ -2632,7 +2818,7 @@ class Player:
             append_to_reader=True
         )
 
-    def rm_world_border(self, *, target: typing.Optional[PlayerTarget] = None):
+    def remove_world_border(self, *, target: typing.Optional[PlayerTarget] = None):
         """Removes the world border for this player.
 
         .. rank:: Emperor
@@ -2653,9 +2839,9 @@ class Player:
         --------
         ::
 
-            p_default.rm_world_border()
+            p_default.remove_world_border()
             # OR
-            Player(PlayerTarget.DEFAULT).rm_world_border()
+            Player(PlayerTarget.DEFAULT).remove_world_border()
         """
         return PlayerAction(
             action=PlayerActionType.RM_WORLD_BORDER,
@@ -2664,10 +2850,10 @@ class Player:
             append_to_reader=True
         )
 
-    def rng_teleport(
-            self, *locs: typing.Union[Locatable, Listable],
-            keep_current_rotation: bool = False,
-            target: typing.Optional[PlayerTarget] = None
+    def random_teleport(
+        self, *locs: typing.Union[Locatable, Listable],
+        keep_current_rotation: bool = False,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Teleports the player to a random location in the chest.
 
@@ -2680,7 +2866,7 @@ class Player:
             Locations to choose from.
 
         keep_current_rotation : :class:`bool`, optional
-            Defaults to ``False``.
+            If the player's current rotation should be kept after teleporting. Defaults to ``False`` (no).
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2693,23 +2879,27 @@ class Player:
 
         Notes
         -----
-        Will pick a different location for each targeted player.
+        A different location will be picked for each targeted player, if multiple are selected.
 
 
         Examples
         --------
         ::
-
-            p_default.rng_teleport(locs)
+            
+            loc_1 = DFLocation(1, 2, 3)
+            loc_2 = LocationVar("some var")
+            loc_3 = DFLocation(4, 5, 6)
+            p_default.random_teleport(loc_1, loc_2, loc_3, keep_current_rotation=True)
             # OR
-            Player(PlayerTarget.DEFAULT).rng_teleport(locs)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).random_teleport(loc_1, loc_2, loc_3, keep_current_rotation=True)
+            # Teleports the default player to one of the given locations (chosen randomly), while keeping its rotation.
         """
         args = Arguments([
             p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)
         ], tags=[
             Tag(
                 "Keep Current Rotation", option=bool(keep_current_rotation),  # default is False
-                action=PlayerActionType.RNG_TELEPORT, block=BlockType.IF_GAME
+                action=PlayerActionType.RNG_TELEPORT, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -2720,8 +2910,8 @@ class Player:
         )
 
     def rollback_blocks(
-            self, num: typing.Optional[Numeric] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, time: typing.Optional[Numeric] = None,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Undoes the interactions with blocks by the player.
 
@@ -2730,8 +2920,9 @@ class Player:
 
         Parameters
         ----------
-        num : Optional[:attr:`~.Numeric`], optional
-            Rollback time. Default is ``None``.
+        time : Optional[:attr:`~.Numeric`], optional
+            Rollback time in SECONDS (how far back in time block changes should be reverted), or ``None`` to revert
+            all changes. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2742,22 +2933,25 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
-        Notes
-        -----
-        - The rollback time argument specifies how far back in time block changes should be reverted.
-        - Please note that the rollback time argument is in SECONDS!
-
 
         Examples
         --------
-        ::
+        Revert all changes::
 
-            p_default.rollback_blocks(num)
+            p_default.rollback_blocks()
             # OR
-            Player(PlayerTarget.DEFAULT).rollback_blocks(num)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).rollback_blocks()
+            # rolls back all of the default player's block changes in the current plot.
+        
+        Revert up to some point back in time::
+
+            p_default.rollback_blocks(120)
+            # OR
+            Player(PlayerTarget.DEFAULT).rollback_blocks(120)
+            # rolls back the default player's block changes up to 120 seconds (2 min) ago.
         """
         args = Arguments([
-            p_check(num, typing.Optional[Numeric], "num") if num is not None else None
+            p_check(time, Numeric, "time") if time is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.ROLLBACK_BLOCKS,
@@ -2766,7 +2960,7 @@ class Player:
             append_to_reader=True
         )
 
-    def save_inv(self, *, target: typing.Optional[PlayerTarget] = None):
+    def save_inventory(self, *, target: typing.Optional[PlayerTarget] = None):
         """Saves the selected player's current inventory. It can be loaded later with 'Load Saved Inventory'.
 
         .. rank:: Noble
@@ -2787,9 +2981,9 @@ class Player:
         --------
         ::
 
-            p_default.save_inv()
+            p_default.save_inventory()
             # OR
-            Player(PlayerTarget.DEFAULT).save_inv()
+            Player(PlayerTarget.DEFAULT).save_inventory()
         """
         return PlayerAction(
             action=PlayerActionType.SAVE_INV,
@@ -2799,9 +2993,9 @@ class Player:
         )
 
     def send_advancement(
-            self, text: Textable, item: typing.Optional[ItemParam] = None,
-            *, toast_type="Advancement",
-            target: typing.Optional[PlayerTarget] = None
+        self, text: Textable, item: typing.Optional[ItemParam] = None,
+        *, adv_type: AdvancementType = AdvancementType.ADVANCEMENT,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Sends an advancement popup to the player.
 
@@ -2814,10 +3008,12 @@ class Player:
             Advancement text.
 
         item : Optional[:attr:`~.ItemParam`], optional
-            Popup icon. Default is ``None``.
+            Popup icon, or ``None`` for no icon. Default is ``None``.
 
-        toast_type :
-            Advancement, Goal, Challenge
+        adv_type : :class:`~.AdvancementType`, optional
+            The type of advancement this is (either :attr:`~.AdvancementType.ADVANCEMENT`,
+            :attr:`~.AdvancementType.GOAL` or :attr:`~.AdvancementType.CHALLENGE`).
+            Defaults to :attr:`~.AdvancementType.ADVANCEMENT`.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2838,11 +3034,11 @@ class Player:
         """
         args = Arguments([
             p_check(text, Textable, "text"),
-            p_check(item, typing.Optional[ItemParam], "item") if item is not None else None
+            p_check(item, ItemParam, "item") if item is not None else None
         ], tags=[
             Tag(
-                "Toast Type", option=toast_type,  # default is Advancement
-                action=PlayerActionType.SEND_ADVANCEMENT, block=BlockType.IF_GAME
+                "Toast Type", option=AdvancementType(adv_type),  # default is Advancement
+                action=PlayerActionType.SEND_ADVANCEMENT, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -2853,16 +3049,15 @@ class Player:
         )
 
     def send_animation(
-            self,
-            *, animation_type="Swing Right Arm",
-            target: typing.Optional[PlayerTarget] = None
+        self, animation_type: PlayerAnimation,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Makes the player perform an animation.
 
         Parameters
         ----------
-        animation_type :
-            Swing Right Arm, Swing Left Arm, Hurt Animation, Crit Particles, Enchanted Hit Particles, Wake Up
+        animation_type : :class:`~.PlayerAnimation`
+            The animation to be performed (see PlayerAnimation docs for options).
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2877,14 +3072,15 @@ class Player:
         --------
         ::
 
-            p_default.send_animation()
+            p_default.send_animation(PlayerAnimation.SWING_RIGHT_ARM)
             # OR
-            Player(PlayerTarget.DEFAULT).send_animation()  # TODO: Example
+            Player(PlayerTarget.DEFAULT).send_animation(PlayerAnimation.SWING_RIGHT_ARM)
+            # forces the default player to swing its right arm.
         """
         args = Arguments([], tags=[
             Tag(
-                "Animation Type", option=animation_type,  # default is Swing Right Arm
-                action=PlayerActionType.SEND_ANIMATION, block=BlockType.IF_GAME
+                "Animation Type", option=PlayerAnimation(animation_type),  # default is Swing Right Arm
+                action=PlayerActionType.SEND_ANIMATION, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -2896,7 +3092,7 @@ class Player:
 
     def send_block(
             self, block_type: BlockParam, loc_1: Locatable, loc_2: typing.Optional[Locatable] = None,
-            *metadatas: typing.Optional[typing.Union[BlockMetadata, Listable]],
+            *metadata: typing.Optional[typing.Union[BlockMetadata, Listable]],
             target: typing.Optional[PlayerTarget] = None
     ):
         """Makes client side, player specific blocks appear at the given location or area.
@@ -2916,13 +3112,14 @@ class Player:
             - text (:attr:`~.Textable` - the material of the block to set as text).
 
         loc_1 : :attr:`~.Locatable`
-            Location.
+            Location of the block, or, if `loc_2` is specified, then the first corner of the region.
 
         loc_2 : Optional[:attr:`~.Locatable`], optional
-            Location 2 (region). Default is ``None``.
+            Location 2 - the second corner of the region of blocks to send, or ``None`` for no region (send 1 block).
+            Default is ``None``.
 
-        metadatas : Optional[Union[:class:`dict`, List[:attr:`~.Textable`], :attr:`~.Listable`]], optional
-            Optionally, the metadata of the block to be set (``None`` for none). If not ``None``, can be in two forms:
+        metadata : Optional[Union[:class:`dict`, List[:attr:`~.Textable`], :attr:`~.Listable`]], optional
+            Optionally, the metadata of the block to send (``None`` for none). If not ``None``, can be in two forms:
 
             1. **As a dictionary:** If this is specified, then:
                 - The keys must be strings;
@@ -2951,9 +3148,9 @@ class Player:
 
             3. **As a** :attr:`~.Listable`\ **:** One can also specify a variable representing a List (in DF) of text values in the format specified in `2`.
 
-        .. note::
-
-            Example: "rotation:9,waterlogged:true"
+            .. note::
+    
+                Example: "rotation:9,waterlogged:true"
 
 
         target : Optional[:class:`~.PlayerTarget`], optional
@@ -2980,11 +3177,12 @@ class Player:
             # OR
             Player(PlayerTarget.DEFAULT).send_block(block_type, loc_1, loc_2, metadatas)  # TODO: Example
         """
+        true_metadata = _load_metadata(metadata, allow_none=True)
         args = Arguments([
             p_check(block_type, typing.Union[ItemParam, Textable], "block_type"),
             p_check(loc_1, Locatable, "loc_1"),
-            p_check(loc_2, typing.Optional[Locatable], "loc_2") if loc_2 is not None else None,
-            *[p_check(metadata, Textable, f"metadatas[{i}]") for i, metadata in enumerate(metadatas)]
+            p_check(loc_2, Locatable, "loc_2") if loc_2 is not None else None,
+            *[p_check(meta, Textable, f"metadata[{i}]") for i, meta in enumerate(true_metadata)]
         ])
         return PlayerAction(
             action=PlayerActionType.SEND_BLOCK,
@@ -2994,8 +3192,8 @@ class Player:
         )
 
     def send_dialogue(
-            self, *texts: typing.Union[Textable, Listable], delay: typing.Optional[Numeric] = None,
-            target: typing.Optional[PlayerTarget] = None
+        self, *texts: typing.Union[Textable, Listable], delay: typing.Optional[Numeric] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Sends a series of messages in chat to the player, with a delay after each message.
 
@@ -3005,15 +3203,10 @@ class Player:
         Parameters
         ----------
         texts : Union[:attr:`~.Textable`, :attr:`~.Listable`]
-            Messages to send.
+            Messages to send, in order.
 
         delay : Optional[:attr:`~.Numeric`], optional
-            Message delay ticks. Default is ``None``.
-
-        .. note::
-
-            Default = 60
-
+            Delay, in ticks, between each message, or ``None`` for the default (60 ticks = 3 s). Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -3028,13 +3221,14 @@ class Player:
         --------
         ::
 
-            p_default.send_dialogue(texts, delay)
+            p_default.send_dialogue("Hello!", "Welcome!", delay=40)
             # OR
-            Player(PlayerTarget.DEFAULT).send_dialogue(texts, delay)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).send_dialogue("Hello!", "Welcome!", delay=40)
+            # sends "Hello!" then, 40 ticks (2 seconds) after, "Welcome!" as messages to the default player.
         """
         args = Arguments([
             *[p_check(text, typing.Union[Textable, Listable], f"texts[{i}]") for i, text in enumerate(texts)],
-            p_check(delay, typing.Optional[Numeric], "delay") if delay is not None else None
+            p_check(delay, Numeric, "delay") if delay is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.SEND_DIALOGUE,
@@ -3044,20 +3238,20 @@ class Player:
         )
 
     def send_hover(
-            self, text_1: Textable, text_2: Textable,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, text: Textable, *, hover_text: Textable,
+        target: typing.Optional[PlayerTarget] = None
     ):
-        """Sends a message to the player When the player 'hovers' over it with their cursor, a second message appears.
+        """Sends a message to the player. When the player 'hovers' over it with their cursor, a second message appears.
 
         .. rank:: Mythic
 
 
         Parameters
         ----------
-        text_1 : :attr:`~.Textable`
+        text : :attr:`~.Textable`
             Message to send in chat.
 
-        text_2 : :attr:`~.Textable`
+        hover_text : :attr:`~.Textable`
             Message to see on hover.
 
         target : Optional[:class:`~.PlayerTarget`], optional
@@ -3073,13 +3267,14 @@ class Player:
         --------
         ::
 
-            p_default.send_hover(text_1, text_2)
+            p_default.send_hover("Hover over me!"", hover_text="Hello!")
             # OR
-            Player(PlayerTarget.DEFAULT).send_hover(text_1, text_2)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).send_hover("Hover over me!", hover_text="Hello!")
+            # sends the default player the message "Hover over me!" which, when hovered, displays "Hello!".
         """
         args = Arguments([
-            p_check(text_1, Textable, "text_1"),
-            p_check(text_2, Textable, "text_2")
+            p_check(text, Textable, "text"),
+            p_check(hover_text, Textable, "hover_text")
         ])
         return PlayerAction(
             action=PlayerActionType.SEND_HOVER,
@@ -3089,22 +3284,31 @@ class Player:
         )
 
     def send_message(
-            self, *texts: typing.Optional[typing.Union[Textable, Listable]],
-            alignment_mode="Regular", text_value_merging="Add Spaces",
-            target: typing.Optional[PlayerTarget] = None
+        self, *texts: typing.Optional[typing.Union[Textable, Listable]],
+        centered: bool = False, add_spaces: bool = True,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Sends a chat message to the player.
 
         Parameters
         ----------
-        texts : Optional[Union[:attr:`~.Textable`, :attr:`~.Listable`]], optional
-            Message to send. Default is ``None``.
+        texts : Union[:attr:`~.Textable`, :attr:`~.Listable`], optional
+            Message to send (each text given is part of the total message, separated either by spaces,
+            if add_spaces is ``True``, or simply added together, if it is ``False``), or a list var with all the text
+            bits. Specify nothing to send an empty message.
 
-        alignment_mode :
+            .. note::
+
+                - Multiple text parts will be merged into one message.
+                - Numbers and locations given will be converted to text.
+
+        centered : :class:`bool`, optional
+            Whether or not the message should be centered. Defaults to ``False`` (not centered).
             Regular, Centered
 
-        text_value_merging :
-            Add Spaces, No Spaces
+        add_spaces : :class:`bool`, optional
+            If ``True``, the different text bits will be joined by a space between each. If ``False``, they will be
+            simply added together. Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -3115,31 +3319,27 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
-        Notes
-        -----
-        - Multiple text items will be merged into one message, with spaces in between each item.
-        - Numbers and locations in the chest will be converted to text.
-
 
         Examples
         --------
         ::
 
-            p_default.send_message(texts)
+            p_default.send_message("a", "b", centered=True, add_spaces=True)
             # OR
-            Player(PlayerTarget.DEFAULT).send_message(texts)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).send_message("a", "b", centered=True, add_spaces=True)
+            # sends message "a b" to the default player (centered and with a space between each text bit).
         """
         args = Arguments([
-            p_check(text, typing.Optional[typing.Union[Textable, Listable]], f"texts[{i}]") for i, text in
+            p_check(text, typing.Union[Textable, Listable], f"texts[{i}]") for i, text in
             enumerate(texts)
         ], tags=[
             Tag(
-                "Alignment Mode", option=alignment_mode,  # default is Regular
-                action=PlayerActionType.SEND_MESSAGE, block=BlockType.IF_GAME
+                "Alignment Mode", option="Centered" if centered else "Regular",  # default is Regular
+                action=PlayerActionType.SEND_MESSAGE, block=BlockType.PLAYER_ACTION
             ),
             Tag(
-                "Text Value Merging", option=text_value_merging,  # default is Add Spaces
-                action=PlayerActionType.SEND_MESSAGE, block=BlockType.IF_GAME
+                "Text Value Merging", option="Add Spaces" if add_spaces else "No Spaces",  # default is No Spaces
+                action=PlayerActionType.SEND_MESSAGE, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -3150,9 +3350,11 @@ class Player:
         )
 
     def send_title(
-            self, text_1: Textable, text_2: typing.Optional[Textable] = None, duration: typing.Optional[Numeric] = None,
-            duration: typing.Optional[Numeric] = None, duration: typing.Optional[Numeric] = None,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, title: Textable, subtitle: typing.Optional[Textable] = None,
+        *, title_dur: typing.Optional[Numeric] = None,
+        start_fade_dur: typing.Optional[Numeric] = None,
+        end_fade_dur: typing.Optional[Numeric] = None,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Sends a title message to the player.
 
@@ -3161,20 +3363,20 @@ class Player:
 
         Parameters
         ----------
-        text_1 : :attr:`~.Textable`
+        title : :attr:`~.Textable`
             Title text.
 
-        text_2 : Optional[:attr:`~.Textable`], optional
+        subtitle : Optional[:attr:`~.Textable`], optional
             Subtitle text. Default is ``None``.
 
-        duration : Optional[:attr:`~.Numeric`], optional
-            Title duration (ticks, default = 60). Default is ``None``.
+        title_dur : Optional[:attr:`~.Numeric`], optional
+            Title duration (in ticks), or ``None`` for the default (60 ticks = 3 s). Default is ``None``.
 
-        duration : Optional[:attr:`~.Numeric`], optional
-            Start fade duration (ticks, default = 20). Default is ``None``.
+        start_fade_dur : Optional[:attr:`~.Numeric`], optional
+            Start fade duration (in ticks), or ``None`` for the default (20 ticks = 1 s). Default is ``None``.
 
-        duration : Optional[:attr:`~.Numeric`], optional
-            End fade duration (ticks, default = 20). Default is ``None``.
+        end_fade_dur : Optional[:attr:`~.Numeric`], optional
+            End fade duration (in ticks), or ``None`` for the default (20 ticks = 1 s). Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -3189,16 +3391,26 @@ class Player:
         --------
         ::
 
-            p_default.send_title(text_1, text_2, duration, duration, duration)
+            title = "Welcome to the plot!"
+            subtitle = "Enjoy your stay!"
+            p_default.send_title(title, subtitle, title_dur=40, start_fade_dur=10, end_fade_dur=10)
             # OR
-            Player(PlayerTarget.DEFAULT).send_title(text_1, text_2, duration, duration, duration)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).send_title(title, subtitle, title_dur=40, start_fade_dur=10, end_fade_dur=10)
+            # displays the title "Welcome to the plot!" and subtitle "Enjoy your stay" to the default player for 2 s,
+            # with a fade in and fade out duration of 10 ticks = 0.5 s.
         """
+        if title_dur is not None and (start_fade_dur is not None or end_fade_dur is not None):
+            title_dur = DFNumber(60)
+
+        if start_fade_dur is None and end_fade_dur is not None:
+            start_fade_dur = DFNumber(20)
+
         args = Arguments([
-            p_check(text_1, Textable, "text_1"),
-            p_check(text_2, typing.Optional[Textable], "text_2") if text_2 is not None else None,
-            p_check(duration, typing.Optional[Numeric], "duration") if duration is not None else None,
-            p_check(duration, typing.Optional[Numeric], "duration") if duration is not None else None,
-            p_check(duration, typing.Optional[Numeric], "duration") if duration is not None else None
+            p_check(title, Textable, "title"),
+            p_check(subtitle, Textable, "subtitle") if subtitle is not None else None,
+            p_check(title_dur, Numeric, "title_dur") if title_dur is not None else None,
+            p_check(start_fade_dur, Numeric, "start_fade_dur") if start_fade_dur is not None else None,
+            p_check(end_fade_dur, Numeric, "end_fade_dur") if end_fade_dur is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.SEND_TITLE,
@@ -3208,8 +3420,8 @@ class Player:
         )
 
     def set_air_ticks(
-            self, ticks: Numeric,
-            *, target: typing.Optional[PlayerTarget] = None
+        self, ticks: Numeric,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Sets the player's remaining breath ticks.
 
@@ -3236,9 +3448,9 @@ class Player:
         --------
         ::
 
-            p_default.set_air_ticks(ticks)
+            p_default.set_air_ticks(40)
             # OR
-            Player(PlayerTarget.DEFAULT).set_air_ticks(ticks)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).set_air_ticks(40)  # sets the default player's remaining breath ticks to 40 (2s).
         """
         args = Arguments([
             p_check(ticks, Numeric, "ticks")
@@ -3251,8 +3463,8 @@ class Player:
         )
 
     def set_armor(
-            self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
-            target: typing.Optional[PlayerTarget] = None
+        self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Sets the armor of the player. Place the armor in slots 1-4 of the chest, with 1 being the helmet and 4 being the boots.
 
@@ -3265,6 +3477,11 @@ class Player:
             - :class:`~.Item` for one item;
             - :attr:`~.Listable` for a variable list of items;
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
+
+
+            .. note::
+
+                - The armor must be placed in order, with the first item being the helmet and the fourth, the boots.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -3284,9 +3501,11 @@ class Player:
         --------
         ::
 
-            p_default.set_armor(items)
+            helmet = Item(Material.DIAOND_HELMET, name="My Helmet")
+            chestplate = ItemVar("some item var with a chestplate")
+            p_default.set_armor(helmet, chestplate)
             # OR
-            Player(PlayerTarget.DEFAULT).set_armor(items)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).set_armor(helmet, chestplate)  # sets the default player's helmt and chestplate
         """
         item_list = flatten(*items, except_iterables=[str], max_depth=1)
 
@@ -3300,9 +3519,9 @@ class Player:
             append_to_reader=True
         )
 
-    def set_atk_speed(
-            self, speed: Numeric,
-            *, target: typing.Optional[PlayerTarget] = None
+    def set_attack_speed(
+        self, speed: Numeric,
+        *, target: typing.Optional[PlayerTarget] = None
     ):
         """Sets the player's attack speed.
 
@@ -3312,7 +3531,9 @@ class Player:
         Parameters
         ----------
         speed : :attr:`~.Numeric`
-            Attack speed.
+            The player's new attack speed (number of times the player can attack per second).
+
+            .. note:: The default attack speed is 4.
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -3323,19 +3544,15 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
-        Notes
-        -----
-        - The player's attack speed is equal to the number of times they can attack per second.
-        - The default attack speed is 4.
-
 
         Examples
         --------
         ::
 
-            p_default.set_atk_speed(speed)
+            p_default.set_attack_speed(10)
             # OR
-            Player(PlayerTarget.DEFAULT).set_atk_speed(speed)  # TODO: Example
+            Player(PlayerTarget.DEFAULT).set_attack_speed(10)
+            # increases the default player's attack speed to 10 attacks per second.
         """
         args = Arguments([
             p_check(speed, Numeric, "speed")
@@ -3399,24 +3616,24 @@ class Player:
         """
         args = Arguments([
             p_check(text, Textable, "text"),
-            p_check(num_1, typing.Optional[Numeric], "num_1") if num_1 is not None else None,
-            p_check(num_2, typing.Optional[Numeric], "num_2") if num_2 is not None else None
+            p_check(num_1, Numeric, "num_1") if num_1 is not None else None,
+            p_check(num_2, Numeric, "num_2") if num_2 is not None else None
         ], tags=[
             Tag(
                 "Bar Color", option=bar_color,  # default is Pink
-                action=PlayerActionType.SET_BOSS_BAR, block=BlockType.IF_GAME
+                action=PlayerActionType.SET_BOSS_BAR, block=BlockType.PLAYER_ACTION
             ),
             Tag(
                 "Bar Style", option=bar_style,  # default is Solid
-                action=PlayerActionType.SET_BOSS_BAR, block=BlockType.IF_GAME
+                action=PlayerActionType.SET_BOSS_BAR, block=BlockType.PLAYER_ACTION
             ),
             Tag(
                 "Sky Effect", option=sky_effect,  # default is None
-                action=PlayerActionType.SET_BOSS_BAR, block=BlockType.IF_GAME
+                action=PlayerActionType.SET_BOSS_BAR, block=BlockType.PLAYER_ACTION
             ),
             Tag(
                 "Bar Slot", option=bar_slot,  # default is 1
-                action=PlayerActionType.SET_BOSS_BAR, block=BlockType.IF_GAME
+                action=PlayerActionType.SET_BOSS_BAR, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -3464,7 +3681,7 @@ class Player:
             Player(PlayerTarget.DEFAULT).set_chat_tag(texts)  # TODO: Example
         """
         args = Arguments([
-            p_check(text, typing.Optional[typing.Union[Textable, Listable]], f"texts[{i}]") for i, text in
+            p_check(text, typing.Union[Textable, Listable], f"texts[{i}]") for i, text in
             enumerate(texts)
         ])
         return PlayerAction(
@@ -3541,7 +3758,7 @@ class Player:
             Player(PlayerTarget.DEFAULT).set_cursor_item(item)  # TODO: Example
         """
         args = Arguments([
-            p_check(item, typing.Optional[ItemParam], "item") if item is not None else None
+            p_check(item, ItemParam, "item") if item is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.SET_CURSOR_ITEM,
@@ -3702,11 +3919,11 @@ class Player:
             Player(PlayerTarget.DEFAULT).set_hand_item(item)  # TODO: Example
         """
         args = Arguments([
-            p_check(item, typing.Optional[ItemParam], "item") if item is not None else None
+            p_check(item, ItemParam, "item") if item is not None else None
         ], tags=[
             Tag(
                 "Hand Slot", option=hand_slot,  # default is Main Hand
-                action=PlayerActionType.SET_HAND_ITEM, block=BlockType.IF_GAME
+                action=PlayerActionType.SET_HAND_ITEM, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -3758,7 +3975,7 @@ class Player:
         ], tags=[
             Tag(
                 "Heal Type", option=heal_type,  # default is Regular Health
-                action=PlayerActionType.SET_HEALTH, block=BlockType.IF_GAME
+                action=PlayerActionType.SET_HEALTH, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -3851,7 +4068,7 @@ class Player:
         args = Arguments([
             p_check(item, ItemParam, "item"),
             p_check(ticks, Numeric, "ticks"),
-            p_check(sound, typing.Optional[SoundParam], "sound") if sound is not None else None
+            p_check(sound, SoundParam, "sound") if sound is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.SET_ITEM_COOLDOWN,
@@ -3951,12 +4168,12 @@ class Player:
             Player(PlayerTarget.DEFAULT).set_list_header(texts)  # TODO: Example
         """
         args = Arguments([
-            p_check(text, typing.Optional[typing.Union[Textable, Listable]], f"texts[{i}]") for i, text in
+            p_check(text, typing.Union[Textable, Listable], f"texts[{i}]") for i, text in
             enumerate(texts)
         ], tags=[
             Tag(
                 "Player List Field", option=player_list_field,  # default is Header
-                action=PlayerActionType.SET_LIST_HEADER, block=BlockType.IF_GAME
+                action=PlayerActionType.SET_LIST_HEADER, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -4003,7 +4220,7 @@ class Player:
         ], tags=[
             Tag(
                 "Heal Player to Max Health", option=bool(heal_player_to_max_health),  # default is False
-                action=PlayerActionType.SET_MAX_HEALTH, block=BlockType.IF_GAME
+                action=PlayerActionType.SET_MAX_HEALTH, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -4230,7 +4447,7 @@ class Player:
             Player(PlayerTarget.DEFAULT).set_slot_item(item, slot)  # TODO: Example
         """
         args = Arguments([
-            p_check(item, typing.Optional[ItemParam], "item") if item is not None else None,
+            p_check(item, ItemParam, "item") if item is not None else None,
             p_check(slot, Numeric, "slot")
         ])
         return PlayerAction(
@@ -4440,7 +4657,7 @@ class Player:
         """
         args = Arguments([
             p_check(radius, Numeric, "radius"),
-            p_check(num_2, typing.Optional[Numeric], "num_2") if num_2 is not None else None
+            p_check(num_2, Numeric, "num_2") if num_2 is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.SHIFT_WORLD_BORDER,
@@ -4559,7 +4776,7 @@ class Player:
             Player(PlayerTarget.DEFAULT).stop_sound(sounds)  # TODO: Example
         """
         args = Arguments([
-            p_check(sound, typing.Optional[typing.Union[SoundParam, Listable]], f"sounds[{i}]") for i, sound in
+            p_check(sound, typing.Union[SoundParam, Listable], f"sounds[{i}]") for i, sound in
             enumerate(sounds)
         ])
         return PlayerAction(
@@ -4606,7 +4823,7 @@ class Player:
         ], tags=[
             Tag(
                 "Keep Current Rotation", option=bool(keep_current_rotation),  # default is False
-                action=PlayerActionType.TELEPORT, block=BlockType.IF_GAME
+                action=PlayerActionType.TELEPORT, block=BlockType.PLAYER_ACTION
             )
         ])
         return PlayerAction(
@@ -4652,7 +4869,7 @@ class Player:
         """
         args = Arguments([
             *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)],
-            p_check(delay, typing.Optional[Numeric], "delay") if delay is not None else None
+            p_check(delay, Numeric, "delay") if delay is not None else None
         ])
         return PlayerAction(
             action=PlayerActionType.TP_SEQUENCE,
@@ -4871,11 +5088,11 @@ location, at most 10 blocks away ...
         args = Arguments([
             *true_btypes,
             *locs,
-            p_check(distance, typing.Optional[Numeric], "distance") if distance is not None else None
+            p_check(distance, Numeric, "distance") if distance is not None else None
         ], tags=[
             Tag(
                 "Fluid Mode", option="Ignore Fluids" if ignore_fluids else "Detect Fluids",  # default is Ignore Fluids
-                action=IfPlayerType.IS_LOOKING_AT, block=BlockType.IF_GAME
+                action=IfPlayerType.IS_LOOKING_AT, block=BlockType.IF_PLAYER
             )
         ])
         return IfPlayer(
@@ -4921,7 +5138,7 @@ location, at most 10 blocks away ...
             # or specify a location to check if that location is within the player's world border.
         """
         args = Arguments([
-            p_check(loc, typing.Optional[Locatable], "loc") if loc is not None else None
+            p_check(loc, Locatable, "loc") if loc is not None else None
         ])
         return IfPlayer(
             action=IfPlayerType.IN_WORLD_BORDER,
@@ -4962,7 +5179,7 @@ location, at most 10 blocks away ...
                 # ... code to be executed if the Default Player has room for 32 stones ...
         """
         args = Arguments([
-            p_check(item, typing.Optional[ItemParam], "item") if item is not None else None
+            p_check(item, ItemParam, "item") if item is not None else None
         ])
         return IfPlayer(
             action=IfPlayerType.HAS_ROOM_FOR_ITEM,
@@ -5259,7 +5476,7 @@ location, at most 10 blocks away ...
         ], tags=[
             Tag(
                 "Check Mode", option="Is Wearing All" if wearing_all else "Is Wearing Some",  # default: Is Wearing Some
-                action=IfPlayerType.IS_WEARING, block=BlockType.IF_GAME
+                action=IfPlayerType.IS_WEARING, block=BlockType.IF_PLAYER
             )
         ])
         return IfPlayer(
@@ -5314,11 +5531,11 @@ given locations ...
         """
         args = Arguments([
             *[p_check(loc, typing.Union[Locatable, Listable], f"locs[{i}]") for i, loc in enumerate(locs)],
-            p_check(distance, typing.Optional[Numeric], "distance") if distance is not None else None
+            p_check(distance, Numeric, "distance") if distance is not None else None
         ], tags=[
             Tag(
                 "Ignore Y-Axis", option=bool(ignore_y_axis),  # default is False
-                action=IfPlayerType.IS_NEAR, block=BlockType.IF_GAME
+                action=IfPlayerType.IS_NEAR, block=BlockType.IF_PLAYER
             )
         ])
         return IfPlayer(
@@ -5444,11 +5661,11 @@ location ...
     #     ], tags=[
     #         Tag(
     #             "Check Mode", option=check_mode,  # default is Check Entire Command
-    #             action=IfPlayerType.CMD_EQUALS, block=BlockType.IF_GAME
+    #             action=IfPlayerType.CMD_EQUALS, block=BlockType.IF_PLAYER
     #         ),
     #         Tag(
     #             "Ignore Case", option=bool(ignore_case),  # default is True
-    #             action=IfPlayerType.CMD_EQUALS, block=BlockType.IF_GAME
+    #             action=IfPlayerType.CMD_EQUALS, block=BlockType.IF_PLAYER
     #         )
     #     ])
     #     return IfPlayer(
@@ -5506,7 +5723,7 @@ location ...
         ], tags=[
             Tag(
                 "Check Mode", option="Has All Effects" if has_all_effects else "Has Any Effect",  # d: Has Any Effect
-                action=IfPlayerType.HAS_EFFECT, block=BlockType.IF_GAME
+                action=IfPlayerType.HAS_EFFECT, block=BlockType.IF_PLAYER
             )
         ])
         return IfPlayer(
@@ -5790,7 +6007,7 @@ location ...
         ], tags=[
             Tag(
                 "Hand Slot", option="Either Hand" if not hand else Hand(hand).value,  # default is Either Hand
-                action=IfPlayerType.IS_HOLDING, block=BlockType.IF_GAME
+                action=IfPlayerType.IS_HOLDING, block=BlockType.IF_PLAYER
             )
         ])
         return IfPlayer(
@@ -6044,7 +6261,7 @@ items at slot number 5 ...
         args = Arguments([], tags=[
             Tag(
                 "Inventory Type", option=inventory_type,  # default is Any Inventory
-                action=IfPlayerType.INV_OPEN, block=BlockType.IF_GAME
+                action=IfPlayerType.INV_OPEN, block=BlockType.IF_PLAYER
             )
         ])
         return IfPlayer(
@@ -6222,7 +6439,7 @@ items at slot number 5 ...
     #     ], tags=[
     #         Tag(
     #             "Ignore Case", option=bool(ignore_case),  # default is True
-    #             action=IfPlayerType.CMD_ARG_EQUALS, block=BlockType.IF_GAME
+    #             action=IfPlayerType.CMD_ARG_EQUALS, block=BlockType.IF_PLAYER
     #         )
     #     ])
     #     return IfPlayer(

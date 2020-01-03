@@ -249,6 +249,12 @@ _B = typing.TypeVar("_B",
 
 @typing.overload
 def p_check(
+    obj: typing.Optional[_P], typeof: typing.Type[typing.Optional[_P]], arg_name: typing.Optional[str] = None,
+    *, convert: bool = True
+) -> _P: ...
+
+@typing.overload
+def p_check(
     obj: Numeric, typeof: typing.Type[Numeric], arg_name: typing.Optional[str] = None, *, convert: bool = True
 ) -> Numeric: ...
 
@@ -366,7 +372,7 @@ def p_check(
         Param, Numeric, Textable, Locatable, Potionable, ItemParam, ParticleParam, SoundParam, SpawnEggable,
         typing.Union[Numeric, Locatable], typing.Union[Textable, ItemParam], typing.Union[Locatable, Textable]
     )
-    if not isinstance(obj, tuple(valid_types)):
+    if not isinstance(obj, tuple(filter(lambda t: t is not None, valid_types))):  # remove 'None'
 
         try:
             corresp_class_ind = corresponding_values.index(typeof)
