@@ -305,6 +305,28 @@ class AdvancementType(TagType):
 
 
 @unique
+class BossBarColor(TagType):
+    """Tag for :meth:`~.Player.set_boss_bar`."""
+    PINK = auto()
+    BLUE = auto()
+    RED = auto()
+    GREEN = auto()
+    YELLOW = auto()
+    PURPLE = auto()
+    WHITE = auto()
+
+
+@unique
+class BossBarStyle(TagType):
+    """Tag for :meth:`~.Player.set_boss_bar`."""
+    SOLID = "Solid"
+    SIX_SEGMENTS = "Segmented 6"
+    TEN_SEGMENTS = "Segmented 10"
+    TWELVE_SEGMENTS = "Segmented 12"
+    TWENTY_SEGMENTS = "Segmented 20"
+
+
+@unique
 class PlayerAnimation(TagType):
     """Tag of :meth:`~.Player.send_animation`."""
     SWING_RIGHT_ARM = auto()

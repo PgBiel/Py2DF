@@ -2117,7 +2117,7 @@ class Entity:
 
         Setting combined health (regular and absorption health)::
 
-            last_mob.set_health(15, combined = True)
+            last_mob.set_health(15, combined=True)
             # OR
             Entity(EntityTarget.LAST_MOB).set_health(15, combined=True)  # sets the last spawned mob's combined to 15
                                                                            # (7.5 hearts in total).
