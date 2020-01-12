@@ -375,6 +375,7 @@ class Entity:
         :class:`EntityAction`
             The generated EntityAction instance.
 
+
         Raises
         ------
         :exc:`ValueError`
@@ -416,7 +417,6 @@ class Entity:
             .. note::
 
                 1 damage = 0.5 hearts
-
 
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
@@ -745,7 +745,6 @@ class Entity:
 
                 1 health = 0.5 hearts
 
-
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
             Defaults to ``None``.
@@ -879,7 +878,6 @@ class Entity:
                 - Must be between 0 and 2, otherwise a ValueError is raised (if a constant is specified, i.e., not
                 a variable).
 
-
         target : Optional[:class:`~.EntityTarget`], optional
             The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
             Defaults to ``None``.
@@ -888,6 +886,7 @@ class Entity:
         -------
         :class:`EntityAction`
             The generated EntityAction instance.
+
 
         Raises
         ------
@@ -1016,6 +1015,7 @@ class Entity:
         -------
         :class:`EntityAction`
             The generated EntityAction instance.
+
 
         Raises
         ------

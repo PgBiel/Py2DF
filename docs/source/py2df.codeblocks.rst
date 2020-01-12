@@ -31,7 +31,12 @@ py2df.codeblocks.caller module
 py2df.codeblocks.humanized_target module
 ----------------------------------------
 
-.. automodule:: py2df.codeblocks.humanized_target
+.. automodule:: py2df.codeblocks.humanized_target.player
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: py2df.codeblocks.humanized_target.entity
    :members:
    :undoc-members:
    :show-inheritance:

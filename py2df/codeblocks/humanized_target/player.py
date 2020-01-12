@@ -287,7 +287,8 @@ class Player:
         -------
         :class:`PlayerAction`
             The generated PlayerAction instance.
-            
+
+
         Raises
         ------
         :exc:`~.ValueError`
@@ -579,7 +580,6 @@ class Player:
             .. note::
 
                 1 damage = 0.5 hearts
-
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -962,6 +962,7 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+
         Raises
         ------
         :exc:`ValueError`
@@ -1012,6 +1013,7 @@ class Player:
         -------
         :class:`PlayerAction`
             The generated PlayerAction instance.
+
 
         Raises
         ------
@@ -1072,6 +1074,7 @@ class Player:
         -------
         :class:`PlayerAction`
             The generated PlayerAction instance.
+
 
         Raises
         ------
@@ -1394,7 +1397,6 @@ class Player:
             .. note::
 
                 1 health = 0.5 hearts
-
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -2412,6 +2414,7 @@ class Player:
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+
         Raises
         ------
         :exc:`ValueError`
@@ -3146,13 +3149,11 @@ class Player:
                 - ``"tag:value"``
                 - ``"tag,value"``
 
-
             3. **As a** :attr:`~.Listable`\ **:** One can also specify a variable representing a List (in DF) of text values in the format specified in `2`.
 
             .. note::
     
                 Example: "rotation:9,waterlogged:true"
-
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -3472,8 +3473,7 @@ class Player:
         self, *items: typing.Union[ItemParam, ItemCollection, typing.Iterable[ItemParam], Listable],
         target: typing.Optional[PlayerTarget] = None
     ):
-        """Sets the armor of the player. Place the armor in slots 1-4 of the chest, with 1 being the helmet and 4
-being the boots.
+        """Sets the armor of the player. Place the armor in slots 1-4 of the chest, with 1 being the helmet and 4 being the boots.
 
         Parameters
         ----------
@@ -3484,7 +3484,6 @@ being the boots.
             - :class:`~.Item` for one item;
             - :attr:`~.Listable` for a variable list of items;
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
-
 
             .. note::
 
@@ -3620,6 +3619,7 @@ being the boots.
         -------
         :class:`PlayerAction`
             The generated PlayerAction instance.
+
 
         Raises
         ------
@@ -3910,6 +3910,7 @@ being the boots.
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+
         Raises
         ------
         :exc:`~.ValueError`
@@ -3994,9 +3995,9 @@ being the boots.
         )
 
     def set_health(
-            self, health: Numeric,
-            *, absorption: bool = False, combined: bool = False,
-            target: typing.Optional[EntityTarget] = None
+        self, health: Numeric,
+        *, absorption: bool = False, combined: bool = False,
+        target: typing.Optional[PlayerTarget] = None
     ):
         """Sets the player's health or absorption hearts.
 
@@ -4021,14 +4022,14 @@ being the boots.
 
                 Specifying this overrides what was specified for `absorption`.
 
-        target : Optional[:class:`~.EntityTarget`], optional
-            The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
+        target : Optional[:class:`~.PlayerTarget`], optional
+            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
         -------
-        :class:`EntityAction`
-            The generated EntityAction instance.
+        :class:`PlayerAction`
+            The generated PlayerAction instance.
 
         Examples
         --------
@@ -4036,20 +4037,20 @@ being the boots.
 
             p_default.set_health(15)
             # OR
-            Player(PlayerTarget.Default).set_health(15)  # sets the default player's health to 15 (7.5 hearts).
+            Player(PlayerTarget.DEFAULT).set_health(15)  # sets the default player's health to 15 (7.5 hearts).
 
         Setting absorption health::
 
             p_default.set_health(15, absorption=True)
             # OR
-            Player(PlayerTarget.Default).set_health(15, absorption=True)  # sets the default player's absorption
+            Player(PlayerTarget.DEFAULT).set_health(15, absorption=True)  # sets the default player's absorption
                                                                           # health to 15 (7.5 absorp. hearts).
 
         Setting combined health (regular and absorption health)::
 
             p_default.set_health(15, combined=True)
             # OR
-            Player(PlayerTarget.Default).set_health(15, combined=True)  # sets the default player's combined to 15
+            Player(PlayerTarget.DEFAULT).set_health(15, combined=True)  # sets the default player's combined to 15
                                                                         # (7.5 hearts in total).
         """
         args = Arguments([
@@ -4186,7 +4187,6 @@ being the boots.
             .. note::
 
                 The top chest row (first 9 items) is the hotbar. The other rows fill the inventory from the top down.
-
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -4465,6 +4465,7 @@ being the boots.
         :class:`PlayerAction`
             The generated PlayerAction instance.
 
+
         Raises
         ------
         :exc:`~.ValueError`
@@ -4506,15 +4507,16 @@ being the boots.
 
                 Varies from 1 (left) to 9 (right)
 
-
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
             Defaults to ``None``.
+
 
         Returns
         -------
         :class:`PlayerAction`
             The generated PlayerAction instance.
+
 
         Raises
         ------
@@ -4560,7 +4562,6 @@ being the boots.
             .. note::
 
                 Slots 1-9 = Hotbar Slots; 10-36 = Inventory (Top to bottom)
-
 
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
@@ -4610,7 +4611,6 @@ being the boots.
                 - Evening: 13 000 Ticks
                 - Midnight: 18 000 Ticks
 
-
         target : Optional[:class:`~.PlayerTarget`], optional
             The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
             Defaults to ``None``.
@@ -4619,6 +4619,7 @@ being the boots.
         -------
         :class:`PlayerAction`
             The generated PlayerAction instance.
+
 
         Raises
         ------
@@ -4751,6 +4752,7 @@ being the boots.
         -------
         :class:`PlayerAction`
             The generated PlayerAction instance.
+
 
         Raises
         ------
@@ -5157,7 +5159,7 @@ being the boots.
             append_to_reader=True
         )
 
-    def weather_rain(self, *, target: typing.Optional[PlayerTarget] = None):
+    def set_rain_weather(self, *, target: typing.Optional[PlayerTarget] = None):
         """Sets the weather to downfall (rain) for the player only.
 
         Parameters
