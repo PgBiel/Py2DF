@@ -49,7 +49,7 @@ class Entity:
         Returns
         -------
         Optional[:class:`~.EntityTarget`]
-            Returns the given target as a valid EntityTarget, or None.
+            Returns the given target as a valid EntityTarget, or ``None``.
         """
         return EntityTarget(target) if target else None
 
@@ -102,7 +102,7 @@ class Entity:
             ``None``.
 
         target : Optional[:class:`~.EntityTarget`], optional
-            The target of this :class:`~.EntityAction`, or None for the current :class:`Entity` instance's target.
+            The target of this :class:`~.EntityAction`, or ``None`` for the current :class:`Entity` instance's target.
             Defaults to ``None``.
 
         Returns
