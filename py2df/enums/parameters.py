@@ -49,7 +49,7 @@ class BracketDirection(AutoLowerNameEnum):
 
 @unique
 class PlotSizes(Enum):
-    """An :class:`Enum` that relates each plot size to its respective width, in blocks. E.g.: Basic Plot is 50x50."""
-    BASIC_PLOT = 50
-    LARGE_PLOT = 100
-    MASSIVE_PLOT = 300
+    """An :class:`Enum` that relates each plot size to its respective width, in blocks. E.g.: Basic Plot is 51x51."""
+    BASIC_PLOT = 51
+    LARGE_PLOT = 101
+    MASSIVE_PLOT = 301
