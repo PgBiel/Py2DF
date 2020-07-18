@@ -95,7 +95,8 @@ ALL_HIDE_FLAGS = HideFlags(sum(list(HideFlags)))
 
 @unique
 class Enchantments(AutoLowerNameEnum):
-    """Enchantment types in Minecraft 1.14.4."""
+    """Enchantment types in Minecraft 1.15.2."""
+    #  New in 1.16, Soul Speed
     AQUA_AFFINITY         = auto()  #: Speeds up how fast you can mine blocks underwater.
     BANE_OF_ARTHROPODS    = auto()  #: Increases attack damage against arthropods.
     BINDING_CURSE         = auto()  #: Cursed item can not be removed from player.
