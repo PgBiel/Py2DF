@@ -10,7 +10,7 @@ from enum import auto, unique
 @unique
 class Material(AutoLowerNameEnum):
     """
-    Contains all of Minecraft's item types (version 1.14.4).
+    Contains all of Minecraft's item types (version 1.15.2).
     """
     ACACIA_BOAT = auto()
     ACACIA_BUTTON = auto()
@@ -46,7 +46,10 @@ class Material(AutoLowerNameEnum):
     BAT_SPAWN_EGG = auto()
     BEACON = auto()
     BEDROCK = auto()
+    BEE_NEST = auto()
+    BEE_SPAWN_EGG = auto()
     BEEF = auto()
+    BEEHIVE = auto()
     BEETROOT = auto()
     BEETROOT_SEEDS = auto()
     BEETROOT_SOUP = auto()
@@ -386,6 +389,10 @@ class Material(AutoLowerNameEnum):
     HAY_BLOCK = auto()
     HEART_OF_THE_SEA = auto()
     HEAVY_WEIGHTED_PRESSURE_PLATE = auto()
+    HONEY_BLOCK = auto()
+    HONEY_BOTTLE = auto()
+    HONEY_COMB = auto()
+    HONEYCOMB_BLOCK = auto()
     HOPPER = auto()
     HOPPER_MINECART = auto()
     HORN_CORAL = auto()
