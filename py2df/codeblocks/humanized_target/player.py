@@ -4205,7 +4205,7 @@ class Player:
                 None, None, Item(Material.STONE), None, None, Item(Material.COAL, name="item"), None, None, None,
                 None, None, None,                 None, None, Item(Material.DIAMOND),           None, None, None
             ])  # example new inventory - all remaining slots are set to nothing (None)
-            p_default.set_inv_items(items)
+            p_default.set_inv_items(new_inv)
             # OR
             Player(PlayerTarget.DEFAULT).set_inv_items(new_inv)  # sets the default player's inventory
         """
