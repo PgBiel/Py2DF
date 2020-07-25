@@ -84,7 +84,7 @@ class Player:
             simply added together. Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -143,7 +143,7 @@ class Player:
             to :attr:`~.PARowPos.BOTTOM`.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -185,7 +185,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -232,7 +232,7 @@ class Player:
             Name of disguise. Default is ``None`` (no name).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -280,7 +280,7 @@ class Player:
             Defaults to ``True``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -344,7 +344,7 @@ class Player:
             and a formatting modifier (e.g. bold, italics...) simultaneously.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -376,7 +376,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -405,7 +405,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -446,7 +446,7 @@ class Player:
             If the crafting area and the cursor should be cleared as well. Defaults to ``True``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -503,7 +503,7 @@ class Player:
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -543,7 +543,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -582,7 +582,7 @@ class Player:
                 1 damage = 0.5 hearts
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -614,7 +614,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -659,7 +659,7 @@ class Player:
             - a :attr:`~.Listable` (A List - in DF - variable containing either Item or Text parameters).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -695,7 +695,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -724,7 +724,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -753,7 +753,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -798,7 +798,7 @@ class Player:
             - a :attr:`~.Listable` (A List - in DF - variable containing either Item or Text parameters).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -834,7 +834,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -863,7 +863,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -907,7 +907,7 @@ class Player:
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -954,7 +954,7 @@ class Player:
             % of normal flight speed (-1000 to 1000).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1006,7 +1006,7 @@ class Player:
             If ``True``, the player will be forced to stop flying. Defaults to ``False``).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1067,7 +1067,7 @@ class Player:
             If ``True``, the player will be forced to stop gliding. Defaults to ``False``).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1134,7 +1134,7 @@ class Player:
             If existing effects should be overridden by the given ones. Defaults to ``False`` (no).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1197,7 +1197,7 @@ class Player:
                 If an amount is specified, the items will be repeatedly given that many times.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1254,7 +1254,7 @@ class Player:
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1296,7 +1296,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1325,7 +1325,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1360,7 +1360,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1399,7 +1399,7 @@ class Player:
                 1 health = 0.5 hearts
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1434,7 +1434,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1463,7 +1463,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1502,7 +1502,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1546,7 +1546,7 @@ class Player:
             to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1624,7 +1624,7 @@ class Player:
             A particle to be the projectile's launch trail. Default is ``None`` (no launch trail).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1685,7 +1685,7 @@ class Player:
             pull. Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1732,7 +1732,7 @@ class Player:
             Launch power.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1770,7 +1770,7 @@ class Player:
             Strike location.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1807,7 +1807,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1854,7 +1854,7 @@ class Player:
             Disguise name (of the mob). Default is ``None`` (no name).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1889,7 +1889,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1918,7 +1918,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1947,7 +1947,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -1976,7 +1976,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2005,7 +2005,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2043,7 +2043,7 @@ class Player:
             Location of the block to be accessed.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2086,7 +2086,7 @@ class Player:
             Book item to be opened.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2140,7 +2140,7 @@ class Player:
             Particle count, or ``None`` for a default value. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2186,7 +2186,7 @@ class Player:
             Plot command to be executed by the player, including the arguments.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2232,7 +2232,7 @@ class Player:
             location (i.e., at the player - no matter to where they move, they hear the sound). Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2278,7 +2278,7 @@ class Player:
             Playback location, or ``None`` for no specific location (at the player). Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2326,7 +2326,7 @@ class Player:
             Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2360,7 +2360,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2406,7 +2406,7 @@ class Player:
             All Bossbars, 1, 2, 3, 4
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2462,7 +2462,7 @@ class Player:
             Potion effect(s) to be removed, or a List variable containing them.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2517,7 +2517,7 @@ class Player:
             either :attr:`~.PARowPos.TOP` or :attr:`~.PARowPos.BOTTOM`. Defaults to :attr:`~.PARowPos.BOTTOM`.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2566,7 +2566,7 @@ class Player:
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2622,7 +2622,7 @@ class Player:
             Amount of `from_items` to replace, or ``None`` to replace all occurrences. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2683,7 +2683,7 @@ class Player:
             Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2723,7 +2723,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2761,7 +2761,7 @@ class Player:
             Name of player or entity to be ridden.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2798,7 +2798,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2830,7 +2830,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2872,7 +2872,7 @@ class Player:
             If the player's current rotation should be kept after teleporting. Defaults to ``False`` (no).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2928,7 +2928,7 @@ class Player:
             all changes. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -2972,7 +2972,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3019,7 +3019,7 @@ class Player:
             Defaults to :attr:`~.AdvancementType.ADVANCEMENT`.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3064,7 +3064,7 @@ class Player:
             The animation to be performed (see PlayerAnimation docs for options).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3156,7 +3156,7 @@ class Player:
                 Example: "rotation:9,waterlogged:true"
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3216,7 +3216,7 @@ class Player:
             Delay, in ticks, between each message, or ``None`` for the default (60 ticks = 3 s). Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3262,7 +3262,7 @@ class Player:
             Message to see on hover.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3318,7 +3318,7 @@ class Player:
             simply added together. Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3386,7 +3386,7 @@ class Player:
             End fade duration (in ticks), or ``None`` for the default (20 ticks = 1 s). Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3438,7 +3438,7 @@ class Player:
             Breath ticks.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3490,7 +3490,7 @@ class Player:
                 - The armor must be placed in order, with the first item being the helmet and the fourth, the boots.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3542,7 +3542,7 @@ class Player:
             .. note:: The default attack speed is 4.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3612,7 +3612,7 @@ class Player:
             the slot provided will be overridden by the new one. Defaults to slot 1.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3697,7 +3697,7 @@ class Player:
                 - Leave empty to reset the chat tag.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3748,7 +3748,7 @@ class Player:
             New compass target.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3787,7 +3787,7 @@ class Player:
             Item to set. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3826,7 +3826,7 @@ class Player:
             Fall distance (in blocks).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3864,7 +3864,7 @@ class Player:
             Duration of the fire (in ticks), or 0 to extinguish the player.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3902,7 +3902,7 @@ class Player:
             New hunger level (1-20).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -3954,7 +3954,7 @@ class Player:
             (:attr:`~.Hand.MAIN_HAND`).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4023,7 +4023,7 @@ class Player:
                 Specifying this overrides what was specified for `absorption`.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4085,7 +4085,7 @@ class Player:
             The inventory's new name.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4130,7 +4130,7 @@ class Player:
             Cooldown refresh sound, or ``None`` for no sound. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4189,7 +4189,7 @@ class Player:
                 The top chest row (first 9 items) is the hotbar. The other rows fill the inventory from the top down.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4245,7 +4245,7 @@ class Player:
             Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4302,7 +4302,7 @@ class Player:
             If ``True``, the player is instantly healed to the new max health. Defaults to ``False`` (not healed).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4360,7 +4360,7 @@ class Player:
             - e.g. ``[1, 2, 3, 4]`` - or a Listable param containing them - e.g. ``ListVar("slots")``).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4414,7 +4414,7 @@ class Player:
             Name color. (Usage of :class:`~.Color` class is recommended.)
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4457,7 +4457,7 @@ class Player:
             New saturation level (1-20).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4508,7 +4508,7 @@ class Player:
                 Varies from 1 (left) to 9 (right)
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
 
@@ -4564,7 +4564,7 @@ class Player:
                 Slots 1-9 = Hotbar Slots; 10-36 = Inventory (Top to bottom)
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4612,7 +4612,7 @@ class Player:
                 - Midnight: 18 000 Ticks
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4666,7 +4666,7 @@ class Player:
             The border's radius from the center, in blocks.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4707,7 +4707,7 @@ class Player:
             New experience level.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4745,7 +4745,7 @@ class Player:
             Progress % (0-100).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4800,7 +4800,7 @@ class Player:
             Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4837,7 +4837,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4881,7 +4881,7 @@ class Player:
             - :class:`~.ItemCollection` or Iterable[:class:`~.Item`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4927,7 +4927,7 @@ class Player:
             Sounds to stop. Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -4973,7 +4973,7 @@ class Player:
             If the player's current rotation should be kept after teleporting. Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5026,7 +5026,7 @@ class Player:
             Default is ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5066,7 +5066,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5104,7 +5104,7 @@ class Player:
             % of normal walk speed (0 to 500).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5136,7 +5136,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5165,7 +5165,7 @@ class Player:
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.PlayerAction`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.PlayerAction`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5223,7 +5223,7 @@ class Player:
             they are considered. Defaults to ``True``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5297,7 +5297,7 @@ location, at most 10 blocks away ...
             Location to check if is within the player's world border. Default is ``None`` (check the player itself).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5339,7 +5339,7 @@ location, at most 10 blocks away ...
             Item (stack) to check. Default is ``None`` (has room for any item).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5380,7 +5380,7 @@ location, at most 10 blocks away ...
             Item type to check. (Note that only the Material determines the cooldown.)
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5427,7 +5427,7 @@ location, at most 10 blocks away ...
             - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5465,7 +5465,7 @@ location, at most 10 blocks away ...
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5512,7 +5512,7 @@ location, at most 10 blocks away ...
             - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5574,7 +5574,7 @@ location, at most 10 blocks away ...
     #             If multiple items are given, then the block can be any of them.
     #
     #     target : Optional[:class:`~.PlayerTarget`], optional
-    #         The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+    #         The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
     #         Defaults to ``None``.
     #
     #     Returns
@@ -5628,7 +5628,7 @@ location, at most 10 blocks away ...
             at least one of them. Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5688,7 +5688,7 @@ location, at most 10 blocks away ...
             Defaults to ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5747,7 +5747,7 @@ given locations ...
             - a :attr:`~.Listable` (A List - in DF - variable containing either Item or Text parameters).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5818,7 +5818,7 @@ location ...
     #         Defaults to ``True``.
     #
     #     target : Optional[:class:`~.PlayerTarget`], optional
-    #         The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+    #         The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
     #         Defaults to ``None``.
     #
     #     Returns
@@ -5872,7 +5872,7 @@ location ...
             ``False``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5919,7 +5919,7 @@ location ...
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -5970,7 +5970,7 @@ location ...
     #                 If multiple items given, the event item can be any of them.
     #
     #         target : Optional[:class:`~.PlayerTarget`], optional
-    #             The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+    #             The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
     #             Defaults to ``None``.
     #
     #         Returns
@@ -6022,7 +6022,7 @@ location ...
                 If multiple items are given, the player can have any of them on their cursor.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6076,7 +6076,7 @@ location ...
                 - 9 = Rightmost slot
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6110,7 +6110,7 @@ location ...
     #     Parameters
     #     ----------
     #     target : Optional[:class:`~.PlayerTarget`], optional
-    #         The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+    #         The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
     #         Defaults to ``None``.
     #
     #     Returns
@@ -6158,7 +6158,7 @@ location ...
             (i.e., accept the player having the item on either hand). Defaults to ``None``.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6219,7 +6219,7 @@ location ...
             - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6263,7 +6263,7 @@ items at slot number 5 ...
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6294,7 +6294,7 @@ items at slot number 5 ...
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6325,7 +6325,7 @@ items at slot number 5 ...
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6364,7 +6364,7 @@ items at slot number 5 ...
             .. note:: Works with UUIDs.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6414,7 +6414,7 @@ items at slot number 5 ...
             Defaults to :attr:`~.ANY_INVENTORY` (any inventory type is accepted).
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6473,7 +6473,7 @@ items at slot number 5 ...
             - :class:`~.ItemCollection` or Iterable[:class:`~.ItemParam`] for a predetermined list of items.
 
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6516,7 +6516,7 @@ items at slot number 5 ...
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6547,7 +6547,7 @@ items at slot number 5 ...
         Parameters
         ----------
         target : Optional[:class:`~.PlayerTarget`], optional
-            The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+            The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
             Defaults to ``None``.
 
         Returns
@@ -6595,7 +6595,7 @@ items at slot number 5 ...
     #         Defaults to ``True``.
     #
     #     target : Optional[:class:`~.PlayerTarget`], optional
-    #         The target of this :class:`~.IfPlayer`, or None for the current :class:`Player` instance's target.
+    #         The target of this :class:`~.IfPlayer`, or ``None`` for the current :class:`Player` instance's target.
     #         Defaults to ``None``.
     #
     #     Returns
