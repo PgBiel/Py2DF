@@ -1,15 +1,14 @@
 # Py2DF
+==========
 
 A modern, easy to use and feature-rich tool to convert written, easier to understand python code to a DiamondFire template.
-
-==========
 
 Installing
 ----------
 
 **Python 3.6 or higher is required**
 
-To install the library you can just run the following command:  THIS ISN'T LIVE YET BUT WILL BE SOON TM
+To install the library you can just run the following command:   THIS ISN'T LIVE YET BUT WILL BE SOON TM
 
 .. code:: sh
 
@@ -31,7 +30,6 @@ Quick Example
         p_default.give_items(Item(material=material.DIAMOND_SWORD, name="My Sword", lore=["My custom sword]))
         p_default.teleport(Location(50, 50, 50))
         
-
 
 You can find more examples in the examples directory.
 
