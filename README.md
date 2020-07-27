@@ -10,7 +10,7 @@ Installing
 
 To install the library you can just run the following command:   THIS ISN'T LIVE YET BUT WILL BE SOON TM
 
-.. code:: sh
+
 
     # Linux/macOS
     python3 -m pip install -U Py2DF.py
@@ -21,8 +21,6 @@ To install the library you can just run the following command:   THIS ISN'T LIVE
 
 Quick Example
 --------------
-
-.. code:: py
 
     @PlayerEvent.Join
     def on_join():
