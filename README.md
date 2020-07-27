@@ -1,7 +1,7 @@
 # Py2DF
 ==========
 
-A modern, easy to use and feature-rich tool to convert written, easier to understand python code to a DiamondFire template.
+An easy to use and feature-rich tool to convert written, easier to understand python code to a DiamondFire template.
 
 Installing
 ----------
@@ -9,7 +9,6 @@ Installing
 **Python 3.6 or higher is required**
 
 To install the library you can just run the following command:   THIS ISN'T LIVE YET BUT WILL BE SOON TM
-
 
 
     # Linux/macOS
