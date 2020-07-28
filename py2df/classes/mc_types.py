@@ -1520,11 +1520,13 @@ class DFLocation(DFType):
             id=constants.ITEM_ID_LOCATION,
             data=dict(
                 isBlock=self.is_block,
-                x=self.x,
-                y=self.y,
-                z=self.z,
-                pitch=self.pitch,
-                yaw=self.yaw
+                loc=dict(
+                    x=self.x,
+                    y=self.y,
+                    z=self.z,
+                    pitch=self.pitch,
+                    yaw=self.yaw
+                )
             )
         )
 
