@@ -20,12 +20,13 @@ To install the library you can just run the following command:   THIS ISN'T LIVE
 
 Quick Example
 --------------
-
-    @PlayerEvent.Join
-    def on_join():
-        p_default.send_messsage("Test")
-        p_default.give_items(Item(material=material.DIAMOND_SWORD, name="My Sword", lore=["My custom sword]))
-        p_default.teleport(Location(50, 50, 50))
+```py
+@PlayerEvent.Join
+def on_join():
+    p_default.send_messsage("Test")
+    p_default.give_items(Item(material=material.DIAMOND_SWORD, name="My Sword", lore=["My custom sword]))
+    p_default.teleport(Location(50, 50, 50))
+```
         
 
 You can find more examples in the examples directory.
