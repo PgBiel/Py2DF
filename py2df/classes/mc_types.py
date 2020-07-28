@@ -277,6 +277,9 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
             else:  # must be a nbtlib.Compound or dict already
                 tag["EntityTag"] = ent_t
 
+        if self.enchantments:
+            tag["Enchantments"] = [ItemEnchantmentSchema({"id": enchant.ench_type, "lvl": enchant.level}) for enchant in self.enchantments]
+        
         if any([self.leather_armor_color is not None, self.name, self.lore]):
             display = ItemDisplaySchema()
             if self.name:
