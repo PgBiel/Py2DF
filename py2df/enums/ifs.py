@@ -32,6 +32,7 @@ class IfPlayerType(IfType, AutoSnakeToPascalCaseNameEnum):
     IS_SNEAKING = auto()  #: Checks if a player is sneaking.
     IS_SPRINTING = auto()  #: Checks if a player is sprinting or using the sprint key to swim.
     IS_SWIMMING = auto()  #: Checks if a player is in water or lava.
+    IS_USING_ITEM = auto()  #: Checks if a player is currently using an item such as a bow, consumable, or shield.
     IS_WEARING = auto()  #: Checks if a player is wearing an item.
     ITEM_EQUALS = auto()  #: Checks if the items in one of the events below is a certain item.
     MENU_SLOT_EQUALS = auto(
