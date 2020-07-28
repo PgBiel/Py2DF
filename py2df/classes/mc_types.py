@@ -278,7 +278,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
                 tag["EntityTag"] = ent_t
 
         if self.enchantments:
-            tag["Enchantments"] = [ItemEnchantmentSchema({"id": enchant.ench_type, "lvl": enchant.level}) for enchant in self.enchantments]
+            tag["Enchantments"] = [ItemEnchantmentSchema({"id": 'minecraft:' + enchant.ench_type.value, "lvl": enchant.level}) for enchant in self.enchantments]
         
         if any([self.leather_armor_color is not None, self.name, self.lore]):
             display = ItemDisplaySchema()
