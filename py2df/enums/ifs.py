@@ -51,6 +51,7 @@ class IfVariableType(IfType, AutoSnakeToPascalCaseNameEnum):
     Contains all types of If Variable blocks.
     """
     CONTAINS = auto()  #: Checks if a text variable contains another text item.
+    ENDS_WITH = auto()  #: Checks if the last part of a text variable matches a certain text.
     EQUALS = " = "  #: Checks if a variable is equal to one of the given variables.
     GREATER_THAN = ">"  #: Checks if a number variable is greater than another number.
     GREATER_THAN_OR_EQUAL_TO = ">="  #: Checks if a number variable is greater than or equal to another number.
@@ -65,7 +66,9 @@ class IfVariableType(IfType, AutoSnakeToPascalCaseNameEnum):
     LIST_CONTAINS = auto()  #: Checks if any of a list's contents match the given value.
     LIST_VALUE_EQ = auto()  #: Checks if a list's value at an index is equal to a value.
     NOT_EQUALS = " != "  #: Checks if a variable does not equal another variable.
+    STARTS_WITH = auto()  #: Checks if the first part of a text variable matches a certain text.
     TEXT_MATCHES = auto()  #: Checks if a text matches another text.
+    VAR_EXISTS = auto()  #: Checks if a variable exists.
     VAR_IS_TYPE = auto()  #: Checks if a variable is a certain type of variable.
 
 
