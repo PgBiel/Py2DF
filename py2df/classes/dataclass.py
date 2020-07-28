@@ -79,12 +79,12 @@ class Enchantment(Settable):
         level : :class:`int`, optional
             The level of this enchantments (default is 1).
         """
-        if abs(self.level) > constants.MAX_ENCHANTMENT_LEVEL:
-            raise OverflowError(f"Enchantment level too big (max {constants.MAX_ENCHANTMENT_LEVEL})")
-
         self.ench_type = Enchantments(ench_type)
 
         self.level = int(level)
+
+        if abs(self.level) > constants.MAX_ENCHANTMENT_LEVEL:
+            raise OverflowError(f"Enchantment level too big (max {constants.MAX_ENCHANTMENT_LEVEL})")
 
     def __repr__(self):
         return f"<{self.__class__.__name__} ench_type={self.ench_type.value} level={self.level}>"
