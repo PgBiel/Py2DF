@@ -78,10 +78,13 @@ class IfEntityType(IfType, AutoSnakeToPascalCaseNameEnum):
     Contains all types of If Entity blocks.
     """
     EXISTS = auto()  #: Checks if an entity still exists in the world.
+    HAS_CUSTOM_TAG = auto()  #: Checks if an entity has a given custom tag, and (if provided) whether the tag matches the given value.
+    IS_GROUNDED = auto()  #: Checks if an entity is supported by a block.
     IS_ITEM = auto()  #: Checks if an entity is an item.
     IS_MOB = auto()  #: Checks if an entity is a mob.
     IS_NEAR = auto()  #: Checks if an entity is within a certain distance of a location. (default is 5 blocks)
     IS_PROJ = auto()  #: Checks if an entity is a projectile.
+    IS_RIDING = auto()  #: Checks if an entity is a passenger of another entity.
     IS_TYPE = auto()  #: Checks if an entity is a certain type.
     IS_VEHICLE = auto()  #: Checks if an entity is a vehicle.
     NAME_EQUALS = auto()  #: Checks if an entity's name is equal to the text in the chest.
