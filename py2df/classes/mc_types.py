@@ -277,6 +277,13 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
             else:  # must be a nbtlib.Compound or dict already
                 tag["EntityTag"] = ent_t
 
+        if self.enchantments:
+            tag["Enchantments"] = [
+                ItemEnchantmentSchema(
+                    id=f"minecraft:{enchant.ench_type.value}", lvl=enchant.level
+                ) for enchant in self.enchantments
+            ]
+        
         if any([self.leather_armor_color is not None, self.name, self.lore]):
             display = ItemDisplaySchema()
             if self.name:
@@ -1517,11 +1524,13 @@ class DFLocation(DFType):
             id=constants.ITEM_ID_LOCATION,
             data=dict(
                 isBlock=self.is_block,
-                x=self.x,
-                y=self.y,
-                z=self.z,
-                pitch=self.pitch,
-                yaw=self.yaw
+                loc=dict(
+                    x=self.x,
+                    y=self.y,
+                    z=self.z,
+                    pitch=self.pitch,
+                    yaw=self.yaw
+                )
             )
         )
 
