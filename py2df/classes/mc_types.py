@@ -280,7 +280,7 @@ class Item(DFType, Itemable):  # TODO: Bonus Item classes - WrittenBook, for exa
         if self.enchantments:
             tag["Enchantments"] = [
                 ItemEnchantmentSchema(
-                    dict(id=f"minecraft:{enchant.ench_type.value}", lvl=enchant.level)
+                    id=f"minecraft:{enchant.ench_type.value}", lvl=enchant.level
                 ) for enchant in self.enchantments
             ]
         
