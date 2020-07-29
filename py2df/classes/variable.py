@@ -1743,7 +1743,8 @@ generated IfVariable block). Example usage::
 
         elif isinstance(value, collections.Iterable):  # an iterable of parameters was given
             setv_type = SetVarType.CREATE_LIST
-            args = Arguments([self] + [_tp.p_check(o, self.check_type, "value") for o in value])
+            # args = Arguments([self] + [_tp.p_check(o, self.check_type, "value") for o in value])  # fixed type lists? Nah?
+            args = Arguments([self] + [_tp.p_check(o, _tp.Param, "value") for o in value])
 
         else:
             _tp.p_check(value, self.check_type, "value")  # this will error
